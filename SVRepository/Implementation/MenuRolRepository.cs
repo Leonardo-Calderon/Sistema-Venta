@@ -29,6 +29,7 @@ namespace SVRepository.Implementation
                     {
                         lista.Add(new MenuRol
                         {
+                            IdMenu = Convert.ToInt32(dr["IdMenu"]), // <-- Línea añadida
                             NombreMenu = dr["NombreMenu"].ToString()!,
                             IdMenuPadre = Convert.ToInt32(dr["IdMenuPadre"]),
                             Activo = Convert.ToBoolean(dr["Activo"]),

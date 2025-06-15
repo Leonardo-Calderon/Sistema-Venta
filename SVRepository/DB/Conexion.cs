@@ -1,22 +1,23 @@
-﻿
-using Microsoft.Data.SqlClient;
+﻿// En: SVRepository/DB/Conexion.cs
 using Microsoft.Extensions.Configuration;
+using Microsoft.Data.SqlClient;
 
 namespace SVRepository.DB
 {
     public class Conexion
     {
-        private readonly IConfiguration _configuracion;
-        private readonly string _cadenaSql;
+        private string connectionString = string.Empty;
 
-        public Conexion(IConfiguration configuracion){
-            _configuracion = configuracion;
-            _cadenaSql = _configuracion.GetConnectionString("cadenaSQL")!;
+        // Cambiamos el constructor para que reciba IConfiguration
+        public Conexion(IConfiguration configuration)
+        {
+            // La clase extrae la cadena de conexión que necesita
+            connectionString = configuration.GetConnectionString("cadenaSQL")!;
         }
+
         public SqlConnection ObtenerSQLConexion()
         {
-            return new SqlConnection(_cadenaSql);
+            return new SqlConnection(connectionString);
         }
-
     }
 }

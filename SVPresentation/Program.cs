@@ -27,9 +27,9 @@ namespace SVPresentation
             Host.CreateDefaultBuilder().ConfigureAppConfiguration((context, config) => { 
                 config.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
             }).ConfigureServices((context, services) => 
-            { 
-                services.RegisterRepositoryDependencies();
-                services.RegisterServiceDependencies();
+            {
+                services.RegisterRepositoryDependencies(context.Configuration);
+                services.RegisterServiceDependencies(context.Configuration);
 
                 services.AddTransient<FrmCategoria>();
                 services.AddTransient<FrmProducto>();

@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace SVServices.Implementation
 {
-    internal class UsuarioService : IUsuarioService
+    public class UsuarioService : IUsuarioService
     {
         private readonly IUsuarioRepository _usuarioRepository;
 
