@@ -1,0 +1,72 @@
+﻿@page "/login"
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+@using Shared.DTOs
+@using SistemaVenta.Web.Client.Services.Interfaces
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject IAuthService authService
+@inject NavigationManager navigationManager
+
+<div class="container-fluid d-flex justify-content-center align-items-center vh-100">
+    <div class="card shadow" style="width: 22rem;">
+        <div class="card-header bg-primary text-white text-center">
+            <h3>Iniciar Sesión</h3>
+        </div>
+        <div class="card-body">
+            <EditForm Model="@loginModel" OnValidSubmit="OnLogin">
+                <DataAnnotationsValidator />
+
+                <div class="mb-3">
+                    <label class="form-label">Nombre de Usuario</label>
+                    <InputText class="form-control" @bind-Value="loginModel.NombreUsuario" />
+                    <ValidationMessage For="@(() => loginModel.NombreUsuario)" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Contraseña</label>
+                    <InputText type="password" class="form-control" @bind-Value="loginModel.Clave" />
+                    <ValidationMessage For="@(() => loginModel.Clave)" />
+                </div>
+
+                @if (!string.IsNullOrEmpty(errorMessage))
+                {
+                    <div class="alert alert-danger" role="alert">
+                        @errorMessage
+                    </div>
+                }
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary">Ingresar</button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    private LoginDTO loginModel = new LoginDTO();
+    private string? errorMessage;
+
+    private async Task OnLogin()
+    {
+        errorMessage = null;
+        try
+        {
+            var result = await authService.Login(loginModel);
+
+            if (result != null && !string.IsNullOrEmpty(result.Token))
+            {
+                navigationManager.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                errorMessage = "Credenciales incorrectas. Por favor, intente de nuevo.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al intentar iniciar sesión: {ex.Message}";
+        }
+    }
+}
