@@ -4,7 +4,6 @@ using SVServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
-using Shared.DTOs;
 
 // Envolvemos todo en un bloque try-catch para capturar errores de arranque
 try

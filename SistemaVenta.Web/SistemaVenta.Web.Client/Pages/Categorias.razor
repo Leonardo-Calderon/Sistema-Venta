@@ -1,0 +1,168 @@
+﻿@page "/categorias"
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+@using Shared.DTOs
+@using Microsoft.AspNetCore.Authorization
+@inject ICategoriaService categoriaService
+@inject IMedidaService medidaService
+@inject NavigationManager navigationManager
+
+<AuthorizeView Roles="Administrador">
+    <Authorized Context="authState">
+        <PageTitle>Gestión de Categorías</PageTitle>
+        <h1>Gestión de Categorías</h1>
+
+        @if (currentView == "List")
+        {
+            <div class="card shadow">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Lista de Categorías</span>
+                        <button class="btn btn-primary" @onclick="ShowCreateForm">
+                            <i class="oi oi-plus"></i> Nueva Categoría
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (categoryList == null)
+                    {
+                        <p><em>Cargando...</em></p>
+                    }
+                    else
+                    {
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Nombre</th>
+                                    <th>Unidad de Medida</th>
+                                    <th>Habilitado</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var cat in categoryList)
+                                {
+                                    <tr>
+                                        <td>@cat.Nombre</td>
+                                        <td>@cat.NombreMedida</td>
+                                        <td>@(cat.Activo ? "Sí" : "No")</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-warning" @onclick="() => ShowEditForm(cat)">
+                                                <i class="oi oi-pencil"></i>
+                                            </button>
+                                            @* Aquí iría el botón de eliminar *@
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    }
+                </div>
+            </div>
+        }
+        else if (currentView == "Create" || currentView == "Edit")
+        {
+            <div class="card shadow">
+                <div class="card-header"><h3>@(currentView == "Create" ? "Nueva Categoría" : "Editar Categoría")</h3></div>
+                <div class="card-body">
+                    <EditForm Model="categoriaModel" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+                        <ValidationSummary />
+
+                        <div class="mb-3">
+                            <label class="form-label">Nombre</label>
+                            <InputText class="form-control" @bind-Value="categoriaModel.Nombre" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Unidad de Medida</label>
+                            <InputSelect class="form-select" @bind-Value="categoriaModel.IdMedida">
+                                <option value="0">-- Seleccione --</option>
+                                @if (measureList != null)
+                                {
+                                    @foreach (var medida in measureList)
+                                    {
+                                        <option value="@medida.IdMedida">@medida.Nombre</option>
+                                    }
+                                }
+                            </InputSelect>
+                        </div>
+
+                        @if (currentView == "Edit")
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">Habilitado</label>
+                                <InputSelect class="form-select" @bind-Value="categoriaModel.Activo">
+                                    <option value="true">Sí</option>
+                                    <option value="false">No</option>
+                                </InputSelect>
+                            </div>
+                        }
+
+                        <div class="d-flex justify-content-between">
+                            <button type="button" class="btn btn-secondary" @onclick="SwitchToList"><i class="oi oi-arrow-left"></i> Volver</button>
+                            <button type="submit" class="btn btn-primary"><i class="oi oi-check"></i> Guardar</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <div class="text-center p-4" style="color:red;">
+            <h1 class="display-4">Acceso Denegado</h1>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private string currentView = "List";
+    private List<CategoriaDTO>? categoryList;
+    private List<MedidaDTO>? measureList;
+    private CategoriaDTO categoriaModel = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+        measureList = await medidaService.Lista();
+    }
+
+    private async Task LoadCategories(string search = "")
+    {
+        categoryList = await categoriaService.Lista(search);
+    }
+
+    private void SwitchToList() => currentView = "List";
+
+    private void ShowCreateForm()
+    {
+        categoriaModel = new CategoriaDTO();
+        currentView = "Create";
+    }
+
+    private void ShowEditForm(CategoriaDTO categoriaAEditar)
+    {
+        categoriaModel = new CategoriaDTO
+            {
+                IdCategoria = categoriaAEditar.IdCategoria,
+                Nombre = categoriaAEditar.Nombre,
+                IdMedida = categoriaAEditar.IdMedida,
+                Activo = categoriaAEditar.Activo
+            };
+        currentView = "Edit";
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (currentView == "Create")
+        {
+            await categoriaService.Crear(categoriaModel);
+        }
+        else if (currentView == "Edit")
+        {
+            await categoriaService.Editar(categoriaModel);
+        }
+
+        await LoadCategories();
+        SwitchToList();
+    }
+}

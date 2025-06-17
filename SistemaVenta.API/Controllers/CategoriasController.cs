@@ -1,25 +1,28 @@
-﻿// En: SistemaVenta.API/Controllers/CategoriasController.cs
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using SVServices.Interfaces;
 using Shared.DTOs;
 using SVRepository.Entities;
-using Microsoft.AspNetCore.Authorization; // Lo añadiremos para proteger el endpoint
+using SVServices.Interfaces;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize] // ¡Importante! Protegemos todo el controlador
+[Authorize] // Protege todo el controlador, requiriendo que el usuario esté logueado.
 public class CategoriasController : ControllerBase
 {
     private readonly ICategoriaService _categoriaService;
+    private readonly ILogger<CategoriasController> _logger;
 
-    // 1. Inyección de Dependencia
-    public CategoriasController(ICategoriaService categoriaService)
+    public CategoriasController(ICategoriaService categoriaService, ILogger<CategoriasController> logger)
     {
         _categoriaService = categoriaService;
+        _logger = logger;
     }
 
-    // 2. Endpoint para LISTAR todas las categorías
-    // GET: api/categorias?buscar=texto
+    // GET: api/categorias?buscar=
+    /// <summary>
+    /// Obtiene una lista de todas las categorías, con opción de búsqueda.
+    /// Accesible para cualquier usuario autenticado.
+    /// </summary>
     [HttpGet]
     public async Task<IActionResult> Lista(string buscar = "")
     {
@@ -27,12 +30,6 @@ public class CategoriasController : ControllerBase
         {
             var listaDeEntidades = await _categoriaService.Lista(buscar);
 
-            if (listaDeEntidades == null || !listaDeEntidades.Any())
-            {
-                return NotFound(new List<CategoriaDTO>()); // Devuelve una lista vacía si no hay resultados
-            }
-
-            // Mapeo de Entidad a DTO
             var listaDeDTOs = listaDeEntidades.Select(c => new CategoriaDTO
             {
                 IdCategoria = c.IdCategoria,
@@ -46,32 +43,37 @@ public class CategoriasController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            _logger.LogError(ex, "Error al obtener la lista de categorías.");
+            return StatusCode(500, "Error interno del servidor al procesar la solicitud.");
         }
     }
 
-    // 3. Endpoint para CREAR una categoría
     // POST: api/categorias
+    /// <summary>
+    /// Crea una nueva categoría.
+    /// Requiere rol de Administrador.
+    /// </summary>
     [HttpPost]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Crear([FromBody] CategoriaDTO dto)
     {
-        if (dto == null || string.IsNullOrWhiteSpace(dto.Nombre))
+        if (!ModelState.IsValid)
         {
-            return BadRequest("El nombre de la categoría es obligatorio.");
+            return BadRequest(ModelState);
         }
 
         try
         {
-            // Mapeo de DTO a Entidad
             var entidad = new Categoria
             {
                 Nombre = dto.Nombre,
-                RefMedida = new Medida { IdMedida = dto.IdMedida }
+                RefMedida = new Medida { IdMedida = dto.IdMedida },
+                Activo = 1 // Las categorías nuevas se crean activas por defecto
             };
 
             var resultadoSp = await _categoriaService.Crear(entidad);
 
-            if (!string.IsNullOrEmpty(resultadoSp)) // Si el SP devolvió un mensaje de error
+            if (!string.IsNullOrEmpty(resultadoSp))
             {
                 return BadRequest(resultadoSp);
             }
@@ -80,23 +82,32 @@ public class CategoriasController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            _logger.LogError(ex, "Error al crear la categoría.");
+            return StatusCode(500, "Error interno del servidor.");
         }
     }
 
-    // 4. Endpoint para EDITAR una categoría
-    // PUT: api/categorias
-    [HttpPut]
-    public async Task<IActionResult> Editar([FromBody] CategoriaDTO dto)
+    // PUT: api/categorias/5
+    /// <summary>
+    /// Edita una categoría existente.
+    /// Requiere rol de Administrador.
+    /// </summary>
+    [HttpPut("{id:int}")]
+    [Authorize(Roles = "Administrador")]
+    public async Task<IActionResult> Editar(int id, [FromBody] CategoriaDTO dto)
     {
-        if (dto == null || dto.IdCategoria == 0)
+        if (id != dto.IdCategoria)
         {
-            return BadRequest("Datos de categoría inválidos.");
+            return BadRequest("El ID de la ruta no coincide con el ID del objeto.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(ModelState);
         }
 
         try
         {
-            // Mapeo de DTO a Entidad
             var entidad = new Categoria
             {
                 IdCategoria = dto.IdCategoria,
@@ -107,7 +118,7 @@ public class CategoriasController : ControllerBase
 
             var resultadoSp = await _categoriaService.Editar(entidad);
 
-            if (!string.IsNullOrEmpty(resultadoSp)) // Si el SP devolvió un mensaje de error
+            if (!string.IsNullOrEmpty(resultadoSp))
             {
                 return BadRequest(resultadoSp);
             }
@@ -116,7 +127,9 @@ public class CategoriasController : ControllerBase
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            _logger.LogError(ex, "Error al editar la categoría con ID {CategoriaId}.", id);
+            return StatusCode(500, "Error interno del servidor.");
         }
     }
+
 }
