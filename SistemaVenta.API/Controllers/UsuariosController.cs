@@ -1,77 +1,66 @@
-﻿// En: SistemaVenta.API/Controllers/UsuariosController.cs
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.DTOs;
 using SVRepository.Entities;
 using SVServices.Interfaces;
+using SistemaVenta.API.Utilidades; // Importante para usar Util.cs
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize] // El usuario debe estar logueado para acceder a cualquier método
+[Authorize]
 public class UsuariosController : ControllerBase
 {
     private readonly IUsuarioService _usuarioService;
+    private readonly ICorreoService _correoService; // Inyecta el servicio de correo
+    private readonly ILogger<UsuariosController> _logger;
 
-    public UsuariosController(IUsuarioService usuarioService)
+    public UsuariosController(
+        IUsuarioService usuarioService,
+        ICorreoService correoService, // Añádelo al constructor
+        ILogger<UsuariosController> logger)
     {
         _usuarioService = usuarioService;
+        _correoService = correoService; // Asígnalo
+        _logger = logger;
     }
 
-    // GET: api/usuarios?buscar=texto
     [HttpGet]
-    [Authorize(Roles = "Administrador")] // Solo el admin puede ver la lista de usuarios
-    public async Task<IActionResult> Lista(string buscar = "")
+    [Authorize(Roles = "Administrador")]
+    public async Task<IActionResult> Lista([FromQuery] string buscar = "")
     {
-        try
+        var listaEntidades = await _usuarioService.Lista(buscar);
+        var listaDto = listaEntidades.Select(u => new UsuarioDTO
         {
-            var listaEntidades = await _usuarioService.Lista(buscar);
-
-            if (listaEntidades == null || !listaEntidades.Any())
-                return Ok(new List<UsuarioDTO>());
-
-            // Mapeo cuidadoso para NO exponer la contraseña
-            var listaDto = listaEntidades.Select(u => new UsuarioDTO
-            {
-                IdUsuario = u.IdUsuario,
-                NombreCompleto = u.NombreCompleto,
-                Correo = u.Correo,
-                NombreUsuario = u.NombreUsuario,
-                IdRol = u.RefRol.IdRol,
-                DescripcionRol = u.RefRol.Nombre,
-                Activo = u.Activo == 1,
-                Clave = "" // ¡IMPORTANTE! Nunca devolver la clave
-            }).ToList();
-
-            return Ok(listaDto);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Error interno del servidor: {ex.Message}");
-        }
+            IdUsuario = u.IdUsuario,
+            NombreCompleto = u.NombreCompleto,
+            Correo = u.Correo,
+            NombreUsuario = u.NombreUsuario,
+            IdRol = u.RefRol.IdRol,
+            DescripcionRol = u.RefRol.Nombre,
+            Activo = u.Activo == 1,
+        }).ToList();
+        return Ok(listaDto);
     }
 
-    // POST: api/usuarios
     [HttpPost]
     [Authorize(Roles = "Administrador")]
-    public async Task<IActionResult> Crear([FromBody] UsuarioDTO dto)
+    public async Task<IActionResult> Crear([FromBody] UsuarioCrearDTO dto)
     {
-        if (dto == null) return BadRequest("Datos de usuario inválidos.");
-
         try
         {
-            // ALERTA DE SEGURIDAD: Tu código actual guarda la clave en texto plano.
-            // El servicio debería hashear la clave antes de guardarla.
-            // Ejemplo de cómo se haría en el servicio:
-            // string claveHasheada = BCrypt.Net.BCrypt.HashPassword(dto.Clave);
-            // entidad.Clave = claveHasheada;
+            // 1. Generar y encriptar la clave (lógica de FrmUsuario)
+            var claveGenerada = Util.GenerarCode();
+            var claveEncriptada = Util.ConvertirASha256(claveGenerada);
 
             var entidad = new Usuario
             {
                 NombreCompleto = dto.NombreCompleto,
                 Correo = dto.Correo,
                 NombreUsuario = dto.NombreUsuario,
-                Clave = dto.Clave, // Temporalmente en texto plano, ¡corregir en el servicio!
-                RefRol = new Rol { IdRol = dto.IdRol }
+                Clave = claveEncriptada, // Guardamos la clave encriptada
+                RefRol = new Rol { IdRol = dto.IdRol },
+                ResetearClave = 1, // Forzar cambio de clave en el primer login
+                Activo = 1
             };
 
             var resultadoSp = await _usuarioService.Crear(entidad);
@@ -80,66 +69,57 @@ public class UsuariosController : ControllerBase
                 return BadRequest(resultadoSp);
             }
 
+            // 2. Enviar correo con la clave generada (lógica de FrmUsuario)
+            var mensaje = $"<h3>Usuario creado correctamente.</h3>" +
+                          $"<p>Sus credenciales de acceso son:</p>" +
+                          $"<p><b>Nombre de usuario:</b> {dto.NombreUsuario}</p>" +
+                          $"<p><b>Clave temporal:</b> {claveGenerada}</p>" +
+                          $"<p>Por su seguridad, se le pedirá que cambie la clave la primera vez que inicie sesión.</p>";
+
+            await _correoService.Enviar(dto.Correo, "¡Bienvenido a SistemaVenta!", mensaje);
+
             return Ok("Usuario creado con éxito.");
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            _logger.LogError(ex, "Error creando usuario");
+            return StatusCode(500, "Error interno del servidor.");
         }
     }
 
-    // PUT: api/usuarios
-    [HttpPut]
+    [HttpPut("{id}")]
     [Authorize(Roles = "Administrador")]
-    public async Task<IActionResult> Editar([FromBody] UsuarioDTO dto)
+    public async Task<IActionResult> Editar(int id, [FromBody] UsuarioDTO dto)
     {
-        if (dto == null || dto.IdUsuario == 0) return BadRequest("Datos de usuario inválidos.");
+        if (id != dto.IdUsuario) return BadRequest("El ID del usuario no coincide.");
 
-        try
+        var entidad = new Usuario
         {
-            // El sp_editarUsuario no modifica la clave, lo cual es correcto.
-            var entidad = new Usuario
-            {
-                IdUsuario = dto.IdUsuario,
-                NombreCompleto = dto.NombreCompleto,
-                Correo = dto.Correo,
-                NombreUsuario = dto.NombreUsuario,
-                Activo = dto.Activo ? 1 : 0,
-                RefRol = new Rol { IdRol = dto.IdRol }
-            };
+            IdUsuario = dto.IdUsuario,
+            NombreCompleto = dto.NombreCompleto,
+            Correo = dto.Correo,
+            NombreUsuario = dto.NombreUsuario,
+            Activo = dto.Activo ? 1 : 0,
+            RefRol = new Rol { IdRol = dto.IdRol }
+        };
 
-            var resultadoSp = await _usuarioService.Editar(entidad);
-            if (!string.IsNullOrEmpty(resultadoSp))
-            {
-                return BadRequest(resultadoSp);
-            }
-
-            return Ok("Usuario actualizado con éxito.");
-        }
-        catch (Exception ex)
+        var resultadoSp = await _usuarioService.Editar(entidad);
+        if (!string.IsNullOrEmpty(resultadoSp))
         {
-            return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            return BadRequest(resultadoSp);
         }
+        return Ok("Usuario actualizado con éxito.");
     }
 
-    // DELETE: api/usuarios/5
-    [HttpDelete("{id:int}")]
+    [HttpDelete("{id}")]
     [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Eliminar(int id)
     {
-        try
+        var resultadoSp = await _usuarioService.Eliminar(id);
+        if (!string.IsNullOrEmpty(resultadoSp))
         {
-            var resultadoSp = await _usuarioService.Eliminar(id);
-            if (!string.IsNullOrEmpty(resultadoSp))
-            {
-                return BadRequest(resultadoSp);
-            }
-
-            return Ok("Usuario eliminado con éxito.");
+            return BadRequest(resultadoSp);
         }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Error interno del servidor: {ex.Message}");
-        }
+        return Ok("Usuario eliminado con éxito.");
     }
 }

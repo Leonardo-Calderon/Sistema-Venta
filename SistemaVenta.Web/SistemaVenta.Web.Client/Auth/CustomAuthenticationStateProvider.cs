@@ -1,8 +1,8 @@
 ﻿// En: SistemaVenta.Web/SistemaVenta.Web.Client/Auth/CustomAuthenticationStateProvider.cs
+using System.Security.Claims;
 using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace SistemaVenta.Web.Client.Auth
 {
@@ -18,6 +18,7 @@ namespace SistemaVenta.Web.Client.Auth
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
+            
             try
             {
                 var token = await _localStorage.GetItemAsStringAsync("authToken");
@@ -29,8 +30,9 @@ namespace SistemaVenta.Web.Client.Auth
                 var claimsPrincipal = CreateClaimsPrincipalFromToken(token);
                 return new AuthenticationState(claimsPrincipal);
             }
-            catch
+            catch (Exception ex)
             {
+                Console.WriteLine($"Proveedor Cliente: EXCEPCIÓN -> {ex.Message}");
                 return new AuthenticationState(_anonymous);
             }
         }
@@ -60,8 +62,12 @@ namespace SistemaVenta.Web.Client.Auth
         {
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwtToken = tokenHandler.ReadJwtToken(token);
+            var identity = new ClaimsIdentity(jwtToken.Claims,
+                authenticationType: "jwtAuth",
+                nameType: ClaimTypes.Name,
+                roleType: ClaimTypes.Role);
 
-            return new ClaimsPrincipal(new ClaimsIdentity(jwtToken.Claims, "jwtAuth"));
+            return new ClaimsPrincipal(identity);
         }
     }
 }

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Shared.DTOs;
 using SistemaVenta.Web.Client.Auth;
 using SistemaVenta.Web.Client.Services.Interfaces;
+using System.Net;
 using System.Net.Http.Json;
 
 namespace SistemaVenta.Web.Client.Services.Implementations
@@ -23,19 +24,33 @@ namespace SistemaVenta.Web.Client.Services.Implementations
 
         public async Task<SessionDTO> Login(LoginDTO loginDto)
         {
-            var result = await _httpClient.PostAsJsonAsync("api/auth/login", loginDto);
-            var session = await result.Content.ReadFromJsonAsync<SessionDTO>();
-
-            if (session != null && session.Token != null)
+            try
             {
-                // Guardamos el token en el almacenamiento local del navegador
-                await _localStorage.SetItemAsStringAsync("authToken", session.Token);
+                var response = await _httpClient.PostAsJsonAsync("api/auth/login", loginDto);
 
-                // Notificamos a Blazor que el estado de autenticación ha cambiado
-                await ((CustomAuthenticationStateProvider)_authenticationStateProvider).NotifyUserAuthentication(session.Token);
+                if (!response.IsSuccessStatusCode)
+                {
+                    var errorContent = await response.Content.ReadAsStringAsync();
+                    throw new Exception($"Error {response.StatusCode}: {errorContent}");
+                }
+
+                var sessionDto = await response.Content.ReadFromJsonAsync<SessionDTO>();
+
+                // Guardar el token en localStorage
+                await _localStorage.SetItemAsStringAsync("authToken", sessionDto.Token);
+
+
+                // Notificar cambio de estado de autenticación
+                await ((CustomAuthenticationStateProvider)_authenticationStateProvider)
+                    .NotifyUserAuthentication(sessionDto.Token);
+
+                return sessionDto;
             }
-
-            return session;
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error en AuthService: {ex}");
+                throw;
+            }
         }
 
         public async Task Logout()

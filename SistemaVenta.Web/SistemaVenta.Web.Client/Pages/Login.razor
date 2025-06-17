@@ -1,4 +1,4 @@
-﻿@page "/login"
+﻿@page "/"
 @rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
 
 @using Shared.DTOs
@@ -57,16 +57,18 @@
 
             if (result != null && !string.IsNullOrEmpty(result.Token))
             {
-                navigationManager.NavigateTo("/", forceLoad: true);
+                navigationManager.NavigateTo("/inicio");
             }
             else
             {
-                errorMessage = "Credenciales incorrectas. Por favor, intente de nuevo.";
+                errorMessage = "Credenciales incorrectas";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error al intentar iniciar sesión: {ex.Message}";
+            errorMessage = ex.Message.Contains("400")
+                ? "Usuario o contraseña inválidos"
+                : $"Error: {ex.Message}";
         }
     }
 }

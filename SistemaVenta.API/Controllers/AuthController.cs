@@ -3,10 +3,12 @@ using Microsoft.AspNetCore.Mvc;
 using SVServices.Interfaces;
 using Shared.DTOs;
 using SVRepository.Entities;
+using SistemaVenta.API.Utilidades;
 using Microsoft.IdentityModel.Tokens;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
+using System.Text.Json;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -14,53 +16,67 @@ public class AuthController : ControllerBase
 {
     private readonly IUsuarioService _usuarioService;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<AuthController> _logger;
 
-    // 1. Inyectamos IUsuarioService y también IConfiguration para leer los settings del token
-    public AuthController(IUsuarioService usuarioService, IConfiguration configuration)
+    public AuthController(
+        IUsuarioService usuarioService,
+        IConfiguration configuration,
+        ILogger<AuthController> logger)
     {
         _usuarioService = usuarioService;
         _configuration = configuration;
+        _logger = logger;
     }
 
-    // 2. Endpoint para iniciar sesión
-    // POST: api/auth/login
     [HttpPost("login")]
     public async Task<IActionResult> Login([FromBody] LoginDTO loginDto)
     {
+        // Validación inicial
+        _logger.LogInformation($"Login attempt: {JsonSerializer.Serialize(loginDto)}");
+
+        if (loginDto == null || string.IsNullOrEmpty(loginDto.NombreUsuario))
+        {
+            _logger.LogWarning("Username missing");
+            return BadRequest("Usuario requerido");
+        }
+
         try
         {
-            var usuarioValidado = await _usuarioService.Login(loginDto.NombreUsuario, loginDto.Clave);
+            _logger.LogInformation($"Intento de login: {loginDto.NombreUsuario}");
 
-            // 3. Si las credenciales no son válidas, el servicio devuelve null o un usuario sin Id
+            // 2. Cifra la contraseña aquí, antes de pasarla al servicio.
+            var claveCifrada = Util.ConvertirASha256(loginDto.Clave);
+
+            // 3. Usa la clave cifrada para el login.
+            var usuarioValidado = await _usuarioService.Login(loginDto.NombreUsuario, claveCifrada);
+
             if (usuarioValidado == null || usuarioValidado.IdUsuario == 0)
             {
                 return BadRequest("Credenciales incorrectas.");
             }
-
-            // 4. Si el usuario es válido, generamos el Token JWT
             var token = GenerateJwtToken(usuarioValidado);
 
-            // 5. Creamos el DTO de Sesión para devolverlo al cliente
             var sessionDto = new SessionDTO
             {
                 IdUsuario = usuarioValidado.IdUsuario,
                 NombreCompleto = usuarioValidado.NombreCompleto,
                 Correo = usuarioValidado.Correo,
                 NombreUsuario = usuarioValidado.NombreUsuario,
-                Rol = usuarioValidado.RefRol.Nombre, // Obtenemos el nombre del rol
-                Token = token // Adjuntamos el token
+                Rol = usuarioValidado.RefRol.Nombre,
+                Token = token
             };
 
             return Ok(sessionDto);
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            _logger.LogError(ex, "Error en login");
+            return StatusCode(500, "Error interno");
         }
     }
 
-    // 6. Método privado para generar el Token
-    private string GenerateJwtToken(Usuario usuario)
+// 6. Método privado para generar el Token
+private string GenerateJwtToken(Usuario usuario)
     {
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

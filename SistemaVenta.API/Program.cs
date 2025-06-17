@@ -4,6 +4,7 @@ using SVServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Shared.DTOs;
 
 // Envolvemos todo en un bloque try-catch para capturar errores de arranque
 try
@@ -18,7 +19,6 @@ try
     // 2. Configurar la Inyección de Dependencias de tus proyectos
     builder.Services.RegisterRepositoryDependencies(builder.Configuration);
     builder.Services.RegisterServiceDependencies(builder.Configuration);
-
     // Añadimos esto para el endpoint de descarga de PDF que creamos
     builder.Services.AddHttpClient();
 
@@ -58,7 +58,17 @@ try
         app.UseSwaggerUI();
     }
 
-    app.UseCors("NuevaPolitica");
+    app.UseRouting();
+    app.UseCors(builder => builder
+        .WithOrigins(
+            "https://localhost:7289",
+            "https://localhost:5001",
+            "https://localhost:7189"   
+        )
+        .AllowAnyMethod()
+        .AllowAnyHeader()
+        .AllowCredentials()
+    );
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();

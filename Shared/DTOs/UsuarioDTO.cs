@@ -1,5 +1,4 @@
-﻿
-namespace Shared.DTOs
+﻿namespace Shared.DTOs
 {
     public class UsuarioDTO
     {
@@ -9,7 +8,6 @@ namespace Shared.DTOs
         public string? NombreUsuario { get; set; }
         public int IdRol { get; set; }
         public string? DescripcionRol { get; set; } // Nombre del rol para mostrar
-        public string? Clave { get; set; } // ¡IMPORTANTE! Solo se usará para CREAR
         public bool Activo { get; set; }
     }
 }
