@@ -1,20 +1,21 @@
 ﻿@page "/"
+@*@layout EmptyLayout*@
 @rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
 
 @using Shared.DTOs
 @using SistemaVenta.Web.Client.Services.Interfaces
-@using Microsoft.AspNetCore.Components.Forms
+@using System.Net
 
 @inject IAuthService authService
 @inject NavigationManager navigationManager
 
-<div class="container-fluid d-flex justify-content-center align-items-center vh-100">
+<div class="container-fluid d-flex justify-content-center align-items-center vh-100 bg-light">
     <div class="card shadow" style="width: 22rem;">
         <div class="card-header bg-primary text-white text-center">
             <h3>Iniciar Sesión</h3>
         </div>
-        <div class="card-body">
-            <EditForm Model="@loginModel" OnValidSubmit="OnLogin">
+        <div class="card-body p-4">
+            <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
                 <DataAnnotationsValidator />
 
                 <div class="mb-3">
@@ -31,13 +32,23 @@
 
                 @if (!string.IsNullOrEmpty(errorMessage))
                 {
-                    <div class="alert alert-danger" role="alert">
+                    <div class="alert alert-danger mt-3" role="alert">
                         @errorMessage
                     </div>
                 }
 
-                <div class="d-grid gap-2">
-                    <button type="submit" class="btn btn-primary">Ingresar</button>
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary" disabled="@isLoading">
+                        @if (isLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                            <span> Ingresando...</span>
+                        }
+                        else
+                        {
+                            <span>Ingresar</span>
+                        }
+                    </button>
                 </div>
             </EditForm>
         </div>
@@ -45,30 +56,45 @@
 </div>
 
 @code {
-    private LoginDTO loginModel = new LoginDTO();
+    private LoginDTO loginModel = new();
     private string? errorMessage;
+    private bool isLoading = false;
 
-    private async Task OnLogin()
+    private async Task HandleLogin()
     {
         errorMessage = null;
+        isLoading = true;
+
         try
         {
-            var result = await authService.Login(loginModel);
+            // El AuthService corregido lanzará una excepción en caso de error.
+            // Si esta línea se completa sin errores, el login fue exitoso.
+            await authService.Login(loginModel);
 
-            if (result != null && !string.IsNullOrEmpty(result.Token))
+            // Redirigimos a la página de inicio.
+            // forceLoad: true es CRUCIAL para que el estado de autenticación se actualice en toda la app.
+            navigationManager.NavigateTo("/inicio", forceLoad: true);
+        }
+        catch (HttpRequestException httpEx)
+        {
+            // Capturamos errores específicos de la API (400, 401, etc.)
+            if (httpEx.StatusCode == HttpStatusCode.BadRequest || httpEx.StatusCode == HttpStatusCode.Unauthorized)
             {
-                navigationManager.NavigateTo("/inicio");
+                errorMessage = "Usuario o contraseña incorrectos.";
             }
             else
             {
-                errorMessage = "Credenciales incorrectas";
+                errorMessage = $"Error de conexión: {httpEx.StatusCode}";
             }
         }
         catch (Exception ex)
         {
-            errorMessage = ex.Message.Contains("400")
-                ? "Usuario o contraseña inválidos"
-                : $"Error: {ex.Message}";
+            // Capturamos cualquier otro error inesperado (ej. red caída)
+            errorMessage = $"Ha ocurrido un error inesperado: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 }

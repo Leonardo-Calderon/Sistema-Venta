@@ -254,6 +254,7 @@
             lblMain.TabIndex = 5;
             lblMain.Text = "Bienvenido";
             lblMain.TextAlign = ContentAlignment.MiddleCenter;
+            lblMain.Click += lblMain_Click;
             // 
             // Layout
             // 

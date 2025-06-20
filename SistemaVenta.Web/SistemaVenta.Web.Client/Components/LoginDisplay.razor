@@ -1,0 +1,25 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+<AuthorizeView>
+    <Authorized>
+        <div class="d-flex align-items-center">
+            <span class="text-dark me-3">
+                <i class="bi bi-person-fill me-1"></i> Hola, @context.User.Identity?.Name!
+            </span>
+            <button class="btn btn-outline-dark btn-sm" @onclick="HandleLogout">
+                <i class="bi bi-box-arrow-right me-1"></i> Cerrar Sesión
+            </button>
+        </div>
+    </Authorized>
+</AuthorizeView>
+
+@code {
+    private async Task HandleLogout()
+    {
+        await AuthService.Logout();
+        // Forzamos la recarga para asegurar que todo el estado de autenticación se limpie
+        NavigationManager.NavigateTo("/", forceLoad: true);
+    }
+}

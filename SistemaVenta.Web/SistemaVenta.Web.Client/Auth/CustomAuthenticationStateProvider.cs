@@ -1,61 +1,68 @@
-﻿// En: SistemaVenta.Web/SistemaVenta.Web.Client/Auth/CustomAuthenticationStateProvider.cs
-using System.Security.Claims;
-using Blazored.LocalStorage;
+﻿using Blazored.LocalStorage;
 using Microsoft.AspNetCore.Components.Authorization;
 using System.IdentityModel.Tokens.Jwt;
+using System.Net.Http.Headers;
+using System.Security.Claims;
 
 namespace SistemaVenta.Web.Client.Auth
 {
     public class CustomAuthenticationStateProvider : AuthenticationStateProvider
     {
         private readonly ILocalStorageService _localStorage;
-        private ClaimsPrincipal _anonymous = new ClaimsPrincipal(new ClaimsIdentity());
+        private readonly HttpClient _httpClient;
+        private readonly ClaimsPrincipal _anonymous = new ClaimsPrincipal(new ClaimsIdentity());
 
-        public CustomAuthenticationStateProvider(ILocalStorageService localStorage)
+        public CustomAuthenticationStateProvider(ILocalStorageService localStorage, HttpClient httpClient)
         {
             _localStorage = localStorage;
+            _httpClient = httpClient;
         }
 
         public override async Task<AuthenticationState> GetAuthenticationStateAsync()
         {
-            
             try
             {
                 var token = await _localStorage.GetItemAsStringAsync("authToken");
+
                 if (string.IsNullOrWhiteSpace(token))
                 {
                     return new AuthenticationState(_anonymous);
                 }
 
+                // Si hay un token, se configura la cabecera por defecto del HttpClient
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+
                 var claimsPrincipal = CreateClaimsPrincipalFromToken(token);
                 return new AuthenticationState(claimsPrincipal);
             }
-            catch (Exception ex)
+            catch
             {
-                Console.WriteLine($"Proveedor Cliente: EXCEPCIÓN -> {ex.Message}");
                 return new AuthenticationState(_anonymous);
             }
         }
 
-        public Task NotifyUserAuthentication(string token)
+        public async Task NotifyUserAuthentication(string token)
         {
-            var authenticatedUser = CreateClaimsPrincipalFromToken(token);
-            var authState = Task.FromResult(new AuthenticationState(authenticatedUser));
+            var claimsPrincipal = CreateClaimsPrincipalFromToken(token);
+            var authState = Task.FromResult(new AuthenticationState(claimsPrincipal));
 
-            // Notificamos a Blazor del cambio de estado
+            // Se guarda el token en el almacenamiento local
+            await _localStorage.SetItemAsStringAsync("authToken", token);
+
+            // Se añade el token a las cabeceras del HttpClient para uso inmediato
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+
             NotifyAuthenticationStateChanged(authState);
-
-            return Task.CompletedTask;
         }
 
-        public Task NotifyUserLogout()
+        public async Task NotifyUserLogout()
         {
+            // Se elimina el token del almacenamiento y de las cabeceras del HttpClient
+            await _localStorage.RemoveItemAsync("authToken");
+            _httpClient.DefaultRequestHeaders.Authorization = null;
+
             var authState = Task.FromResult(new AuthenticationState(_anonymous));
-
-            // Notificamos a Blazor que el usuario ya no está autenticado
             NotifyAuthenticationStateChanged(authState);
-
-            return Task.CompletedTask;
         }
 
         private ClaimsPrincipal CreateClaimsPrincipalFromToken(string token)
@@ -63,7 +70,7 @@ namespace SistemaVenta.Web.Client.Auth
             var tokenHandler = new JwtSecurityTokenHandler();
             var jwtToken = tokenHandler.ReadJwtToken(token);
             var identity = new ClaimsIdentity(jwtToken.Claims,
-                authenticationType: "jwtAuth",
+                authenticationType: "jwt",
                 nameType: ClaimTypes.Name,
                 roleType: ClaimTypes.Role);
 

@@ -1,53 +1,40 @@
-// En: SistemaVenta.Web/SistemaVenta.Web.Client/Program.cs
-using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
-using Microsoft.AspNetCore.Components.Authorization;
 using Blazored.LocalStorage;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using SistemaVenta.Web.Client.Auth;
-using SistemaVenta.Web.Client.Services.Interfaces;
 using SistemaVenta.Web.Client.Services.Implementations;
-using System.Net.Http.Headers;
+using SistemaVenta.Web.Client.Services.Interfaces;
 
 var builder = WebAssemblyHostBuilder.CreateDefault(args);
 
+// --- SERVICIOS DE AUTENTICACIÓN ---
 builder.Services.AddBlazoredLocalStorage();
 builder.Services.AddAuthorizationCore();
 builder.Services.AddCascadingAuthenticationState();
 
+// El proveedor de autenticación personalizado se registra como Scoped
 builder.Services.AddScoped<AuthenticationStateProvider, CustomAuthenticationStateProvider>();
 
-// --- CONFIGURACIÓN DEL HTTPCLIENT ---
-
-// Registra el manejador que añadirá el token a las peticiones
-builder.Services.AddScoped<AuthorizationMessageHandler>();
-
-// --- AÑADE ESTA LÍNEA AQUÍ ---
-// Define la variable con la dirección de tu API. 
-// Reemplaza 7206 por el puerto correcto si es diferente.
-string apiBaseAddress = builder.Configuration["ApiUrl"] ?? "https://localhost:7206/";
-// ---------------------------------
-
-// Configura el HttpClient principal para usar el manejador
-// En Program.cs de Web.Client
-builder.Services.AddHttpClient("ApiHttpClient", client =>
+// --- CONFIGURACIÓN DE HTTPCLIENT (SIMPLIFICADO) ---
+// Registramos un único HttpClient que será usado en toda la aplicación.
+// CustomAuthenticationStateProvider se encargará de añadirle el token.
+builder.Services.AddScoped(sp =>
 {
-    client.BaseAddress = new Uri(apiBaseAddress);
-    client.DefaultRequestHeaders.Accept.Add(
-        new MediaTypeWithQualityHeaderValue("application/json"));
-})
-.AddHttpMessageHandler<AuthorizationMessageHandler>();
-
-// La forma correcta de hacer que un HttpClient esté disponible para inyección en Blazor WASM
-builder.Services.AddScoped(sp => sp.GetRequiredService<IHttpClientFactory>().CreateClient("ApiHttpClient"));
+    // Obtenemos la URL base de la configuración (wwwroot/appsettings.json)
+    var apiUrl = builder.Configuration["ApiUrl"] ?? builder.HostEnvironment.BaseAddress;
+    return new HttpClient { BaseAddress = new Uri(apiUrl) };
+});
 
 
 // --- REGISTRO DE SERVICIOS DEL CLIENTE ---
-// Aquí es donde registras las implementaciones de tus servicios
+// Los servicios que dependen de HttpClient usarán la instancia configurada arriba
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUsuarioService, UsuarioService>();
 builder.Services.AddScoped<IRolService, RolService>();
 builder.Services.AddScoped<ICategoriaService, CategoriaService>();
 builder.Services.AddScoped<IMedidaService, MedidaService>();
-
-
+builder.Services.AddScoped<IProductoService, ProductoService>();
+builder.Services.AddScoped<IVentaService, VentaService>();
+// ... registra aquí tus otros servicios ...
 
 await builder.Build().RunAsync();

@@ -1,5 +1,4 @@
-﻿// En: SistemaVenta.API/Controllers/MenusController.cs
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.DTOs;
 using SVServices.Interfaces;
@@ -17,33 +16,38 @@ public class MenusController : ControllerBase
         _menuRolService = menuRolService;
     }
 
-    [HttpGet]
-    public async Task<IActionResult> Lista()
+    [HttpGet] // El NavMenu llamará a GET /api/menus
+    public async Task<IActionResult> ObtenerMenusParaUsuario()
     {
         try
         {
             var claims = HttpContext.User.Claims;
             var idRolClaim = claims.FirstOrDefault(c => c.Type == "IdRol");
-            if (idRolClaim == null) return Unauthorized("Token inválido.");
 
-            int idRol = int.Parse(idRolClaim.Value);
+            if (idRolClaim == null || !int.TryParse(idRolClaim.Value, out int idRol))
+            {
+                return Unauthorized("Token inválido o no contiene el IdRol.");
+            }
+
             var listaPlanaDesdeDb = await _menuRolService.Lista(idRol);
 
-            if (listaPlanaDesdeDb == null) return Ok(new List<MenuDTO>());
+            if (listaPlanaDesdeDb == null || !listaPlanaDesdeDb.Any())
+            {
+                return Ok(new List<MenuDTO>());
+            }
 
-            // Convertimos la lista de la BD a una lista de DTOs, añadiendo la info que falta
-            var listaConDatosCompletos = listaPlanaDesdeDb.Select(m => MapToMenuDTO(m)).ToList();
+            var listaCompletaDto = listaPlanaDesdeDb.Select(MapToMenuDTO).ToList();
 
-            // Construimos la jerarquía
-            var menuJerarquico = listaConDatosCompletos
-                .Where(m => !listaConDatosCompletos.Any(p => p.IdMenu == m.IdMenuPadre)) // Busca padres
-                .Select(m => {
-                    m.SubMenus = listaConDatosCompletos.Where(h => h.IdMenuPadre == m.IdMenu).ToList();
-                    return m;
-                }).ToList();
+            // --- LÓGICA DE JERARQUÍA CORREGIDA ---
+            var menusPadre = listaCompletaDto.Where(m => m.IdMenuPadre == 0).ToList();
 
+            foreach (var padre in menusPadre)
+            {
+                padre.SubMenus = listaCompletaDto.Where(hijo => hijo.IdMenuPadre == padre.IdMenu).ToList();
+            }
+            // ------------------------------------
 
-            return Ok(menuJerarquico);
+            return Ok(menusPadre);
         }
         catch (Exception ex)
         {
@@ -51,7 +55,6 @@ public class MenusController : ControllerBase
         }
     }
 
-    // Método privado para "hardcodear" las URLs y los iconos
     private MenuDTO MapToMenuDTO(SVRepository.Entities.MenuRol menuDb)
     {
         var menuDto = new MenuDTO
@@ -59,26 +62,28 @@ public class MenusController : ControllerBase
             IdMenu = menuDb.IdMenu,
             Nombre = menuDb.NombreMenu,
             IdMenuPadre = menuDb.IdMenuPadre
-            // Url e Icono se asignan aquí abajo
         };
 
-        // Lógica para asignar URL e Icono basado en el nombre
+        // Lógica para asignar URL e Icono basado en el nombre (en minúsculas para evitar errores)
         switch (menuDb.NombreMenu.ToLower())
         {
+            // Grupo Ventas
             case "ventas":
-                menuDto.Url = "/ventas";
-                menuDto.Icono = "oi oi-cart"; // Ejemplo con Open Iconic
+                menuDto.Url = null; // Un padre no necesita URL si solo es un agrupador
+                menuDto.Icono = "oi oi-cart";
                 break;
             case "nuevo":
-                menuDto.Url = "/venta/nueva";
+                menuDto.Url = "/ventas/nueva";
                 menuDto.Icono = "oi oi-plus";
                 break;
             case "historial":
                 menuDto.Url = "/ventas/historial";
                 menuDto.Icono = "oi oi-clock";
                 break;
+
+            // Grupo Inventario
             case "inventario":
-                menuDto.Url = "/inventario";
+                menuDto.Url = null;
                 menuDto.Icono = "oi oi-box";
                 break;
             case "productos":
@@ -89,9 +94,32 @@ public class MenusController : ControllerBase
                 menuDto.Url = "/categorias";
                 menuDto.Icono = "oi oi-tags";
                 break;
-            // ...Añade un case para cada uno de tus menús
+
+            // Grupo Reportes
+            case "reportes":
+                menuDto.Url = null;
+                menuDto.Icono = "oi oi-document";
+                break;
+            // El hijo de reportes se llama "ventas", hay que diferenciarlo del padre
+            // Nota: Sería ideal tener nombres únicos, pero podemos manejarlo.
+            // Si el IdMenuPadre es el del menú "Reportes", es el reporte de ventas.
+            // Para simplificar, asumiremos que no hay colisión por ahora.
+            // case "ventas" when menuDb.IdMenuPadre == ID_REPORTE: 
+            //     menuDto.Url = "/reporte/ventas";
+            //     break;
+
+            // Menús sin hijos
+            case "usuarios":
+                menuDto.Url = "/usuarios";
+                menuDto.Icono = "oi oi-people";
+                break;
+            case "configuracion":
+                menuDto.Url = "/configuracion";
+                menuDto.Icono = "oi oi-cog";
+                break;
+
             default:
-                menuDto.Url = "#"; // URL por defecto si no se encuentra
+                menuDto.Url = "#";
                 menuDto.Icono = "oi oi-question-mark";
                 break;
         }

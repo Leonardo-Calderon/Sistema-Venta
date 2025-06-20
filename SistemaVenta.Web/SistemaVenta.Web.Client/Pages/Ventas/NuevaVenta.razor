@@ -1,0 +1,264 @@
+﻿@page "/ventas/nueva"
+@using Microsoft.AspNetCore.Authorization
+@using System.Security.Claims
+@using Shared.DTOs
+@using SistemaVenta.Web.Client.Services.Interfaces
+@inject IProductoService productoService
+@inject IVentaService ventaService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+
+@attribute [Authorize]
+
+<div class="card">
+    <div class="card-header">
+        <h5>Nueva Venta</h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-sm-8">
+                <div class="row align-items-end mb-3">
+                    <div class="col-sm-12">
+                        <label class="form-label">Código de Producto:</label>
+                        <div class="input-group">
+                            <input @bind="codigoProducto" @bind:event="oninput" @onkeydown="OnCodigoProductoKeyDown" class="form-control" placeholder="Ingrese el código y presione Enter" />
+                            <button @onclick="() => AgregarProducto(codigoProducto)" class="btn btn-primary">
+                                <i class="oi oi-plus"></i> Agregar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-striped table-bordered mt-3">
+                        <thead>
+                            <tr>
+                                <th>Producto</th>
+                                <th>Precio</th>
+                                <th>Cantidad</th>
+                                <th>Total</th>
+                                <th>Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in detalleVenta)
+                            {
+                                <tr>
+                                    <td>@item.DescripcionProducto</td>
+                                    <td>@item.Precio.ToString("N2")</td>
+                                    <td>@item.Cantidad</td>
+                                    <td>@item.Total.ToString("N2")</td>
+                                    <td>
+                                        <button class="btn btn-danger btn-sm" @onclick="() => EliminarProducto(item.IdProducto)">
+                                            <i class="oi oi-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="col-sm-4">
+                <div class="card shadow">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Resumen de Venta</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Nombre Cliente:</label>
+                            <input @bind="nombreCliente" class="form-control" />
+                        </div>
+
+                        <h4 class="mb-3 fw-bold text-end">Total: $@total.ToString("N2")</h4>
+
+                        <div class="mb-3">
+                            <label class="form-label">Paga con:</label>
+                            <input type="number" step="any" class="form-control" @bind="pagoCon" @bind:event="oninput" @onkeyup="CalcularCambio" />
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Cambio:</label>
+                            <input type="text" class="form-control" @bind="cambio" readonly />
+                        </div>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-success btn-lg" @onclick="RegistrarVenta" disabled="@(detalleVenta.Count == 0 || IsLoading)">
+                                @if (IsLoading)
+                                {
+                                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                    <span> Registrando...</span>
+                                }
+                                else
+                                {
+                                    <i class="oi oi-tag"></i>
+                                    <span> Registrar Venta</span>
+                                }
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private string codigoProducto = string.Empty;
+    private string nombreCliente = "Consumidor Final";
+    private List<DetalleVentaDTO> detalleVenta = new();
+    private decimal total = 0;
+    private decimal pagoCon;
+    private string cambio = "0.00";
+    private int idUsuario;
+    private bool IsLoading = false;
+
+    [CascadingParameter]
+    private Task<AuthenticationState> authenticationStateTask { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await authenticationStateTask;
+        var user = authState.User;
+        if (user.Identity.IsAuthenticated)
+        {
+            var claimId = user.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier);
+            if (claimId != null && int.TryParse(claimId.Value, out int parsedId))
+            {
+                idUsuario = parsedId;
+            }
+        }
+    }
+
+    private async Task OnCodigoProductoKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await AgregarProducto(codigoProducto);
+        }
+    }
+
+    private async Task AgregarProducto(string codigo)
+    {
+        if (string.IsNullOrWhiteSpace(codigo)) return;
+
+        var producto = await productoService.ObtenerPorCodigo(codigo);
+        if (producto == null || producto.IdProducto == 0)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "El producto no existe o no tiene stock.");
+            codigoProducto = string.Empty;
+            return;
+        }
+
+        var cantidadStr = await JSRuntime.InvokeAsync<string>("prompt", $"Ingrese la cantidad para {producto.Descripcion}:", "1");
+        if (!string.IsNullOrEmpty(cantidadStr) && int.TryParse(cantidadStr, out int cantidad) && cantidad > 0)
+        {
+            if (cantidad > producto.Cantidad)
+            {
+                await JSRuntime.InvokeVoidAsync("alert", "No hay suficiente cantidad en stock.");
+                return;
+            }
+
+            var itemExistente = detalleVenta.FirstOrDefault(d => d.IdProducto == producto.IdProducto);
+
+            if (itemExistente == null)
+            {
+                detalleVenta.Add(new DetalleVentaDTO
+                    {
+                        IdProducto = producto.IdProducto,
+                        DescripcionProducto = producto.Descripcion,
+                        Cantidad = cantidad,
+                        Precio = producto.PrecioVenta,
+                        Total = cantidad * producto.PrecioVenta
+                    });
+            }
+            else
+            {
+                if (itemExistente.Cantidad + cantidad > producto.Cantidad)
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "No hay suficiente cantidad en stock.");
+                    return;
+                }
+                itemExistente.Cantidad += cantidad;
+                itemExistente.Total = itemExistente.Cantidad * itemExistente.Precio;
+            }
+
+            ActualizarTotal();
+        }
+        codigoProducto = string.Empty;
+        StateHasChanged();
+    }
+
+    private void EliminarProducto(int idProducto)
+    {
+        var item = detalleVenta.FirstOrDefault(d => d.IdProducto == idProducto);
+        if (item != null)
+        {
+            detalleVenta.Remove(item);
+            ActualizarTotal();
+        }
+    }
+
+    private void ActualizarTotal()
+    {
+        total = detalleVenta.Sum(d => d.Total);
+        CalcularCambio();
+    }
+
+    private void CalcularCambio()
+    {
+        if (pagoCon >= total)
+        {
+            cambio = (pagoCon - total).ToString("N2");
+        }
+        else
+        {
+            cambio = "0.00";
+        }
+    }
+
+    private async Task RegistrarVenta()
+    {
+        if (detalleVenta.Count == 0)
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "No hay productos en la venta.");
+            return;
+        }
+
+        IsLoading = true;
+
+        var venta = new VentaDTO
+            {
+                IdUsuarioRegistro = idUsuario,
+                NombreCliente = nombreCliente,
+                PrecioTotal = total,
+                PagoCon = pagoCon,
+                Cambio = decimal.TryParse(cambio, out var c) ? c : 0,
+                DetalleVenta = detalleVenta
+            };
+
+        var numeroVenta = await ventaService.Registrar(venta);
+        IsLoading = false;
+
+        if (!string.IsNullOrEmpty(numeroVenta))
+        {
+            var confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Venta registrada con éxito. Número: {numeroVenta}. ¿Desea ver el detalle de la venta?");
+            if (confirm)
+            {
+                NavigationManager.NavigateTo($"/ventas/detalle/{numeroVenta}", forceLoad: true);
+            }
+            else
+            {
+                // Limpiar formulario para nueva venta
+                detalleVenta.Clear();
+                nombreCliente = "Consumidor Final";
+                pagoCon = 0;
+                ActualizarTotal();
+                StateHasChanged();
+            }
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("alert", "Error al registrar la venta.");
+        }
+    }
+}

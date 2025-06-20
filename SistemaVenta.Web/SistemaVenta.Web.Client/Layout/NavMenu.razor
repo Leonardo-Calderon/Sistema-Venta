@@ -1,6 +1,13 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Shared.DTOs
+@implements IDisposable
+
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IServiceProvider ServiceProvider
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
-        <a class="navbar-brand" href="">SistemaVenta.Web</a>
+        <a class="navbar-brand" href="">Sistema de Venta</a>
     </div>
 </div>
 
@@ -9,22 +16,95 @@
 <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
     <nav class="flex-column">
         <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+            <NavLink class="nav-link" href="inicio" Match="NavLinkMatch.All">
+                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Inicio
             </NavLink>
         </div>
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
+        @if (menus is not null)
+        {
+            @foreach (var menu in menus)
+            {
+                if (menu.SubMenus is not null && menu.SubMenus.Any())
+                {
+                    <div class="nav-heading px-3 mt-4 mb-1 text-muted">
+                        <span>@menu.Nombre</span>
+                    </div>
+                    @foreach (var subMenu in menu.SubMenus)
+                    {
+                        <div class="nav-item px-3">
+                            <NavLink class="nav-link" href="@subMenu.Url">
+                                <span class="bi @(subMenu.Icono ?? "bi-file-earmark")-nav-menu" aria-hidden="true"></span> @subMenu.Nombre
+                            </NavLink>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="nav-item px-3">
+                        <NavLink class="nav-link" href="@menu.Url">
+                            <span class="bi @(menu.Icono ?? "bi-file-earmark")-nav-menu" aria-hidden="true"></span> @menu.Nombre
+                        </NavLink>
+                    </div>
+                }
+            }
+        }
     </nav>
 </div>
 
+@code {
+    private List<MenuDTO>? menus;
+    private HttpClient? Http;
+
+    protected override void OnInitialized()
+    {
+        AuthStateProvider.AuthenticationStateChanged += HandleAuthenticationStateChanged;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            Http = ServiceProvider.GetRequiredService<HttpClient>();
+
+            await LoadMenusForUser();
+        }
+    }
+
+    private async Task LoadMenusForUser()
+    {
+        if (Http is null) return;
+
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity is not null && user.Identity.IsAuthenticated)
+        {
+            try
+            {
+                menus = await Http.GetFromJsonAsync<List<MenuDTO>>("api/menus");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al cargar menús: {ex.Message}");
+                menus = new List<MenuDTO>();
+            }
+        }
+        else
+        {
+            menus = null;
+        }
+
+        StateHasChanged();
+    }
+
+    private async void HandleAuthenticationStateChanged(Task<AuthenticationState> task)
+    {
+        await LoadMenusForUser();
+    }
+
+    public void Dispose()
+    {
+        AuthStateProvider.AuthenticationStateChanged -= HandleAuthenticationStateChanged;
+    }
+}

@@ -1,0 +1,213 @@
+﻿@page "/ventas/detalle/{NumeroVenta}"
+@using Microsoft.AspNetCore.Authorization
+@using Shared.DTOs
+@using SistemaVenta.Web.Client.Services.Interfaces
+
+@* Se inyecta el servicio para interactuar con JavaScript. Se usa el alias "JS" por convención. *@
+@inject IJSRuntime JS
+@inject HttpClient Http
+@inject IVentaService ventaService
+
+
+@* El componente implementa IAsyncDisposable para poder liberar los recursos del módulo de JS cuando ya no se necesite. *@
+@implements IAsyncDisposable
+@attribute [Authorize]
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5>Detalle de Venta</h5>
+        <button class="btn btn-primary" @onclick="Imprimir" disabled="@estaDescargando">
+            @if (estaDescargando)
+            {
+                <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                <span class="ms-2">Generando...</span>
+            }
+            else
+            {
+                <i class="oi oi-print"></i>
+                <span>Descargar PDF</span>
+            }
+        </button>
+    </div>
+    <div class="card-body">
+        @if (venta == null || detalleVenta == null)
+        {
+            <div class="d-flex justify-content-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Cargando...</span>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row mb-3">
+                <div class="col-sm-6">
+                    <p><strong>Número de Venta:</strong> @venta.NumeroVenta</p>
+                    <p><strong>Cliente:</strong> @venta.NombreCliente</p>
+                </div>
+                <div class="col-sm-6 text-sm-end">
+                    <p><strong>Fecha de Registro:</strong> @venta.FechaRegistro</p>
+                    <p><strong>Vendido por:</strong> @venta.NombreCliente</p>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-striped table-bordered">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Producto</th>
+                            <th>Cantidad</th>
+                            <th>Precio Venta</th>
+                            <th>Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in detalleVenta)
+                        {
+                            <tr>
+                                <td>@item.DescripcionProducto</td>
+                                <td>@item.Cantidad</td>
+                                <td>$@item.Precio.ToString("N2")</td>
+                                <td>$@item.Total.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="row justify-content-end mt-3">
+                <div class="col-sm-4 col-md-3">
+                    <ul class="list-group">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Total:</strong>
+                            <span class="badge bg-primary rounded-pill fs-6">$@venta.PrecioTotal.ToString("N2")</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Pagó con:</strong>
+                            <span>$@venta.PagoCon.ToString("N2")</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            <strong>Cambio:</strong>
+                            <span>$@venta.Cambio.ToString("N2")</span>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+@code {
+    /// <summary>
+    /// Parámetro que recibe el número de la venta desde la URL.
+    /// </summary>
+    [Parameter]
+    public string NumeroVenta { get; set; }
+
+    private VentaDTO venta;
+    private List<DetalleVentaDTO> detalleVenta;
+    private bool estaDescargando = false;
+
+    /// <summary>
+    /// Referencia al módulo de JavaScript ('util.js') que contiene la función 'saveAsFile'.
+    /// Esta referencia se obtiene de forma asíncrona.
+    /// </summary>
+    private IJSObjectReference? module;
+
+    /// <summary>
+    /// Método del ciclo de vida de Blazor que se ejecuta cuando el componente se ha inicializado.
+    /// Carga los datos de la venta y su detalle.
+    /// </summary>
+    protected override async Task OnInitializedAsync()
+    {
+        if (!string.IsNullOrEmpty(NumeroVenta))
+        {
+            var ventaTask = ventaService.Obtener(NumeroVenta);
+            var detalleTask = ventaService.Detalle(NumeroVenta);
+
+            // Espera a que ambas tareas asíncronas terminen.
+            await Task.WhenAll(ventaTask, detalleTask);
+
+            venta = ventaTask.Result;
+            detalleVenta = detalleTask.Result;
+        }
+    }
+
+    /// <summary>
+    /// Método del ciclo de vida de Blazor que se ejecuta después de que el componente se ha renderizado.
+    /// Es el lugar ideal para realizar interoperabilidad con JavaScript.
+    /// </summary>
+    /// <param name="firstRender">True si es la primera vez que el componente se renderiza.</param>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Se asegura de que el módulo JS se cargue solo una vez, en la primera renderización.
+        if (firstRender)
+        {
+            // 'import' es la función estándar de JS para cargar módulos.
+            // La ruta './js/util.js' es relativa a la carpeta wwwroot.
+            module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/util.js");
+        }
+    }
+
+    /// <summary>
+    /// Se ejecuta al hacer clic en el botón "Descargar PDF".
+    /// Llama a la API para generar el PDF y luego invoca la función JS para descargarlo.
+    /// </summary>
+    private async Task Imprimir()
+    {
+        // Verifica si el módulo de JS fue cargado correctamente antes de continuar.
+        if (module is null)
+        {
+            // Puedes manejar este error como prefieras (ej. mostrar una alerta).
+            Console.WriteLine("Error: El módulo de JavaScript para descargas no está disponible.");
+            return;
+        }
+
+        estaDescargando = true;
+        // StateHasChanged() notifica a Blazor que el estado ha cambiado para que redibuje la UI (mostrar el spinner).
+        StateHasChanged();
+
+        try
+        {
+            var response = await Http.GetAsync($"api/Ventas/GenerarPDF/{NumeroVenta}");
+            if (response.IsSuccessStatusCode)
+            {
+                var pdfBytes = await response.Content.ReadAsByteArrayAsync();
+                var base64String = Convert.ToBase64String(pdfBytes);
+
+                // Invoca la función 'saveAsFile' desde el módulo JS que ya tenemos cargado.
+                await module.InvokeVoidAsync("saveAsFile", $"Boleta_{NumeroVenta}.pdf", base64String);
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                // Utiliza el módulo para mostrar una alerta. También podrías usar un componente de modal para un mejor UX.
+                await module.InvokeVoidAsync("alert", $"Error al generar el PDF: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Ocurrió un error inesperado: {ex.Message}");
+            await module.InvokeVoidAsync("alert", $"Ocurrió un error inesperado: {ex.Message}");
+        }
+        finally
+        {
+            estaDescargando = false;
+            // Notifica nuevamente a Blazor para que oculte el spinner y reactive el botón.
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Método de la interfaz IAsyncDisposable. Se llama automáticamente cuando el componente
+    /// va a ser eliminado del DOM.
+    /// Libera la referencia al módulo de JavaScript para evitar fugas de memoria.
+    /// </summary>
+    public async ValueTask DisposeAsync()
+    {
+        if (module is not null)
+        {
+            await module.DisposeAsync();
+        }
+    }
+}

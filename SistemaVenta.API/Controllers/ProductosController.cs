@@ -1,14 +1,12 @@
-﻿// En: SistemaVenta.API/Controllers/ProductosController.cs
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Shared.DTOs;
+using Shared.DTOs; 
 using SVRepository.Entities;
 using SVServices.Interfaces;
-using System.Threading.Tasks;
 
 [ApiController]
 [Route("api/[controller]")]
-[Authorize]
+[Authorize] // Autorización a nivel de controlador
 public class ProductosController : ControllerBase
 {
     private readonly IProductoService _productoService;
@@ -18,158 +16,112 @@ public class ProductosController : ControllerBase
         _productoService = productoService;
     }
 
-    // GET: api/productos?buscar=texto
     [HttpGet]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Lista(string buscar = "")
     {
-        try
+        var listaEntidades = await _productoService.Lista(buscar);
+
+        // El mapeo aquí es correcto.
+        var listaDto = listaEntidades.Select(p => new ProductoDTO
         {
-            var listaEntidades = await _productoService.Lista(buscar);
+            IdProducto = p.IdProducto,
+            Codigo = p.Codigo,
+            Descripcion = p.Descripcion,
+            IdCategoria = p.RefCategoria.IdCategoria,
+            DescripcionCategoria = p.RefCategoria.Nombre,
+            PrecioCompra = p.PrecioCompra,
+            PrecioVenta = p.PrecioVenta,
+            Cantidad = p.Cantidad,
+            Activo = p.Activo == 1
+        }).ToList();
 
-            if (listaEntidades == null || !listaEntidades.Any())
-                return Ok(new List<ProductoDTO>());
-
-            var listaDto = listaEntidades.Select(p => new ProductoDTO
-            {
-                IdProducto = p.IdProducto,
-                Codigo = p.Codigo,
-                Descripcion = p.Descripcion,
-                IdCategoria = p.RefCategoria.IdCategoria,
-                DescripcionCategoria = p.RefCategoria.Nombre,
-                PrecioCompra = p.PrecioCompra,
-                PrecioVenta = p.PrecioVenta,
-                Cantidad = p.Cantidad,
-                Activo = p.Activo == 1
-            }).ToList();
-
-            return Ok(listaDto);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Error interno del servidor: {ex.Message}");
-        }
+        return Ok(listaDto);
     }
 
-    // GET: api/productos/codigo/{codigo}
-    [HttpGet("codigo/{codigo}")]
+    // --- NUEVO ENDPOINT AÑADIDO ---
+    // Este endpoint es crucial y ya existía la lógica en tu repositorio.
+    // Permite buscar un producto para, por ejemplo, agregarlo a una venta.
+    [HttpGet("ObtenerPorCodigo/{codigo}")]
+    [AllowAnonymous] // Se permite el acceso anónimo para la búsqueda de productos en la venta
     public async Task<IActionResult> ObtenerPorCodigo(string codigo)
     {
-        try
+        var p = await _productoService.Obtener(codigo);
+        if (p.IdProducto == 0)
         {
-            var entidad = await _productoService.Obtener(codigo);
-            if (entidad == null || entidad.IdProducto == 0)
-            {
-                return NotFound($"No se encontró un producto con el código '{codigo}'.");
-            }
-
-            var dto = new ProductoDTO
-            {
-                IdProducto = entidad.IdProducto,
-                Codigo = entidad.Codigo,
-                Descripcion = entidad.Descripcion,
-                // Nota: El SP sp_obtenerProducto debe devolver estos campos para que no sean nulos
-                IdCategoria = entidad.RefCategoria?.IdCategoria ?? 0,
-                DescripcionCategoria = entidad.RefCategoria?.Nombre,
-                PrecioCompra = entidad.PrecioCompra,
-                PrecioVenta = entidad.PrecioVenta,
-                Cantidad = entidad.Cantidad,
-                Activo = entidad.Activo == 1
-            };
-
-            return Ok(dto);
+            return NotFound("Producto no encontrado.");
         }
-        catch (Exception ex)
+
+        var dto = new ProductoDTO
         {
-            return StatusCode(500, $"Error interno del servidor: {ex.Message}");
-        }
+            IdProducto = p.IdProducto,
+            Codigo = p.Codigo,
+            Descripcion = p.Descripcion,
+            IdCategoria = p.RefCategoria.IdCategoria,
+            DescripcionCategoria = p.RefCategoria.Nombre,
+            PrecioCompra = p.PrecioCompra,
+            PrecioVenta = p.PrecioVenta,
+            Cantidad = p.Cantidad,
+            Activo = p.Activo == 1
+        };
+
+        return Ok(dto);
     }
 
-
-    // POST: api/productos
     [HttpPost]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Crear([FromBody] ProductoDTO dto)
     {
-        if (dto == null) return BadRequest("Datos de producto inválidos.");
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-        try
+        // Mapeo corregido para incluir todos los campos necesarios.
+        var entidad = new Producto
         {
-            var entidad = new Producto
-            {
-                Codigo = dto.Codigo,
-                Descripcion = dto.Descripcion,
-                PrecioCompra = dto.PrecioCompra,
-                PrecioVenta = dto.PrecioVenta,
-                Cantidad = dto.Cantidad,
-                RefCategoria = new Categoria { IdCategoria = dto.IdCategoria }
-            };
+            Codigo = dto.Codigo,
+            Descripcion = dto.Descripcion,
+            PrecioCompra = dto.PrecioCompra,
+            PrecioVenta = dto.PrecioVenta,
+            Cantidad = dto.Cantidad,
+            Activo = dto.Activo ? 1 : 0, // Se añade la conversión de bool a int
+            RefCategoria = new Categoria { IdCategoria = dto.IdCategoria }
+        };
 
-            var resultadoSp = await _productoService.Crear(entidad);
-            if (!string.IsNullOrEmpty(resultadoSp))
-            {
-                return BadRequest(resultadoSp);
-            }
-
-            return Ok("Producto creado con éxito.");
-        }
-        catch (Exception ex)
+        var resultadoSp = await _productoService.Crear(entidad);
+        if (!string.IsNullOrEmpty(resultadoSp))
         {
-            return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            return BadRequest(resultadoSp);
         }
+
+        return Ok();
     }
 
-    // PUT: api/productos
     [HttpPut]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Editar([FromBody] ProductoDTO dto)
     {
-        if (dto == null || dto.IdProducto == 0) return BadRequest("Datos de producto inválidos.");
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
 
-        try
+        // El mapeo aquí ya era correcto y se mantiene.
+        var entidad = new Producto
         {
-            var entidad = new Producto
-            {
-                IdProducto = dto.IdProducto,
-                Codigo = dto.Codigo,
-                Descripcion = dto.Descripcion,
-                PrecioCompra = dto.PrecioCompra,
-                PrecioVenta = dto.PrecioVenta,
-                Cantidad = dto.Cantidad,
-                Activo = dto.Activo ? 1 : 0,
-                RefCategoria = new Categoria { IdCategoria = dto.IdCategoria }
-            };
+            IdProducto = dto.IdProducto,
+            Codigo = dto.Codigo,
+            Descripcion = dto.Descripcion,
+            PrecioCompra = dto.PrecioCompra,
+            PrecioVenta = dto.PrecioVenta,
+            Cantidad = dto.Cantidad,
+            Activo = dto.Activo ? 1 : 0,
+            RefCategoria = new Categoria { IdCategoria = dto.IdCategoria }
+        };
 
-            var resultadoSp = await _productoService.Editar(entidad);
-            if (!string.IsNullOrEmpty(resultadoSp))
-            {
-                return BadRequest(resultadoSp);
-            }
-
-            return Ok("Producto actualizado con éxito.");
-        }
-        catch (Exception ex)
+        var resultadoSp = await _productoService.Editar(entidad);
+        if (!string.IsNullOrEmpty(resultadoSp))
         {
-            return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            return BadRequest(resultadoSp);
         }
-    }
 
-    // DELETE: api/productos/5
-    [HttpDelete("{id:int}")]
-    public async Task<IActionResult> Eliminar(int id)
-    {
-        // NOTA IMPORTANTE: Este método no existe en tu repositorio/servicio.
-        // Debes añadirlo para que este endpoint funcione.
-        try
-        {
-            // var resultado = await _productoService.Eliminar(id);
-            // if(!resultado) return BadRequest("No se pudo eliminar el producto.");
-
-            // return Ok("Producto eliminado con éxito.");
-
-            // Por ahora, devolvemos un "No Implementado"
-            return StatusCode(501, "La funcionalidad de eliminar no está implementada en el servicio.");
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Error interno del servidor: {ex.Message}");
-        }
+        return Ok();
     }
 }

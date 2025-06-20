@@ -1,0 +1,291 @@
+﻿@page "/productos"
+@rendermode @(new InteractiveWebAssemblyRenderMode(prerender: false))
+
+@using Microsoft.AspNetCore.Authorization
+@using Shared.DTOs
+@using SistemaVenta.Web.Client.Services.Interfaces
+
+@inject IProductoService ProductoService
+@inject ICategoriaService CategoriaService
+
+<PageTitle>Gestión de Productos</PageTitle>
+
+<AuthorizeView Roles="Administrador">
+    <Authorized Context="authContext">
+        @*<-- CORRECCIÓN APLICADA AQUÍ *@
+        <h1>Gestión de Productos</h1>
+        <p>Administra los productos del inventario.</p>
+
+        @if (currentView == "List")
+        {
+            <div class="card shadow">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Lista de Productos</span>
+                        <button class="btn btn-success" @onclick="ShowCreateForm">
+                            <i class="bi bi-plus-circle-fill me-1"></i> Nuevo Producto
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <input @bind="searchTerm" class="form-control" placeholder="Buscar por código, descripción, categoría..." @onkeyup="HandleSearch" />
+                                <button class="btn btn-outline-secondary" @onclick="() => LoadProducts(searchTerm)">
+                                    <i class="bi bi-search"></i> Buscar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (productList == null)
+                    {
+                        <div class="d-flex justify-content-center my-3">
+                            <div class="spinner-border" role="status"><span class="visually-hidden">Cargando...</span></div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Descripción</th>
+                                        <th>Categoría</th>
+                                        <th>Stock</th>
+                                        <th>Precio Venta</th>
+                                        <th>Habilitado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var prod in productList)
+                                    {
+                                        <tr>
+                                            <td>@prod.Codigo</td>
+                                            <td>@prod.Descripcion</td>
+                                            <td>@prod.DescripcionCategoria</td>
+                                            <td>@prod.Cantidad</td>
+                                            <td>@prod.PrecioVenta.ToString("C")</td>
+                                            <td>@(prod.Activo ? "Sí" : "No")</td>
+                                            <td>
+                                                <button class="btn btn-sm btn-primary" @onclick="() => ShowEditForm(prod.IdProducto)">
+                                                    <i class="bi bi-pencil-square"></i> Editar
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+        else if (currentView == "Create" || currentView == "Edit")
+        {
+            <div class="card shadow">
+                <div class="card-header"><h3>@(currentView == "Create" ? "Nuevo Producto" : "Editar Producto")</h3></div>
+                <div class="card-body">
+                    <EditForm Model="productModel" OnValidSubmit="HandleSubmit">
+                        <DataAnnotationsValidator />
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Código</label>
+                                <InputText class="form-control" @bind-Value="productModel.Codigo" />
+                                <ValidationMessage For="() => productModel.Codigo" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Descripción</label>
+                                <InputText class="form-control" @bind-Value="productModel.Descripcion" />
+                                <ValidationMessage For="() => productModel.Descripcion" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Categoría</label>
+                                <InputSelect class="form-select" @bind-Value="productModel.IdCategoria">
+                                    <option value="0">-- Seleccione una Categoría --</option>
+                                    @if (categoryList != null)
+                                    {
+                                        @foreach (var cat in categoryList)
+                                        {
+                                            <option value="@cat.IdCategoria">@cat.Nombre</option>
+                                        }
+                                    }
+                                </InputSelect>
+                                <ValidationMessage For="() => productModel.IdCategoria" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Stock (Cantidad)</label>
+                                <InputNumber class="form-control" @bind-Value="productModel.Cantidad" />
+                                <ValidationMessage For="() => productModel.Cantidad" />
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Precio Compra</label>
+                                <InputNumber class="form-control" @bind-Value="productModel.PrecioCompra" />
+                                <ValidationMessage For="() => productModel.PrecioCompra" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Precio Venta</label>
+                                <InputNumber class="form-control" @bind-Value="productModel.PrecioVenta" />
+                                <ValidationMessage For="() => productModel.PrecioVenta" />
+                            </div>
+                        </div>
+
+                        @if (currentView == "Edit")
+                        {
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label class="form-label">Habilitado</label>
+                                    <InputSelect class="form-select" @bind-Value="productModel.Activo">
+                                        <option value="true">Sí</option>
+                                        <option value="false">No</option>
+                                    </InputSelect>
+                                </div>
+                            </div>
+                        }
+
+                        @if (!string.IsNullOrEmpty(errorMessage))
+                        {
+                            <div class="alert alert-danger mt-3">@errorMessage</div>
+                        }
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <button type="button" class="btn btn-secondary" @onclick="SwitchToList"><i class="bi bi-arrow-left-circle"></i> Volver</button>
+                            <button type="submit" class="btn btn-primary"><i class="bi bi-save"></i> Guardar</button>
+                        </div>
+                    </EditForm>
+                </div>
+            </div>
+        }
+    </Authorized>
+    <NotAuthorized>
+        <div class="alert alert-danger text-center">
+            <h4 class="alert-heading">Acceso Denegado</h4>
+            <p>No tienes los permisos de Administrador necesarios para ver este recurso.</p>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
+
+
+@code {
+    private string currentView = "List";
+    private List<ProductoDTO>? productList;
+    private List<CategoriaDTO>? categoryList;
+    private string searchTerm = "";
+    private ProductoDTO productModel = new();
+    private string? errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadCategories();
+        await LoadProducts();
+    }
+
+    private async Task LoadProducts(string search = "")
+    {
+        productList = null;
+        StateHasChanged();
+        try
+        {
+            productList = await ProductoService.Listar(search);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al cargar productos: {ex.Message}";
+        }
+        StateHasChanged();
+    }
+
+    private async Task LoadCategories()
+    {
+        try
+        {
+            categoryList = await CategoriaService.Lista("");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error al cargar categorías: {ex.Message}";
+        }
+    }
+
+    private async Task HandleSearch(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await LoadProducts(searchTerm);
+        }
+    }
+
+    private void ShowCreateForm()
+    {
+        productModel = new ProductoDTO { Activo = true };
+        errorMessage = null;
+        currentView = "Create";
+    }
+
+    private void ShowEditForm(int id)
+    {
+        var product = productList?.FirstOrDefault(p => p.IdProducto == id);
+        if (product != null)
+        {
+            productModel = new ProductoDTO
+                {
+                    IdProducto = product.IdProducto,
+                    Codigo = product.Codigo,
+                    Descripcion = product.Descripcion,
+                    IdCategoria = product.IdCategoria,
+                    Cantidad = product.Cantidad,
+                    PrecioCompra = product.PrecioCompra,
+                    PrecioVenta = product.PrecioVenta,
+                    Activo = product.Activo
+                };
+            errorMessage = null;
+            currentView = "Edit";
+        }
+    }
+
+    private void SwitchToList()
+    {
+        errorMessage = null;
+        currentView = "List";
+    }
+
+    private async Task HandleSubmit()
+    {
+        errorMessage = null;
+        HttpResponseMessage response;
+        if (productModel.PrecioCompra > productModel.PrecioVenta)
+        {
+            errorMessage = "El precio de compra no puede ser mayor al precio de venta.";
+            return;
+        }
+
+        if (productModel.IdProducto == 0)
+        {
+            response = await ProductoService.Crear(productModel);
+        }
+        else
+        {
+            response = await ProductoService.Editar(productModel);
+        }
+
+        if (response.IsSuccessStatusCode)
+        {
+            await LoadProducts();
+            SwitchToList();
+        }
+        else
+        {
+            errorMessage = await response.Content.ReadAsStringAsync();
+        }
+    }
+}
