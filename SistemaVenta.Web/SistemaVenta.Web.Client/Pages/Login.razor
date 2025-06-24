@@ -67,17 +67,13 @@
 
         try
         {
-            // El AuthService corregido lanzará una excepción en caso de error.
-            // Si esta línea se completa sin errores, el login fue exitoso.
             await authService.Login(loginModel);
 
-            // Redirigimos a la página de inicio.
-            // forceLoad: true es CRUCIAL para que el estado de autenticación se actualice en toda la app.
             navigationManager.NavigateTo("/inicio", forceLoad: true);
         }
         catch (HttpRequestException httpEx)
         {
-            // Capturamos errores específicos de la API (400, 401, etc.)
+
             if (httpEx.StatusCode == HttpStatusCode.BadRequest || httpEx.StatusCode == HttpStatusCode.Unauthorized)
             {
                 errorMessage = "Usuario o contraseña incorrectos.";
@@ -89,7 +85,6 @@
         }
         catch (Exception ex)
         {
-            // Capturamos cualquier otro error inesperado (ej. red caída)
             errorMessage = $"Ha ocurrido un error inesperado: {ex.Message}";
         }
         finally

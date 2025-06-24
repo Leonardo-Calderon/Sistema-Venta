@@ -19,8 +19,6 @@ namespace SistemaVenta.Web.Client.Services.Implementations
             var result = await _httpClient.GetFromJsonAsync<List<ProductoDTO>>($"api/productos?buscar={buscar}");
             return result ?? new List<ProductoDTO>();
         }
-
-        // --- IMPLEMENTACIÓN AÑADIDA ---
         public async Task<ProductoDTO> ObtenerPorCodigo(string codigo)
         {
             var response = await _httpClient.GetAsync($"api/productos/ObtenerPorCodigo/{codigo}");
@@ -29,8 +27,6 @@ namespace SistemaVenta.Web.Client.Services.Implementations
                 // Si el producto no se encuentra, devolvemos un DTO vacío para evitar errores.
                 return new ProductoDTO { IdProducto = 0 };
             }
-
-            // Si se encuentra, lo deserializamos y lo devolvemos.
             return await response.Content.ReadFromJsonAsync<ProductoDTO>();
         }
 

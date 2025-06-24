@@ -3,13 +3,10 @@
 @using Shared.DTOs
 @using SistemaVenta.Web.Client.Services.Interfaces
 
-@* Se inyecta el servicio para interactuar con JavaScript. Se usa el alias "JS" por convención. *@
 @inject IJSRuntime JS
 @inject HttpClient Http
 @inject IVentaService ventaService
 
-
-@* El componente implementa IAsyncDisposable para poder liberar los recursos del módulo de JS cuando ya no se necesite. *@
 @implements IAsyncDisposable
 @attribute [Authorize]
 
@@ -125,7 +122,6 @@
             var ventaTask = ventaService.Obtener(NumeroVenta);
             var detalleTask = ventaService.Detalle(NumeroVenta);
 
-            // Espera a que ambas tareas asíncronas terminen.
             await Task.WhenAll(ventaTask, detalleTask);
 
             venta = ventaTask.Result;
@@ -140,11 +136,8 @@
     /// <param name="firstRender">True si es la primera vez que el componente se renderiza.</param>
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Se asegura de que el módulo JS se cargue solo una vez, en la primera renderización.
         if (firstRender)
         {
-            // 'import' es la función estándar de JS para cargar módulos.
-            // La ruta './js/util.js' es relativa a la carpeta wwwroot.
             module = await JS.InvokeAsync<IJSObjectReference>("import", "./js/util.js");
         }
     }
@@ -155,16 +148,13 @@
     /// </summary>
     private async Task Imprimir()
     {
-        // Verifica si el módulo de JS fue cargado correctamente antes de continuar.
         if (module is null)
         {
-            // Puedes manejar este error como prefieras (ej. mostrar una alerta).
             Console.WriteLine("Error: El módulo de JavaScript para descargas no está disponible.");
             return;
         }
 
         estaDescargando = true;
-        // StateHasChanged() notifica a Blazor que el estado ha cambiado para que redibuje la UI (mostrar el spinner).
         StateHasChanged();
 
         try
@@ -175,13 +165,11 @@
                 var pdfBytes = await response.Content.ReadAsByteArrayAsync();
                 var base64String = Convert.ToBase64String(pdfBytes);
 
-                // Invoca la función 'saveAsFile' desde el módulo JS que ya tenemos cargado.
                 await module.InvokeVoidAsync("saveAsFile", $"Boleta_{NumeroVenta}.pdf", base64String);
             }
             else
             {
                 var error = await response.Content.ReadAsStringAsync();
-                // Utiliza el módulo para mostrar una alerta. También podrías usar un componente de modal para un mejor UX.
                 await module.InvokeVoidAsync("alert", $"Error al generar el PDF: {error}");
             }
         }
@@ -193,7 +181,6 @@
         finally
         {
             estaDescargando = false;
-            // Notifica nuevamente a Blazor para que oculte el spinner y reactive el botón.
             StateHasChanged();
         }
     }

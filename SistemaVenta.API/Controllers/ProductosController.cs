@@ -83,7 +83,7 @@ public class ProductosController : ControllerBase
             PrecioCompra = dto.PrecioCompra,
             PrecioVenta = dto.PrecioVenta,
             Cantidad = dto.Cantidad,
-            Activo = dto.Activo ? 1 : 0, // Se añade la conversión de bool a int
+            Activo = dto.Activo ? 1 : 0, 
             RefCategoria = new Categoria { IdCategoria = dto.IdCategoria }
         };
 

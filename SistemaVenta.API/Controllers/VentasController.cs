@@ -2,11 +2,9 @@
 using Shared.DTOs;
 using SVServices.Interfaces;
 using System.Xml.Linq;
-// Referencias que vamos a necesitar
 using SistemaVenta.API.Utilidades;
-using SVRepository.Entities; // Necesaria para llamar a tu método `Util`
-using System.IO;
-using System.Net.Http;
+using System.Data;
+using ClosedXML.Excel;
 
 namespace SistemaVenta.API.Controllers
 {
@@ -16,11 +14,13 @@ namespace SistemaVenta.API.Controllers
     {
         private readonly IVentaService _ventaService;
         private readonly INegocioService _negocioService;
+        private readonly IProductoService _productoService;
 
-        public VentasController(IVentaService ventaService, INegocioService negocioService)
+        public VentasController(IVentaService ventaService, INegocioService negocioService, IProductoService productoService)
         {
             _ventaService = ventaService;
             _negocioService = negocioService;
+            _productoService = productoService;
         }
 
         [HttpGet("GenerarPDF/{numeroVenta}")]
@@ -28,7 +28,6 @@ namespace SistemaVenta.API.Controllers
         {
             try
             {
-                // 1. Obtener las ENTIDADES originales, ya que tu método `Util` las necesita.
                 var negocioTask = _negocioService.Obtener();
                 var ventaTask = _ventaService.Obtener(numeroVenta);
                 var detalleTask = _ventaService.ObtenerDetalle(numeroVenta);
@@ -44,10 +43,8 @@ namespace SistemaVenta.API.Controllers
                     return NotFound($"Venta {numeroVenta} no encontrada.");
                 }
 
-                // Tu método de PDF necesita que la lista de detalles esté dentro del objeto Venta.
                 oVenta.RefDetalleVenta = oDetalleVenta;
 
-                // 2. Descargar la imagen del logo
                 MemoryStream imagenLogo = new MemoryStream();
                 using (var httpClient = new HttpClient())
                 {
@@ -55,14 +52,11 @@ namespace SistemaVenta.API.Controllers
                     {
                         var imageBytes = await httpClient.GetByteArrayAsync(oNegocio.URL);
                         await imagenLogo.WriteAsync(imageBytes, 0, imageBytes.Length);
-                        imagenLogo.Position = 0; // Reseteamos la posición del stream
+                        imagenLogo.Position = 0;
                     }
                 }
-
-                // 3. Llamar a TU método existente para generar el PDF
                 var pdfBytes = Util.GeneratePDFVenta(oNegocio, oVenta, imagenLogo);
 
-                // 4. Devolver el archivo
                 return File(pdfBytes, "application/pdf", $"Boleta_{numeroVenta}.pdf");
             }
             catch (Exception ex)
@@ -71,8 +65,6 @@ namespace SistemaVenta.API.Controllers
             }
         }
 
-        // --- MÉTODO AÑADIDO Y CORREGIDO ---
-        // Este es el endpoint que faltaba y que causa el error 404.
         [HttpGet("Obtener/{numeroVenta}")]
         public async Task<IActionResult> Obtener(string numeroVenta)
         {
@@ -83,8 +75,6 @@ namespace SistemaVenta.API.Controllers
                 {
                     return NotFound($"No se encontró la venta con el número: {numeroVenta}");
                 }
-
-                // Mapeamos la entidad al DTO para enviar solo los datos necesarios al cliente.
                 var dto = new VentaDTO
                 {
                     IdVenta = v.IdVenta,
@@ -94,7 +84,7 @@ namespace SistemaVenta.API.Controllers
                     PagoCon = v.PagoCon,
                     Cambio = v.Cambio,
                     FechaRegistro = v.FechaRegistro,
-                    NombreUsuario = v.UsuarioRegistrado?.NombreUsuario // Incluimos el nombre del usuario
+                    NombreUsuario = v.UsuarioRegistrado?.NombreUsuario
                 };
                 return Ok(dto);
             }
@@ -111,8 +101,6 @@ namespace SistemaVenta.API.Controllers
             {
                 var listaEntidades = await _ventaService.Lista(fechaInicio, fechaFin, buscar);
 
-                // --- MAPEO CORREGIDO ---
-                // Mapeamos la lista de entidades a una lista de DTOs.
                 var listaDto = listaEntidades.Select(v => new VentaDTO
                 {
                     NumeroVenta = v.NumeroVenta,
@@ -137,7 +125,6 @@ namespace SistemaVenta.API.Controllers
             {
                 var listaEntidad = await _ventaService.ObtenerDetalle(numeroVenta);
 
-                // Mapeamos a DTO para ser consistentes.
                 var listaDto = listaEntidad.Select(d => new DetalleVentaDTO
                 {
                     DescripcionProducto = d.RefProducto.Descripcion,
@@ -203,13 +190,99 @@ namespace SistemaVenta.API.Controllers
         {
             try
             {
-                var reporte = await _ventaService.Reporte(fechaInicio, fechaFin);
-                return Ok(reporte); // Considera mapear esto a un DTO también si es necesario.
+                var listaEntidad = await _ventaService.Reporte(fechaInicio, fechaFin);
+
+                if (listaEntidad == null)
+                {
+                    return Ok(new List<ReporteVentaDTO>());
+                }
+
+                var listaDto = listaEntidad.Select(d => new ReporteVentaDTO
+                {
+                    NumeroVenta = d.RefVenta.NumeroVenta,
+                    NombreUsuario = d.RefVenta.UsuarioRegistrado.NombreUsuario,
+                    FechaRegistro = d.RefVenta.FechaRegistro,
+                    Producto = d.RefProducto.Descripcion,
+                    PrecioCompra = d.RefProducto.PrecioCompra,
+                    PrecioVenta = d.PrecioVenta,
+                    Cantidad = d.Cantidad,
+                    PrecioTotal = d.PrecioTotal
+                }).ToList();
+
+                // Devolvemos la lista directamente, como en tus otros métodos.
+                return Ok(listaDto);
+            }
+            catch (Exception ex)
+            {
+                // Devolvemos un error 500 con el mensaje.
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+        [HttpPost("GenerarReporteExcel")]
+        public IActionResult GenerarReporteExcel([FromBody] List<ReporteVentaDTO> listaReporte)
+        {
+            try
+            {
+                using (var wb = new XLWorkbook())
+                {
+                    var dt = new DataTable();
+                    dt.TableName = "Reporte de Ventas";
+                    dt.Columns.Add("Numero Venta", typeof(string));
+                    dt.Columns.Add("Nombre Usuario", typeof(string));
+                    dt.Columns.Add("Fecha Registro", typeof(string));
+                    dt.Columns.Add("Producto", typeof(string));
+                    dt.Columns.Add("Precio Compra", typeof(decimal));
+                    dt.Columns.Add("Precio Venta", typeof(decimal));
+                    dt.Columns.Add("Cantidad", typeof(int));
+                    dt.Columns.Add("Precio Total", typeof(decimal));
+
+                    foreach (var item in listaReporte)
+                    {
+                        dt.Rows.Add(
+                            item.NumeroVenta,
+                            item.NombreUsuario,
+                            item.FechaRegistro,
+                            item.Producto,
+                            item.PrecioCompra,
+                            item.PrecioVenta,
+                            item.Cantidad,
+                            item.PrecioTotal
+                        );
+                    }
+                    var hojaDatos = wb.Worksheets.Add(dt);
+                    hojaDatos.ColumnsUsed().AdjustToContents();
+
+                    using (var stream = new MemoryStream())
+                    {
+                        wb.SaveAs(stream);
+                        // Devolvemos los bytes del archivo directamente.
+                        return File(stream.ToArray(),
+                            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            $"ReporteVentas_{DateTime.Now:yyyyMMddHHmmss}.xlsx");
+                    }
+                }
             }
             catch (Exception ex)
             {
                 return StatusCode(500, $"Error interno del servidor: {ex.Message}");
             }
         }
+
+        [HttpGet("Lista")]
+        public async Task<IActionResult> Lista()
+        {
+            try
+            {
+                
+                var lista = await _productoService.Lista();
+                return Ok(lista);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
     }
 }

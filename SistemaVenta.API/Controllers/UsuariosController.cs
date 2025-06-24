@@ -3,24 +3,23 @@ using Microsoft.AspNetCore.Mvc;
 using Shared.DTOs;
 using SVRepository.Entities;
 using SVServices.Interfaces;
-using SistemaVenta.API.Utilidades; // Importante para usar Util.cs
-
+using SistemaVenta.API.Utilidades;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
 public class UsuariosController : ControllerBase
 {
     private readonly IUsuarioService _usuarioService;
-    private readonly ICorreoService _correoService; // Inyecta el servicio de correo
+    private readonly ICorreoService _correoService;
     private readonly ILogger<UsuariosController> _logger;
 
     public UsuariosController(
         IUsuarioService usuarioService,
-        ICorreoService correoService, // Añádelo al constructor
+        ICorreoService correoService, 
         ILogger<UsuariosController> logger)
     {
         _usuarioService = usuarioService;
-        _correoService = correoService; // Asígnalo
+        _correoService = correoService; 
         _logger = logger;
     }
 
@@ -48,7 +47,7 @@ public class UsuariosController : ControllerBase
     {
         try
         {
-            // 1. Generar y encriptar la clave (lógica de FrmUsuario)
+           
             var claveGenerada = Util.GenerarCode();
             var claveEncriptada = Util.ConvertirASha256(claveGenerada);
 
@@ -57,9 +56,9 @@ public class UsuariosController : ControllerBase
                 NombreCompleto = dto.NombreCompleto,
                 Correo = dto.Correo,
                 NombreUsuario = dto.NombreUsuario,
-                Clave = claveEncriptada, // Guardamos la clave encriptada
+                Clave = claveEncriptada,
                 RefRol = new Rol { IdRol = dto.IdRol },
-                ResetearClave = 1, // Forzar cambio de clave en el primer login
+                ResetearClave = 1,
                 Activo = 1
             };
 
@@ -69,7 +68,6 @@ public class UsuariosController : ControllerBase
                 return BadRequest(resultadoSp);
             }
 
-            // 2. Enviar correo con la clave generada (lógica de FrmUsuario)
             var mensaje = $"<h3>Usuario creado correctamente.</h3>" +
                           $"<p>Sus credenciales de acceso son:</p>" +
                           $"<p><b>Nombre de usuario:</b> {dto.NombreUsuario}</p>" +

@@ -1,24 +1,19 @@
 ﻿@inherits LayoutComponentBase
-@* Añadimos el using a la carpeta Shared donde creamos el nuevo componente *@
 @using SistemaVenta.Web.Client.Components
 
 <div class="page">
     <div class="sidebar">
-        @* Aquí se renderiza tu menú de navegación dinámico *@
         <NavMenu />
     </div>
 
     <main>
         <div class="top-row px-4">
-            @* Este div adicional con la clase 'ms-auto' de Bootstrap
-               empujará nuestro componente a la derecha de la barra superior. *@
             <div class="ms-auto">
                 <LoginDisplay />
             </div>
         </div>
 
         <article class="content px-4">
-            @* @Body renderiza el contenido de la página actual (Ej: Categorias.razor, etc.) *@
             @Body
         </article>
     </main>

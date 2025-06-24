@@ -80,7 +80,6 @@
 @code {
     private List<VentaDTO> ventas;
 
-    // --- CORRECCIÓN CLAVE: Usar DateTime para el enlace de datos ---
     private DateTime fechaInicio = DateTime.Now;
     private DateTime fechaFin = DateTime.Now;
 
@@ -93,8 +92,6 @@
 
     private async Task CargarVentas()
     {
-        // Se convierten las fechas a string con el formato esperado ("dd/MM/yyyy")
-        // justo antes de enviarlas a la API.
         var inicioFormateado = fechaInicio.ToString("dd/MM/yyyy");
         var finFormateado = fechaFin.ToString("dd/MM/yyyy");
 
@@ -103,7 +100,7 @@
 
     private async Task Buscar()
     {
-        ventas = null; // Para mostrar el spinner de carga
+        ventas = null;
         await CargarVentas();
     }
 

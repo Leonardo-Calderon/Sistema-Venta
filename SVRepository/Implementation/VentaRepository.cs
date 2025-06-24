@@ -148,8 +148,8 @@ namespace SVRepository.Implementation
             {
                 con.Open();
                 var cmd = new SqlCommand("sp_reporteVenta", con);
-                cmd.Parameters.Add(new SqlParameter("@FechaInicio", fechaInicio));
-                cmd.Parameters.Add(new SqlParameter("@FechaFin", fechaFin));
+                cmd.Parameters.Add("@FechaInicio", SqlDbType.VarChar, 10).Value = fechaInicio;
+                cmd.Parameters.Add("@FechaFin", SqlDbType.VarChar, 10).Value = fechaFin;
                 cmd.CommandType = CommandType.StoredProcedure;
                 using (var dr = await cmd.ExecuteReaderAsync())
                 {

@@ -16,7 +16,7 @@ public class MenusController : ControllerBase
         _menuRolService = menuRolService;
     }
 
-    [HttpGet] // El NavMenu llamará a GET /api/menus
+    [HttpGet]
     public async Task<IActionResult> ObtenerMenusParaUsuario()
     {
         try
@@ -37,15 +37,12 @@ public class MenusController : ControllerBase
             }
 
             var listaCompletaDto = listaPlanaDesdeDb.Select(MapToMenuDTO).ToList();
-
-            // --- LÓGICA DE JERARQUÍA CORREGIDA ---
             var menusPadre = listaCompletaDto.Where(m => m.IdMenuPadre == 0).ToList();
 
             foreach (var padre in menusPadre)
             {
                 padre.SubMenus = listaCompletaDto.Where(hijo => hijo.IdMenuPadre == padre.IdMenu).ToList();
             }
-            // ------------------------------------
 
             return Ok(menusPadre);
         }
@@ -69,7 +66,7 @@ public class MenusController : ControllerBase
         {
             // Grupo Ventas
             case "ventas":
-                menuDto.Url = null; // Un padre no necesita URL si solo es un agrupador
+                menuDto.Url = "/reporteventa"; // Un padre no necesita URL si solo es un agrupador
                 menuDto.Icono = "oi oi-cart";
                 break;
             case "nuevo":
@@ -97,18 +94,9 @@ public class MenusController : ControllerBase
 
             // Grupo Reportes
             case "reportes":
-                menuDto.Url = null;
+                menuDto.Url = "/reporteventa";
                 menuDto.Icono = "oi oi-document";
                 break;
-            // El hijo de reportes se llama "ventas", hay que diferenciarlo del padre
-            // Nota: Sería ideal tener nombres únicos, pero podemos manejarlo.
-            // Si el IdMenuPadre es el del menú "Reportes", es el reporte de ventas.
-            // Para simplificar, asumiremos que no hay colisión por ahora.
-            // case "ventas" when menuDb.IdMenuPadre == ID_REPORTE: 
-            //     menuDto.Url = "/reporte/ventas";
-            //     break;
-
-            // Menús sin hijos
             case "usuarios":
                 menuDto.Url = "/usuarios";
                 menuDto.Icono = "oi oi-people";

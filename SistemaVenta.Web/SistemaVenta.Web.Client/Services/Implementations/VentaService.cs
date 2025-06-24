@@ -46,10 +46,11 @@ namespace SistemaVenta.Web.Client.Services.Implementations
             return response ?? new List<DetalleVentaDTO>();
         }
 
-        public async Task<List<DetalleVentaDTO>> Reporte(string fechaInicio, string fechaFin)
+        public async Task<List<ReporteVentaDTO>> Reporte(string fechaInicio, string fechaFin)
         {
-            var response = await _httpClient.GetFromJsonAsync<List<DetalleVentaDTO>>($"api/Ventas/Reporte?fechaInicio={fechaInicio}&fechaFin={fechaFin}");
-            return response ?? new List<DetalleVentaDTO>();
+            var url = $"api/Ventas/Reporte?fechaInicio={fechaInicio}&fechaFin={fechaFin}";
+            var result = await _httpClient.GetFromJsonAsync<List<ReporteVentaDTO>>(url);
+            return result ?? new List<ReporteVentaDTO>();
         }
     }
 

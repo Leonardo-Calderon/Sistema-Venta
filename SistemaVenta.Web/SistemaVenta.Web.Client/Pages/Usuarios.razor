@@ -6,14 +6,9 @@
 @inject IRolService rolService
 @inject NavigationManager navigationManager
 
-@* El atributo [Authorize] se elimina para evitar la redirección del servidor *@
-
 <AuthorizeView Roles="Administrador">
     <Authorized Context="authState">
-        @{
-            // Todo el contenido visual de la página va aquí dentro.
-            // Solo se renderizará si el usuario tiene el rol "Administrador".
-        }
+
         <PageTitle>Gestión de Usuarios</PageTitle>
 
         <h1>Gestión de Usuarios</h1>
@@ -236,7 +231,6 @@
 </AuthorizeView>
 
 @code {
-    // El bloque @code se mantiene exactamente igual. No es necesario cambiar nada.
 
     private string currentView = "List";
     private List<UsuarioDTO>? userList;

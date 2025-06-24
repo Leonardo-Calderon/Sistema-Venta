@@ -20,8 +20,6 @@ namespace SistemaVenta.Web.Client.Services.Implementations
         public async Task<SessionDTO> Login(LoginDTO loginDto)
         {
             var response = await _httpClient.PostAsJsonAsync("api/auth/login", loginDto);
-
-            // Lanza una excepción si la respuesta no es exitosa para un mejor manejo de errores en la UI
             response.EnsureSuccessStatusCode();
 
             var sessionDto = await response.Content.ReadFromJsonAsync<SessionDTO>();
@@ -29,7 +27,6 @@ namespace SistemaVenta.Web.Client.Services.Implementations
             if (sessionDto == null || string.IsNullOrWhiteSpace(sessionDto.Token))
                 throw new Exception("No se recibió un token de sesión válido.");
 
-            // El proveedor se encarga de guardar el token y notificar a la app
             await ((CustomAuthenticationStateProvider)_authenticationStateProvider)
                 .NotifyUserAuthentication(sessionDto.Token);
 

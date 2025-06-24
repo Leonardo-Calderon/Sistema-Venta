@@ -1,94 +1,119 @@
-﻿// En: SistemaVenta.API/Controllers/NegocioController.cs
-using Microsoft.AspNetCore.Authorization;
+﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Shared.DTOs;
 using SVRepository.Entities;
 using SVServices.Interfaces;
-using System.Threading.Tasks;
 using System;
+using System.IO;
+using System.Threading.Tasks;
 
-[ApiController]
-[Route("api/[controller]")]
-[Authorize] // Protegemos el controlador
-public class NegocioController : ControllerBase
+namespace SistemaVenta.API.Controllers
 {
-    private readonly INegocioService _negocioService;
-
-    public NegocioController(INegocioService negocioService)
+    [ApiController]
+    [Route("api/[controller]")]
+    [Authorize]
+    public class NegocioController : ControllerBase
     {
-        _negocioService = negocioService;
-    }
+        private readonly INegocioService _negocioService;
+        private readonly ICloudinaryService _cloudinaryService;
 
-    /// <summary>
-    /// Obtiene los datos del negocio.
-    /// </summary>
-    [HttpGet]
-    public async Task<IActionResult> Obtener()
-    {
-        try
+        // Inyectamos ambos servicios, como en la app de escritorio
+        public NegocioController(INegocioService negocioService, ICloudinaryService cloudinaryService)
         {
-            var entidad = await _negocioService.Obtener();
-            if (entidad == null)
+            _negocioService = negocioService;
+            _cloudinaryService = cloudinaryService;
+        }
+
+        [HttpGet]
+        public async Task<IActionResult> Obtener()
+        {
+            try
             {
-                return NotFound(); // Opcional: si la tabla pudiera estar vacía
+                var entidad = await _negocioService.Obtener();
+                if (entidad == null) return NotFound();
+
+                // El mapeo a DTO es correcto
+                var dto = new NegocioDTO
+                {
+                    IdNegocio = entidad.IdNegocio,
+                    RazonSocial = entidad.RazonSocial,
+                    RFC = entidad.RFC,
+                    Direccion = entidad.Direccion,
+                    Celular = entidad.Celular,
+                    Correo = entidad.Correo,
+                    SimboloMoneda = entidad.SimboloMoneda,
+                    NombreLogo = entidad.NombreLogo,
+                    URL = entidad.URL
+                };
+                return Ok(dto);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
+        }
+
+        // Usamos HttpPost y FromForm para poder recibir datos y un archivo.
+        [HttpPost("GuardarCambios")]
+        public async Task<IActionResult> GuardarCambios([FromForm] NegocioDTO dto, IFormFile? logo)
+        {
+            if (dto == null)
+            {
+                return BadRequest("Los datos del negocio no pueden ser nulos.");
             }
 
-            // Mapeamos la entidad al DTO que se enviará al cliente
-            var dto = new NegocioDTO
+            try
             {
-                IdNegocio = entidad.IdNegocio,
-                RazonSocial = entidad.RazonSocial,
-                RFC = entidad.RFC,
-                Direccion = entidad.Direccion,
-                Celular = entidad.Celular,
-                Correo = entidad.Correo,
-                SimboloMoneda = entidad.SimboloMoneda,
-                NombreLogo = entidad.NombreLogo,
-                URL = entidad.URL
-            };
+                // Obtenemos el negocio actual para saber si hay un logo antiguo que borrar
+                var negocioActual = await _negocioService.Obtener();
 
-            return Ok(dto);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Error interno del servidor: {ex.Message}");
-        }
-    }
+                // Si se ha enviado un nuevo logo desde Blazor
+                if (logo != null)
+                {
+                    using var stream = logo.OpenReadStream();
+                    var cloudinaryResponse = await _cloudinaryService.SubirImagen(logo.FileName, stream);
 
-    /// <summary>
-    /// Guarda o actualiza los datos del negocio.
-    /// </summary>
-    [HttpPut]
-    public async Task<IActionResult> Editar([FromBody] NegocioDTO dto)
-    {
-        if (dto == null)
-        {
-            return BadRequest("Los datos del negocio no pueden ser nulos.");
-        }
+                    if (!string.IsNullOrEmpty(cloudinaryResponse.PublicId))
+                    {
+                        // Si el negocio ya tenía un logo, borramos el antiguo de Cloudinary
+                        if (!string.IsNullOrEmpty(negocioActual.NombreLogo))
+                        {
+                            await _cloudinaryService.EliminarImagen(negocioActual.NombreLogo);
+                        }
+                        // Actualizamos el DTO con los nuevos datos del logo
+                        dto.NombreLogo = cloudinaryResponse.PublicId;
+                        dto.URL = cloudinaryResponse.SecureUrl;
+                    }
+                }
+                else // Si no se envió un nuevo logo, mantenemos el existente
+                {
+                    dto.NombreLogo = negocioActual.NombreLogo;
+                    dto.URL = negocioActual.URL;
+                }
 
-        try
-        {
-            // Mapeamos el DTO a la entidad que recibirá el servicio
-            var entidad = new Negocio
+                // Mapeamos el DTO (ya actualizado con el logo si corresponde) a la entidad
+                var entidad = new Negocio
+                {
+                    IdNegocio = negocioActual.IdNegocio, // Siempre es el Id 1
+                    RazonSocial = dto.RazonSocial,
+                    RFC = dto.RFC,
+                    Direccion = dto.Direccion,
+                    Celular = dto.Celular,
+                    Correo = dto.Correo,
+                    SimboloMoneda = dto.SimboloMoneda,
+                    NombreLogo = dto.NombreLogo,
+                    URL = dto.URL
+                };
+
+                await _negocioService.Editar(entidad);
+
+                // Devolvemos el DTO actualizado para que el cliente refresque sus datos
+                return Ok(dto);
+            }
+            catch (Exception ex)
             {
-                IdNegocio = dto.IdNegocio,
-                RazonSocial = dto.RazonSocial,
-                RFC = dto.RFC,
-                Direccion = dto.Direccion,
-                Celular = dto.Celular,
-                Correo = dto.Correo,
-                SimboloMoneda = dto.SimboloMoneda,
-                NombreLogo = dto.NombreLogo,
-                URL = dto.URL
-            };
-
-            await _negocioService.Editar(entidad);
-
-            return Ok("Datos del negocio actualizados con éxito.");
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+                return StatusCode(500, $"Error interno del servidor: {ex.Message}");
+            }
         }
     }
 }

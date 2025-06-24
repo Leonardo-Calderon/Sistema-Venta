@@ -1,0 +1,162 @@
+﻿@page "/configuracion"
+@using Microsoft.AspNetCore.Authorization
+@using Shared.DTOs
+@using SistemaVenta.Web.Client.Services.Interfaces
+@inject INegocioService negocioService
+
+@attribute [Authorize]
+
+<PageTitle>Configuración del Negocio</PageTitle>
+
+@if (negocio == null)
+{
+    <div class="d-flex justify-content-center mt-5">
+        <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Cargando...</span>
+        </div>
+    </div>
+}
+else
+{
+    <EditForm Model="negocio" OnValidSubmit="GuardarCambios">
+        <DataAnnotationsValidator />
+        <div class="card shadow">
+            <div class="card-header">
+                <h5>Datos del Negocio</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-sm-12 col-md-8">
+                        <div class="row">
+                            <div class="col-sm-12 col-md-6 mb-3">
+                                <label class="form-label">Razón Social</label>
+                                <InputText class="form-control" @bind-Value="negocio.RazonSocial" />
+                                <ValidationMessage For="@(() => negocio.RazonSocial)" />
+                            </div>
+                            <div class="col-sm-12 col-md-6 mb-3">
+                                <label class="form-label">RFC</label>
+                                <InputText class="form-control" @bind-Value="negocio.RFC" />
+                                <ValidationMessage For="@(() => negocio.RFC)" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12 col-md-6 mb-3">
+                                <label class="form-label">Dirección</label>
+                                <InputText class="form-control" @bind-Value="negocio.Direccion" />
+                                <ValidationMessage For="@(() => negocio.Direccion)" />
+                            </div>
+                            <div class="col-sm-12 col-md-6 mb-3">
+                                <label class="form-label">Celular</label>
+                                <InputText class="form-control" @bind-Value="negocio.Celular" />
+                                <ValidationMessage For="@(() => negocio.Celular)" />
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-sm-12 col-md-6 mb-3">
+                                <label class="form-label">Correo</label>
+                                <InputText class="form-control" @bind-Value="negocio.Correo" />
+                                <ValidationMessage For="@(() => negocio.Correo)" />
+                            </div>
+                            <div class="col-sm-12 col-md-6 mb-3">
+                                <label class="form-label">Símbolo Moneda (ej. $, MXN)</label>
+                                <InputText class="form-control" @bind-Value="negocio.SimboloMoneda" />
+                                <ValidationMessage For="@(() => negocio.SimboloMoneda)" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-md-4">
+                        <div class="mb-3">
+                            <label class="form-label">Logo del Negocio</label>
+                            <InputFile class="form-control" OnChange="CargarImagen" accept=".jpg,.jpeg,.png,.bmp" />
+                        </div>
+                        <div class="text-center">
+                            @if (!string.IsNullOrEmpty(logoParaMostrar))
+                            {
+                                <img src="@logoParaMostrar" style="max-width:200px; max-height:200px; border:1px solid #ddd; padding:5px;" />
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-end">
+                <button class="btn btn-success" type="submit" disabled="@guardando">
+                    @if (guardando)
+                    {
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span class="ms-2">Guardando...</span>
+                    }
+                    else
+                    {
+                        <i class="oi oi-check"></i>
+                        <span>Guardar Cambios</span>
+                    }
+                </button>
+            </div>
+        </div>
+    </EditForm>
+}
+
+@code {
+    private NegocioDTO? negocio;
+    private IBrowserFile? logoSeleccionado;
+    private string? logoParaMostrar;
+    private bool guardando = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        negocio = await negocioService.Obtener();
+        if (negocio != null)
+        {
+            logoParaMostrar = negocio.URL;
+        }
+    }
+
+    private async Task CargarImagen(InputFileChangeEventArgs e)
+    {
+        logoSeleccionado = e.File;
+        if (logoSeleccionado != null)
+        {
+            // Genera una URL local para la vista previa de la imagen
+            var buffer = new byte[logoSeleccionado.Size];
+            await logoSeleccionado.OpenReadStream().ReadAsync(buffer);
+            logoParaMostrar = $"data:image/png;base64,{Convert.ToBase64String(buffer)}";
+        }
+    }
+
+    private async Task GuardarCambios()
+    {
+        guardando = true;
+
+        var content = new MultipartFormDataContent();
+
+        // Añadimos los campos de texto al formulario
+        content.Add(new StringContent(negocio.RazonSocial ?? ""), "RazonSocial");
+        content.Add(new StringContent(negocio.RFC ?? ""), "RFC");
+        content.Add(new StringContent(negocio.Direccion ?? ""), "Direccion");
+        content.Add(new StringContent(negocio.Celular ?? ""), "Celular");
+        content.Add(new StringContent(negocio.Correo ?? ""), "Correo");
+        content.Add(new StringContent(negocio.SimboloMoneda ?? ""), "SimboloMoneda");
+
+        // Si el usuario seleccionó un nuevo logo, lo añadimos también
+        if (logoSeleccionado != null)
+        {
+            var fileContent = new StreamContent(logoSeleccionado.OpenReadStream(maxAllowedSize: 2097152)); // Límite de 2MB
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(logoSeleccionado.ContentType);
+            content.Add(fileContent, "logo", logoSeleccionado.Name);
+        }
+
+        var resultado = await negocioService.GuardarCambios(content);
+
+        if (resultado != null)
+        {
+            negocio = resultado;
+            logoParaMostrar = negocio.URL;
+            logoSeleccionado = null;
+        }
+        else
+        {
+        }
+
+        guardando = false;
+    }
+}
