@@ -4,21 +4,32 @@ using SVServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using SistemaVenta.API.Middleware;
 
 // Envolvemos todo en un bloque try-catch para capturar errores de arranque
 try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    // 1. Agregar servicios básicos para la API
+    // 1. Agregar servicios bÃ¡sicos para la API
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
 
-    // 2. Configurar la Inyección de Dependencias de tus proyectos
+    // Configurar servicios anti-CSRF
+    builder.Services.AddAntiforgery(options =>
+    {
+        options.HeaderName = "X-CSRF-TOKEN";
+        options.Cookie.Name = "CSRF-TOKEN";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+    });
+
+    // 2. Configurar la InyecciÃ³n de Dependencias de tus proyectos
     builder.Services.RegisterRepositoryDependencies(builder.Configuration);
     builder.Services.RegisterServiceDependencies(builder.Configuration);
-    // Añadimos esto para el endpoint de descarga de PDF que creamos
+    // AÃ±adimos esto para el endpoint de descarga de PDF que creamos
     builder.Services.AddHttpClient();
 
     // 3. Configurar CORS
@@ -32,7 +43,7 @@ try
         });
     });
 
-    // 4. Configurar la autenticación con JWT
+    // 4. Configurar la autenticaciÃ³n con JWT
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
@@ -57,7 +68,16 @@ try
         app.UseSwaggerUI();
     }
 
+    // Habilitar HSTS (HTTP Strict Transport Security)
+    app.UseHsts();
+
     app.UseRouting();
+    
+    // Agregar middleware de manejo global de excepciones
+    app.UseMiddleware<GlobalExceptionHandlerMiddleware>();
+    
+    // Agregar middleware de cabeceras de seguridad
+    app.UseMiddleware<SecurityHeadersMiddleware>();
     app.UseCors(builder => builder
         .WithOrigins(
             "https://localhost:7289",
@@ -70,15 +90,19 @@ try
     );
     app.UseAuthentication();
     app.UseAuthorization();
+    
+    // Agregar middleware de auditorÃ­a
+    app.UseMiddleware<AuditoriaMiddleware>();
+    
     app.MapControllers();
 
     app.Run();
 }
 catch (Exception ex)
 {
-    // Si algo falla durante el arranque, lo capturamos aquí
+    // Si algo falla durante el arranque, lo capturamos aquÃ­
     Console.ForegroundColor = ConsoleColor.Red;
-    Console.WriteLine("!!!!!!!!!! ERROR FATAL AL INICIAR LA APLICACIÓN !!!!!!!!!!");
+    Console.WriteLine("!!!!!!!!!! ERROR FATAL AL INICIAR LA APLICACIÃ“N !!!!!!!!!!");
     Console.WriteLine(ex.ToString()); // Imprime el error completo con todos sus detalles
     Console.ResetColor();
     Console.WriteLine("\nPresiona cualquier tecla para cerrar...");

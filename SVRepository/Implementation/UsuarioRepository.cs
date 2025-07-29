@@ -188,6 +188,38 @@ namespace SVRepository.Implementation
             return idUsuario;
         }
 
+        public async Task<Usuario> ObtenerPorId(int idUsuario)
+        {
+            Usuario objeto = new Usuario();
+            using (var con = _conexion.ObtenerSQLConexion())
+            {
+                con.Open();
+                var cmd = new SqlCommand("sp_obtenerUsuarioPorId", con);
+                cmd.Parameters.AddWithValue("@IdUsuario", idUsuario);
+                cmd.CommandType = CommandType.StoredProcedure;
+                using (var dr = await cmd.ExecuteReaderAsync())
+                {
+                    if (await dr.ReadAsync())
+                    {
+                        objeto = new Usuario
+                        {
+                            IdUsuario = Convert.ToInt32(dr["IdUsuario"]),
+                            NombreCompleto = dr["NombreCompleto"].ToString(),
+                            RefRol = new Rol
+                            {
+                                IdRol = Convert.ToInt32(dr["IdRol"]),
+                                Nombre = dr["NombreRol"].ToString(),
+                            },
+                            Correo = dr["Correo"].ToString(),
+                            NombreUsuario = dr["NombreUsuario"].ToString(),
+                            Activo = Convert.ToInt32(dr["Activo"])
+                        };
+                    }
+                }
+            }
+            return objeto;
+        }
+
         public async Task ActualizarClave(int idUsuario, string nuevaClave, int resetear)
         {
             using (var con = _conexion.ObtenerSQLConexion())

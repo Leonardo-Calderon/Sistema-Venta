@@ -22,8 +22,10 @@ public class RolesController : ControllerBase
 
     /// <summary>
     /// Devuelve la lista de todos los roles.
+    /// Solo administradores pueden ver la lista de roles.
     /// </summary>
     [HttpGet]
+    [Authorize(Roles = "Administrador")]
     public async Task<IActionResult> Lista()
     {
         try

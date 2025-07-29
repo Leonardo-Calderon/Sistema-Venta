@@ -14,6 +14,7 @@ namespace SVRepository.Interfaces
         Task<String> Editar(Usuario objeto);
         Task<string> Eliminar(int idUsuario);
         Task<Usuario>Login(string usuario, string clave);
+        Task<Usuario> ObtenerPorId(int idUsuario);
         Task<int> VerificarCorreo(string correo);
         Task ActualizarClave(int idUsuario, string nuevaClave, int resetear);
     }

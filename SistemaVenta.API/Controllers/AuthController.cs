@@ -17,15 +17,18 @@ public class AuthController : ControllerBase
     private readonly IUsuarioService _usuarioService;
     private readonly IConfiguration _configuration;
     private readonly ILogger<AuthController> _logger;
+    private readonly IAuditoriaService _auditoriaService;
 
     public AuthController(
         IUsuarioService usuarioService,
         IConfiguration configuration,
-        ILogger<AuthController> logger)
+        ILogger<AuthController> logger,
+        IAuditoriaService auditoriaService)
     {
         _usuarioService = usuarioService;
         _configuration = configuration;
         _logger = logger;
+        _auditoriaService = auditoriaService;
     }
 
     [HttpPost("login")]
@@ -44,6 +47,9 @@ public class AuthController : ControllerBase
         {
             _logger.LogInformation($"Intento de login: {loginDto.NombreUsuario}");
 
+            // Obtener IP del cliente
+            var ipAddress = GetClientIpAddress();
+
             // 2. Cifra la contraseña aquí, antes de pasarla al servicio.
             var claveCifrada = Util.ConvertirASha256(loginDto.Clave);
 
@@ -52,8 +58,14 @@ public class AuthController : ControllerBase
 
             if (usuarioValidado == null || usuarioValidado.IdUsuario == 0)
             {
+                // Registrar intento fallido
+                await _auditoriaService.RegistrarAutenticacion(loginDto.NombreUsuario, "Fallido", ipAddress, "Credenciales incorrectas");
                 return BadRequest("Credenciales incorrectas.");
             }
+
+            // Registrar intento exitoso
+            await _auditoriaService.RegistrarAutenticacion(loginDto.NombreUsuario, "Exitoso", ipAddress, $"Login exitoso - Rol: {usuarioValidado.RefRol.Nombre}");
+
             var token = GenerateJwtToken(usuarioValidado);
 
             var sessionDto = new SessionDTO
@@ -71,6 +83,11 @@ public class AuthController : ControllerBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error en login");
+            
+            // Registrar error en autenticación
+            var ipAddress = GetClientIpAddress();
+            await _auditoriaService.RegistrarAutenticacion(loginDto?.NombreUsuario ?? "Desconocido", "Error", ipAddress, $"Error interno: {ex.Message}");
+            
             return StatusCode(500, "Error interno");
         }
     }
@@ -99,5 +116,22 @@ private string GenerateJwtToken(Usuario usuario)
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    private string GetClientIpAddress()
+    {
+        var ip = HttpContext.Connection.RemoteIpAddress?.ToString();
+        
+        // Verificar headers de proxy
+        if (HttpContext.Request.Headers.ContainsKey("X-Forwarded-For"))
+        {
+            ip = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+        }
+        else if (HttpContext.Request.Headers.ContainsKey("X-Real-IP"))
+        {
+            ip = HttpContext.Request.Headers["X-Real-IP"].FirstOrDefault();
+        }
+
+        return ip ?? "Desconocida";
     }
 }

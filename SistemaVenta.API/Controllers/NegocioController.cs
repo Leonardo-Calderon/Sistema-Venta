@@ -25,6 +25,7 @@ namespace SistemaVenta.API.Controllers
         }
 
         [HttpGet]
+        [Authorize(Roles = "Administrador")] // Solo administradores pueden ver configuración del negocio
         public async Task<IActionResult> Obtener()
         {
             try
@@ -55,6 +56,7 @@ namespace SistemaVenta.API.Controllers
 
         // Usamos HttpPost y FromForm para poder recibir datos y un archivo.
         [HttpPost("GuardarCambios")]
+        [Authorize(Roles = "Administrador")] // Solo administradores pueden modificar configuración del negocio
         public async Task<IActionResult> GuardarCambios([FromForm] NegocioDTO dto, IFormFile? logo)
         {
             if (dto == null)

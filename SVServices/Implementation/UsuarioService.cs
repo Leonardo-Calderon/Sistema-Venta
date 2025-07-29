@@ -41,6 +41,11 @@ namespace SVServices.Implementation
             return await _usuarioRepository.Login(usuario, clave);
         }
 
+        public async Task<Usuario> ObtenerPorId(int idUsuario)
+        {
+            return await _usuarioRepository.ObtenerPorId(idUsuario);
+        }
+
         public async Task<int> VerificarCorreo(string correo)
         {
             return await _usuarioRepository.VerificarCorreo(correo);

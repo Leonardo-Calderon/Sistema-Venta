@@ -21,6 +21,10 @@ namespace SVServices
             services.AddTransient<IRolService, RolService>();
             services.AddTransient<IUsuarioService, UsuarioService>();
             services.AddTransient<IVentaService, VentaService>();
+            services.AddTransient<IAuditoriaService, AuditoriaService>();
+            services.AddTransient<IValidacionService, ValidacionService>();
+            services.AddTransient<ISeguridadSQLService, SeguridadSQLService>();
+            services.AddTransient<IPruebasSeguridadService, PruebasSeguridadService>();
         }
     }
 }

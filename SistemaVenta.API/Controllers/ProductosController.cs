@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Shared.DTOs; 
 using SVRepository.Entities;
 using SVServices.Interfaces;
+using Microsoft.Extensions.Logging;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -10,10 +11,14 @@ using SVServices.Interfaces;
 public class ProductosController : ControllerBase
 {
     private readonly IProductoService _productoService;
+    private readonly IValidacionService _validacionService;
+    private readonly ILogger<ProductosController> _logger;
 
-    public ProductosController(IProductoService productoService)
+    public ProductosController(IProductoService productoService, IValidacionService validacionService, ILogger<ProductosController> logger)
     {
         _productoService = productoService;
+        _validacionService = validacionService;
+        _logger = logger;
     }
 
     [HttpGet]
@@ -39,11 +44,93 @@ public class ProductosController : ControllerBase
         return Ok(listaDto);
     }
 
+    /// <summary>
+    /// PASO 4: Endpoint de búsqueda segura de productos con validación y sanitización
+    /// </summary>
+    [HttpGet("search")]
+    [Authorize(Roles = "Administrador")]
+    public async Task<IActionResult> BusquedaSegura([FromQuery] string searchTerm = "")
+    {
+        try
+        {
+            // PASO 4: Validación y sanitización del término de búsqueda
+            if (string.IsNullOrWhiteSpace(searchTerm))
+            {
+                _logger.LogInformation("Búsqueda de productos sin término de búsqueda");
+                return await Lista(""); // Retornar lista completa
+            }
+
+            // Sanitizar el término de búsqueda
+            var searchTermSanitizado = _validacionService.SanitizarString(searchTerm, 50, true);
+            
+            // Verificar si el término de búsqueda fue rechazado por la sanitización
+            if (searchTermSanitizado == null)
+            {
+                _logger.LogWarning("Término de búsqueda rechazado por sanitización: {SearchTerm}", searchTerm);
+                return BadRequest("El término de búsqueda contiene caracteres no permitidos.");
+            }
+
+            // Verificar si contiene caracteres peligrosos
+            if (_validacionService.ContieneCaracteresPeligrosos(searchTerm))
+            {
+                _logger.LogWarning("Se detectaron caracteres peligrosos en la búsqueda de productos: {SearchTerm}", searchTerm);
+                return BadRequest("El término de búsqueda contiene caracteres no permitidos.");
+            }
+
+            // Validar longitud mínima y máxima
+            if (searchTermSanitizado.Length < 2)
+            {
+                _logger.LogWarning("Término de búsqueda de productos demasiado corto: {SearchTerm}", searchTermSanitizado);
+                return BadRequest("El término de búsqueda debe tener al menos 2 caracteres.");
+            }
+
+            if (searchTermSanitizado.Length > 50)
+            {
+                _logger.LogWarning("Término de búsqueda de productos demasiado largo: {SearchTerm}", searchTermSanitizado);
+                return BadRequest("El término de búsqueda no puede exceder 50 caracteres.");
+            }
+
+            // PASO 4: Realizar búsqueda segura usando el servicio
+            _logger.LogInformation("Iniciando búsqueda segura de productos con término: {SearchTerm}", searchTermSanitizado);
+            
+            var listaEntidades = await _productoService.Lista(searchTermSanitizado);
+            
+            // Mapear a DTOs
+            var listaDto = listaEntidades.Select(p => new ProductoDTO
+            {
+                IdProducto = p.IdProducto,
+                Codigo = p.Codigo,
+                Descripcion = p.Descripcion,
+                IdCategoria = p.RefCategoria.IdCategoria,
+                DescripcionCategoria = p.RefCategoria.Nombre,
+                PrecioCompra = p.PrecioCompra,
+                PrecioVenta = p.PrecioVenta,
+                Cantidad = p.Cantidad,
+                Activo = p.Activo == 1
+            }).ToList();
+
+            _logger.LogInformation("Búsqueda segura de productos completada. Resultados encontrados: {Count}", listaDto.Count);
+            
+            return Ok(new
+            {
+                TerminoBusqueda = searchTermSanitizado,
+                TotalResultados = listaDto.Count,
+                Resultados = listaDto,
+                FechaBusqueda = DateTime.Now
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error en búsqueda segura de productos con término: {SearchTerm}", searchTerm);
+            return StatusCode(500, "Error interno del servidor durante la búsqueda.");
+        }
+    }
+
     // --- NUEVO ENDPOINT AÑADIDO ---
     // Este endpoint es crucial y ya existía la lógica en tu repositorio.
     // Permite buscar un producto para, por ejemplo, agregarlo a una venta.
     [HttpGet("ObtenerPorCodigo/{codigo}")]
-    [AllowAnonymous] // Se permite el acceso anónimo para la búsqueda de productos en la venta
+    [Authorize] // Requiere autenticación para buscar productos
     public async Task<IActionResult> ObtenerPorCodigo(string codigo)
     {
         var p = await _productoService.Obtener(codigo);
@@ -70,6 +157,7 @@ public class ProductosController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = "Administrador")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Crear([FromBody] ProductoDTO dto)
     {
         if (!ModelState.IsValid)
@@ -98,6 +186,7 @@ public class ProductosController : ControllerBase
 
     [HttpPut]
     [Authorize(Roles = "Administrador")]
+    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Editar([FromBody] ProductoDTO dto)
     {
         if (!ModelState.IsValid)
