@@ -132,34 +132,53 @@ namespace SVRepository.Implementation
         public async Task<Usuario> Login(string usuario, string clave)
         {
             Usuario objeto = new Usuario();
-            using (var con = _conexion.ObtenerSQLConexion())
+            try
             {
-                con.Open();
-                var cmd = new SqlCommand("sp_login", con);
-                cmd.Parameters.AddWithValue("@NombreUsuario", usuario);
-                cmd.Parameters.AddWithValue("@Clave", clave);
-                cmd.CommandType = CommandType.StoredProcedure;
-                using (var dr = await cmd.ExecuteReaderAsync())
+                using (var con = _conexion.ObtenerSQLConexion())
                 {
-                    if (await dr.ReadAsync())
+                    await con.OpenAsync();
+                    var cmd = new SqlCommand("sp_login", con);
+                    cmd.Parameters.AddWithValue("@NombreUsuario", usuario);
+                    cmd.Parameters.AddWithValue("@Clave", clave);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    
+                    using (var dr = await cmd.ExecuteReaderAsync())
                     {
-                        objeto = new Usuario
+                        if (await dr.ReadAsync())
                         {
-                            IdUsuario = Convert.ToInt32(dr["IdUsuario"]),
-                            NombreCompleto = dr["NombreCompleto"].ToString(),
-                            RefRol = new Rol
+                            objeto = new Usuario
                             {
-                                IdRol = Convert.ToInt32(dr["IdRol"]),
-                                Nombre = dr["NombreRol"].ToString(),
-                            },
-                            Correo = dr["Correo"].ToString(),
-                            NombreUsuario = dr["NombreUsuario"].ToString(),
-                            ResetearClave = Convert.ToInt32(dr["ResetearClave"]),
-                            Activo = Convert.ToInt32(dr["Activo"])
-                        };
+                                IdUsuario = Convert.ToInt32(dr["IdUsuario"]),
+                                NombreCompleto = dr["NombreCompleto"].ToString(),
+                                RefRol = new Rol
+                                {
+                                    IdRol = Convert.ToInt32(dr["IdRol"]),
+                                    Nombre = dr["NombreRol"].ToString(),
+                                },
+                                Correo = dr["Correo"].ToString(),
+                                NombreUsuario = dr["NombreUsuario"].ToString(),
+                                ResetearClave = Convert.ToInt32(dr["ResetearClave"]),
+                                Activo = Convert.ToInt32(dr["Activo"])
+                            };
+                        }
                     }
                 }
             }
+            catch (SqlException ex)
+            {
+                // Log del error específico de SQL
+                Console.WriteLine($"Error SQL en Login: {ex.Message}");
+                Console.WriteLine($"Error Number: {ex.Number}");
+                Console.WriteLine($"Procedure: {ex.Procedure}");
+                throw; // Re-lanzar para que el controlador lo maneje
+            }
+            catch (Exception ex)
+            {
+                // Log de otros errores
+                Console.WriteLine($"Error general en Login: {ex.Message}");
+                throw; // Re-lanzar para que el controlador lo maneje
+            }
+            
             return objeto;
         }
 

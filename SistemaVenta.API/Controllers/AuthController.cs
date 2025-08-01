@@ -9,6 +9,8 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
+using System.Data;
+using Microsoft.Data.SqlClient;
 
 [ApiController]
 [Route("api/[controller]")]
@@ -40,20 +42,56 @@ public class AuthController : ControllerBase
             return BadRequest("Usuario requerido");
         }
 
+        if (string.IsNullOrEmpty(loginDto.Clave))
+        {
+            _logger.LogWarning("Password missing");
+            return BadRequest("Contraseña requerida");
+        }
+
         try
         {
             _logger.LogInformation($"Intento de login: {loginDto.NombreUsuario}");
 
-            // 2. Cifra la contraseña aquí, antes de pasarla al servicio.
-            var claveCifrada = Util.ConvertirASha256(loginDto.Clave);
+            // Verificar configuración JWT
+            var jwtKey = _configuration["Jwt:Key"];
+            var jwtIssuer = _configuration["Jwt:Issuer"];
+            var jwtAudience = _configuration["Jwt:Audience"];
 
-            // 3. Usa la clave cifrada para el login.
+            if (string.IsNullOrEmpty(jwtKey) || string.IsNullOrEmpty(jwtIssuer) || string.IsNullOrEmpty(jwtAudience))
+            {
+                _logger.LogError("Configuración JWT incompleta");
+                return StatusCode(500, "Error de configuración del servidor");
+            }
+
+            // Cifra la contraseña aquí, antes de pasarla al servicio.
+            var claveCifrada = Util.ConvertirASha256(loginDto.Clave);
+            _logger.LogInformation($"Contraseña cifrada generada para usuario: {loginDto.NombreUsuario}");
+
+            // Usa la clave cifrada para el login.
             var usuarioValidado = await _usuarioService.Login(loginDto.NombreUsuario, claveCifrada);
 
             if (usuarioValidado == null || usuarioValidado.IdUsuario == 0)
             {
+                _logger.LogWarning($"Credenciales incorrectas para usuario: {loginDto.NombreUsuario}");
                 return BadRequest("Credenciales incorrectas.");
             }
+
+            // Verificar que el usuario esté activo
+            if (usuarioValidado.Activo == 0)
+            {
+                _logger.LogWarning($"Usuario inactivo intentando login: {loginDto.NombreUsuario}");
+                return BadRequest("Usuario inactivo. Contacte al administrador.");
+            }
+
+            // Verificar que el rol esté presente
+            if (usuarioValidado.RefRol == null)
+            {
+                _logger.LogError($"Usuario sin rol asignado: {loginDto.NombreUsuario}");
+                return StatusCode(500, "Error: Usuario sin rol asignado");
+            }
+
+            _logger.LogInformation($"Usuario autenticado exitosamente: {loginDto.NombreUsuario}, Rol: {usuarioValidado.RefRol.Nombre}");
+
             var token = GenerateJwtToken(usuarioValidado);
 
             var sessionDto = new SessionDTO
@@ -66,12 +104,18 @@ public class AuthController : ControllerBase
                 Token = token
             };
 
+            _logger.LogInformation($"Sesión creada exitosamente para usuario: {loginDto.NombreUsuario}");
             return Ok(sessionDto);
+        }
+        catch (SqlException sqlEx)
+        {
+            _logger.LogError(sqlEx, $"Error de base de datos en login para usuario {loginDto.NombreUsuario}: {sqlEx.Message}");
+            return StatusCode(500, "Error de conexión a la base de datos. Contacte al administrador.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error en login");
-            return StatusCode(500, "Error interno");
+            _logger.LogError(ex, $"Error inesperado en login para usuario {loginDto.NombreUsuario}: {ex.Message}");
+            return StatusCode(500, "Error interno del servidor. Intente nuevamente.");
         }
     }
 

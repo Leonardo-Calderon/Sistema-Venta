@@ -4,21 +4,22 @@ using SVServices;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using SistemaVenta.API.Middleware;
 
 // Envolvemos todo en un bloque try-catch para capturar errores de arranque
 try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    // 1. Agregar servicios básicos para la API
+    // 1. Agregar servicios bï¿½sicos para la API
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
 
-    // 2. Configurar la Inyección de Dependencias de tus proyectos
+    // 2. Configurar la Inyecciï¿½n de Dependencias de tus proyectos
     builder.Services.RegisterRepositoryDependencies(builder.Configuration);
     builder.Services.RegisterServiceDependencies(builder.Configuration);
-    // Añadimos esto para el endpoint de descarga de PDF que creamos
+    // Aï¿½adimos esto para el endpoint de descarga de PDF que creamos
     builder.Services.AddHttpClient();
 
     // 3. Configurar CORS
@@ -32,7 +33,7 @@ try
         });
     });
 
-    // 4. Configurar la autenticación con JWT
+    // 4. Configurar la autenticaciï¿½n con JWT
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
@@ -57,6 +58,9 @@ try
         app.UseSwaggerUI();
     }
 
+    // Agregar middleware de logging para debugging
+    app.UseMiddleware<RequestLoggingMiddleware>();
+
     app.UseRouting();
     app.UseCors(builder => builder
         .WithOrigins(
@@ -76,9 +80,9 @@ try
 }
 catch (Exception ex)
 {
-    // Si algo falla durante el arranque, lo capturamos aquí
+    // Si algo falla durante el arranque, lo capturamos aquï¿½
     Console.ForegroundColor = ConsoleColor.Red;
-    Console.WriteLine("!!!!!!!!!! ERROR FATAL AL INICIAR LA APLICACIÓN !!!!!!!!!!");
+    Console.WriteLine("!!!!!!!!!! ERROR FATAL AL INICIAR LA APLICACIï¿½N !!!!!!!!!!");
     Console.WriteLine(ex.ToString()); // Imprime el error completo con todos sus detalles
     Console.ResetColor();
     Console.WriteLine("\nPresiona cualquier tecla para cerrar...");
