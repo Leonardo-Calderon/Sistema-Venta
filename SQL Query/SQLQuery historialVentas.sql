@@ -1,4 +1,4 @@
-
+Use DBTienda
 
 select * from venta
 

@@ -2,7 +2,7 @@
 
 create database DBTienda
 
---para usarla tenemos el siguiente comando que nos pondrá directamente dentro de la base de datos
+--para usarla tenemos el siguiente comando que nos pondrï¿½ directamente dentro de la base de datos
 use DBTienda
 
 --comenzamos creando las  tablas comenzando por medida

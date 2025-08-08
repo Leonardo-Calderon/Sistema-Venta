@@ -8,12 +8,15 @@ values
 ('Kilogramo','Kkg','g',1000)
 
 --
+GO
 
 create procedure sp_listaMedida
 as
 begin
 	select * from Medida
 end
+
+GO
 
 create procedure sp_listaCategoria
 (
@@ -25,8 +28,15 @@ begin
 	where concat(c.Nombre,m.Nombre,iif(c.Activo=1,'SI','NO')) like '%'+ @Buscar +'%'
 end
 
+GO
+
 sp_help Medida
+
+GO
+
 sp_help Categoria
+
+GO
 
 create procedure sp_crearCategoria(
 @Nombre varchar(50),
@@ -45,6 +55,8 @@ begin
 	insert into Categoria(Nombre,IdMedida)
 	values(@Nombre,@IdMedida)
 end
+
+GO
 
 create procedure sp_editarCategoria(
 @IdCategoria int,

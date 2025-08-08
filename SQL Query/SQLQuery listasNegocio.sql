@@ -1,3 +1,5 @@
+USE DBTienda
+
 INSERT INTO Negocio (
     RazonSocial,
     RFC,
@@ -25,8 +27,15 @@ begin
 	select RazonSocial, RFC,Direccion, Celular, Correo, SimboloMoneda,NombreLogo,URL from Negocio
 	where IdNegocio=1
 end
+
+GO
+
  exec sp_obtenerNegocio
+
+GO
+
  sp_help Negocio
+
 GO
 
 create procedure sp_editarNegocio
@@ -54,5 +63,4 @@ begin
 	WHERE IdNegocio =1
 end
 
-GO
 
