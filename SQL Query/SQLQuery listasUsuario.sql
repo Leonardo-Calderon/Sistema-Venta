@@ -5,7 +5,7 @@ insert into Rol(Nombre) values
 INSERT INTO Usuario (IdRol, NombreCompleto, Correo, NombreUsuario, Clave, ResetearClave)
 VALUES (
     1,
-    'Juan Pérez',
+    'Juan Pï¿½rez',
     'juan.perez@example.com',
     'jperez',
     'A665A45920422F9D417E4867EFDC4FB8A04A1F3FFF1FA07E998E86F7F7A27AE3',

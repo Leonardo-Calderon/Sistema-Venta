@@ -126,7 +126,7 @@ public class UsuariosController : ControllerBase
     }
 
     [HttpGet("Perfil")]
-    [Authorize(Roles = "Administrador,Vendedor")] // Cualquier usuario autenticado puede obtener su perfil
+    [Authorize(Roles = "Administrador,Ventas")] // Cualquier usuario autenticado puede obtener su perfil
     public async Task<IActionResult> ObtenerPerfil()
     {
         try
@@ -167,7 +167,6 @@ public class UsuariosController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = "Administrador")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Crear([FromBody] UsuarioCrearDTO dto)
     {
         try
@@ -204,9 +203,29 @@ public class UsuariosController : ControllerBase
                 return BadRequest("Los datos proporcionados contienen caracteres no permitidos.");
             }
 
-            // Crear clave segura
-            var claveGenerada = Util.GenerarCode();
-            var claveEncriptada = Util.ConvertirASha256(claveGenerada);
+            // Determinar la contraseña a usar
+            string contrasenaFinal;
+            bool esContrasenaTemporal;
+            string contrasenaTemporal = "";
+
+            if (!string.IsNullOrWhiteSpace(dto.Contrasena))
+            {
+                // Usar la contraseña proporcionada por el usuario
+                contrasenaFinal = dto.Contrasena;
+                esContrasenaTemporal = false;
+                _logger.LogInformation("Usuario creado con contraseña personalizada");
+            }
+            else
+            {
+                // Generar contraseña temporal automáticamente
+                contrasenaTemporal = Util.GenerarCode();
+                contrasenaFinal = contrasenaTemporal;
+                esContrasenaTemporal = true;
+                _logger.LogInformation("Usuario creado con contraseña temporal generada automáticamente");
+            }
+
+            // Encriptar la contraseña
+            var claveEncriptada = Util.ConvertirASha256(contrasenaFinal);
 
             // PASO 2: Creación segura de la entidad con datos sanitizados
             var entidad = new Usuario
@@ -216,7 +235,7 @@ public class UsuariosController : ControllerBase
                 NombreUsuario = nombreUsuarioSanitizado,
                 Clave = claveEncriptada,
                 RefRol = new Rol { IdRol = idRolSanitizado.Value },
-                ResetearClave = 1,
+                ResetearClave = esContrasenaTemporal ? 1 : 0, // Solo resetear si es contraseña temporal
                 Activo = 1
             };
 
@@ -228,17 +247,54 @@ public class UsuariosController : ControllerBase
                 return BadRequest(resultadoSp);
             }
 
-            // Enviar email con datos sanitizados
-            var mensaje = $"<h3>Usuario creado correctamente.</h3>" +
-                          $"<p>Sus credenciales de acceso son:</p>" +
-                          $"<p><b>Nombre de usuario:</b> {nombreUsuarioSanitizado}</p>" +
-                          $"<p><b>Clave temporal:</b> {claveGenerada}</p>" +
-                          $"<p>Por su seguridad, se le pedirá que cambie la clave la primera vez que inicie sesión.</p>";
+            // Preparar mensaje de email según el tipo de contraseña
+            string mensajeEmail;
+            if (esContrasenaTemporal)
+            {
+                mensajeEmail = $"<h3>Usuario creado correctamente.</h3>" +
+                              $"<p>Sus credenciales de acceso son:</p>" +
+                              $"<p><b>Nombre de usuario:</b> {nombreUsuarioSanitizado}</p>" +
+                              $"<p><b>Clave temporal:</b> {contrasenaTemporal}</p>" +
+                              $"<p>Por su seguridad, se le pedirá que cambie la clave la primera vez que inicie sesión.</p>";
+            }
+            else
+            {
+                mensajeEmail = $"<h3>Usuario creado correctamente.</h3>" +
+                              $"<p>Sus credenciales de acceso son:</p>" +
+                              $"<p><b>Nombre de usuario:</b> {nombreUsuarioSanitizado}</p>" +
+                              $"<p><b>Clave:</b> {contrasenaFinal}</p>" +
+                              $"<p>Su cuenta está lista para usar.</p>";
+            }
 
-            await _correoService.Enviar(correoSanitizado, "¡Bienvenido a SistemaVenta!", mensaje);
+            // Enviar email con datos sanitizados (opcional, no debe fallar la creación)
+            try
+            {
+                await _correoService.Enviar(correoSanitizado, "¡Bienvenido a SistemaVenta!", mensajeEmail);
+                _logger.LogInformation("Email enviado exitosamente a: {Correo}", correoSanitizado);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo enviar el email a: {Correo}. El usuario fue creado exitosamente.", correoSanitizado);
+            }
 
-            _logger.LogInformation("Usuario creado exitosamente: {NombreUsuario}", nombreUsuarioSanitizado);
-            return Ok("Usuario creado con éxito.");
+            // Preparar respuesta con información del usuario creado
+            var respuesta = new UsuarioCreadoResponseDTO
+            {
+                IdUsuario = 0, // No tenemos el ID porque no modificamos el SP
+                NombreCompleto = nombreCompletoSanitizado,
+                NombreUsuario = nombreUsuarioSanitizado,
+                Correo = correoSanitizado,
+                ContrasenaTemporal = esContrasenaTemporal ? contrasenaTemporal : contrasenaFinal,
+                EsContrasenaTemporal = esContrasenaTemporal,
+                Mensaje = esContrasenaTemporal 
+                    ? "Usuario creado con éxito. Contraseña temporal: " + contrasenaTemporal
+                    : "Usuario creado con éxito. Contraseña: " + contrasenaFinal
+            };
+
+            _logger.LogInformation("Usuario creado exitosamente: {NombreUsuario} | Contraseña: {Contrasena}", 
+                nombreUsuarioSanitizado, 
+                esContrasenaTemporal ? contrasenaTemporal : contrasenaFinal);
+            return Ok(respuesta);
         }
         catch (Exception ex)
         {
@@ -248,8 +304,7 @@ public class UsuariosController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    [Authorize(Roles = "Administrador,Vendedor")] // Permitir que vendedores editen su propio perfil
-    [ValidateAntiForgeryToken]
+    [Authorize(Roles = "Administrador,Ventas")] // Permitir que vendedores editen su propio perfil
     public async Task<IActionResult> Editar(int id, [FromBody] UsuarioDTO dto)
     {
         if (id != dto.IdUsuario) return BadRequest("El ID del usuario no coincide.");
@@ -290,7 +345,6 @@ public class UsuariosController : ControllerBase
 
     [HttpDelete("{id}")]
     [Authorize(Roles = "Administrador")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Eliminar(int id)
     {
         var resultadoSp = await _usuarioService.Eliminar(id);
@@ -302,7 +356,7 @@ public class UsuariosController : ControllerBase
     }
 
     [HttpGet("TestAcceso/{id}")]
-    [Authorize(Roles = "Administrador,Vendedor")] // Endpoint de prueba para verificar acceso
+    [Authorize(Roles = "Administrador,Ventas")] // Endpoint de prueba para verificar acceso
     public async Task<IActionResult> TestAcceso(int id)
     {
         try

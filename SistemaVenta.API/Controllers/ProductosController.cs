@@ -22,7 +22,7 @@ public class ProductosController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Administrador")]
+    [Authorize(Roles = "Administrador,Ventas")]
     public async Task<IActionResult> Lista(string buscar = "")
     {
         var listaEntidades = await _productoService.Lista(buscar);
@@ -48,7 +48,7 @@ public class ProductosController : ControllerBase
     /// PASO 4: Endpoint de búsqueda segura de productos con validación y sanitización
     /// </summary>
     [HttpGet("search")]
-    [Authorize(Roles = "Administrador")]
+    [Authorize(Roles = "Administrador,Ventas")]
     public async Task<IActionResult> BusquedaSegura([FromQuery] string searchTerm = "")
     {
         try
@@ -157,36 +157,73 @@ public class ProductosController : ControllerBase
 
     [HttpPost]
     [Authorize(Roles = "Administrador")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Crear([FromBody] ProductoDTO dto)
     {
-        if (!ModelState.IsValid)
-            return BadRequest(ModelState);
-
-        // Mapeo corregido para incluir todos los campos necesarios.
-        var entidad = new Producto
+        try
         {
-            Codigo = dto.Codigo,
-            Descripcion = dto.Descripcion,
-            PrecioCompra = dto.PrecioCompra,
-            PrecioVenta = dto.PrecioVenta,
-            Cantidad = dto.Cantidad,
-            Activo = dto.Activo ? 1 : 0, 
-            RefCategoria = new Categoria { IdCategoria = dto.IdCategoria }
-        };
+            _logger.LogInformation("Iniciando creación de producto: {Codigo}", dto.Codigo);
 
-        var resultadoSp = await _productoService.Crear(entidad);
-        if (!string.IsNullOrEmpty(resultadoSp))
-        {
-            return BadRequest(resultadoSp);
+            if (!ModelState.IsValid)
+            {
+                _logger.LogWarning("ModelState inválido al crear producto: {Errors}", 
+                    string.Join(", ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage)));
+                return BadRequest(ModelState);
+            }
+
+            // Validar datos antes de crear
+            if (string.IsNullOrWhiteSpace(dto.Codigo))
+            {
+                _logger.LogWarning("Código de producto vacío");
+                return BadRequest("El código del producto es obligatorio");
+            }
+
+            if (string.IsNullOrWhiteSpace(dto.Descripcion))
+            {
+                _logger.LogWarning("Descripción de producto vacía");
+                return BadRequest("La descripción del producto es obligatoria");
+            }
+
+            if (dto.IdCategoria <= 0)
+            {
+                _logger.LogWarning("Categoría inválida: {IdCategoria}", dto.IdCategoria);
+                return BadRequest("Debe seleccionar una categoría válida");
+            }
+
+            // Mapeo corregido para incluir todos los campos necesarios.
+            var entidad = new Producto
+            {
+                Codigo = dto.Codigo?.Trim(),
+                Descripcion = dto.Descripcion?.Trim(),
+                PrecioCompra = dto.PrecioCompra,
+                PrecioVenta = dto.PrecioVenta,
+                Cantidad = dto.Cantidad,
+                Activo = dto.Activo ? 1 : 0, 
+                RefCategoria = new Categoria { IdCategoria = dto.IdCategoria }
+            };
+
+            _logger.LogInformation("Entidad producto creada, llamando al servicio: {Codigo}, {Descripcion}, {IdCategoria}", 
+                entidad.Codigo, entidad.Descripcion, entidad.RefCategoria.IdCategoria);
+
+            var resultadoSp = await _productoService.Crear(entidad);
+            
+            if (!string.IsNullOrEmpty(resultadoSp))
+            {
+                _logger.LogWarning("Error al crear producto: {Error}", resultadoSp);
+                return BadRequest(resultadoSp);
+            }
+
+            _logger.LogInformation("Producto creado exitosamente: {Codigo}", dto.Codigo);
+            return Ok(new { message = "Producto creado exitosamente" });
         }
-
-        return Ok();
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error inesperado al crear producto: {Codigo}", dto.Codigo);
+            return StatusCode(500, "Error interno del servidor al crear el producto");
+        }
     }
 
     [HttpPut]
     [Authorize(Roles = "Administrador")]
-    [ValidateAntiForgeryToken]
     public async Task<IActionResult> Editar([FromBody] ProductoDTO dto)
     {
         if (!ModelState.IsValid)

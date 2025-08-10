@@ -17,30 +17,43 @@ namespace SVRepository.Implementation
         public async Task<String> Crear(Producto objeto)
         {
             string respuesta = "";
-            using (var con = _conexion.ObtenerSQLConexion())
+            try
             {
-                con.Open();
-                var cmd = new SqlCommand("sp_crearProducto", con);
-                cmd.Parameters.Add(new SqlParameter("@IdCategoria", objeto.RefCategoria.IdCategoria));
-                cmd.Parameters.Add(new SqlParameter("@Codigo", objeto.Codigo));
-                cmd.Parameters.Add(new SqlParameter("@Descripcion", objeto.Descripcion));
-                cmd.Parameters.Add(new SqlParameter("@PrecioCompra", objeto.PrecioCompra));
-                cmd.Parameters.Add(new SqlParameter("@PrecioVenta", objeto.PrecioVenta));
-                cmd.Parameters.Add(new SqlParameter("@Cantidad", objeto.Cantidad));
-                cmd.Parameters.Add("@MsjError", SqlDbType.VarChar, 100).Direction = ParameterDirection.Output;
-                cmd.CommandType = CommandType.StoredProcedure;
-
-                try
+                using (var con = _conexion.ObtenerSQLConexion())
                 {
+                    await con.OpenAsync();
+                    
+                    // Verificar que la conexión esté abierta
+                    if (con.State != System.Data.ConnectionState.Open)
+                    {
+                        return "Error: No se pudo abrir la conexión a la base de datos";
+                    }
+
+                    var cmd = new SqlCommand("sp_crearProducto", con);
+                    cmd.CommandType = CommandType.StoredProcedure;
+                    
+                    // Agregar parámetros con validación
+                    cmd.Parameters.Add(new SqlParameter("@IdCategoria", objeto.RefCategoria?.IdCategoria ?? 0));
+                    cmd.Parameters.Add(new SqlParameter("@Codigo", objeto.Codigo ?? ""));
+                    cmd.Parameters.Add(new SqlParameter("@Descripcion", objeto.Descripcion ?? ""));
+                    cmd.Parameters.Add(new SqlParameter("@PrecioCompra", objeto.PrecioCompra));
+                    cmd.Parameters.Add(new SqlParameter("@PrecioVenta", objeto.PrecioVenta));
+                    cmd.Parameters.Add(new SqlParameter("@Cantidad", objeto.Cantidad));
+                    cmd.Parameters.Add("@MsjError", SqlDbType.VarChar, 100).Direction = ParameterDirection.Output;
+
                     await cmd.ExecuteNonQueryAsync();
                     respuesta = Convert.ToString(cmd.Parameters["@MsjError"].Value);
                 }
-                catch (Exception ex)
-                {
-                    respuesta = ex.Message;
-                }
-
             }
+            catch (SqlException ex)
+            {
+                respuesta = $"Error de base de datos: {ex.Message} (Error #{ex.Number})";
+            }
+            catch (Exception ex)
+            {
+                respuesta = $"Error inesperado: {ex.Message}";
+            }
+
             return respuesta;
         }
 

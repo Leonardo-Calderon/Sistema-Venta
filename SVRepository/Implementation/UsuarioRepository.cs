@@ -57,7 +57,7 @@ namespace SVRepository.Implementation
                 cmd.Parameters.Add(new SqlParameter("@NombreCompleto", objeto.NombreCompleto));
                 cmd.Parameters.Add(new SqlParameter("@Correo", objeto.Correo));
                 cmd.Parameters.Add(new SqlParameter("@NombreUsuario", objeto.NombreUsuario));
-                cmd.Parameters.Add(new SqlParameter("@Clave", objeto.Clave));   
+                cmd.Parameters.Add(new SqlParameter("@Clave", objeto.Clave));
                 cmd.Parameters.Add("@MsjError", SqlDbType.VarChar, 100).Direction = ParameterDirection.Output;
                 cmd.CommandType = CommandType.StoredProcedure;
 

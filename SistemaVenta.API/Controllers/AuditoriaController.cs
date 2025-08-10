@@ -83,7 +83,7 @@ namespace SistemaVenta.API.Controllers
         }
 
         [HttpGet("mi-actividad")]
-        [Authorize(Roles = "Administrador,Vendedor")] // Permitir que cualquier usuario autenticado vea su propia actividad
+        [Authorize(Roles = "Administrador,Ventas")] // Permitir que cualquier usuario autenticado vea su propia actividad
         public async Task<IActionResult> ObtenerMiActividad([FromQuery] DateTime fechaInicio, [FromQuery] DateTime fechaFin)
         {
             try

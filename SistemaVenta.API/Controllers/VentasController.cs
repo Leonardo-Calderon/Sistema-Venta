@@ -34,7 +34,7 @@ namespace SistemaVenta.API.Controllers
         }
 
         [HttpGet("GenerarPDF/{numeroVenta}")]
-        [Authorize(Roles = "Administrador,Vendedor")] // Administradores y vendedores pueden generar PDFs
+        [Authorize(Roles = "Administrador,Ventas")] // Administradores y vendedores pueden generar PDFs
         public async Task<IActionResult> GenerarPDF(string numeroVenta)
         {
             try
@@ -65,7 +65,8 @@ namespace SistemaVenta.API.Controllers
                 }
 
                 // Verificar propiedad del recurso
-                if (!isAdmin && oVenta.UsuarioRegistrado?.IdUsuario != userId)
+                var nombreUsuario = User.FindFirst(ClaimTypes.Name)?.Value;
+                if (!isAdmin && oVenta.UsuarioRegistrado?.NombreUsuario != nombreUsuario)
                 {
                     return Forbid("No tiene permisos para generar el PDF de esta venta.");
                 }
@@ -93,7 +94,7 @@ namespace SistemaVenta.API.Controllers
         }
 
         [HttpGet("Obtener/{numeroVenta}")]
-        [Authorize(Roles = "Administrador,Vendedor")] // Administradores y vendedores pueden ver ventas
+        [Authorize(Roles = "Administrador,Ventas")] // Administradores y vendedores pueden ver ventas
         public async Task<IActionResult> Obtener(string numeroVenta)
         {
             try
@@ -115,7 +116,8 @@ namespace SistemaVenta.API.Controllers
                 }
 
                 // Verificar propiedad del recurso
-                if (!isAdmin && v.UsuarioRegistrado?.IdUsuario != userId)
+                var nombreUsuario = User.FindFirst(ClaimTypes.Name)?.Value;
+                if (!isAdmin && v.UsuarioRegistrado?.NombreUsuario != nombreUsuario)
                 {
                     // Registrar autorización denegada
                     await _auditoriaService.RegistrarAutorizacion(User, $"Venta {numeroVenta}", "Consulta", "Denegado", "Usuario no es propietario de la venta");
@@ -145,7 +147,7 @@ namespace SistemaVenta.API.Controllers
         }
 
         [HttpGet("Historial")]
-        [Authorize(Roles = "Administrador,Vendedor")] // Administradores y vendedores pueden ver historial
+        [Authorize(Roles = "Administrador,Ventas")] // Administradores y vendedores pueden ver historial
         public async Task<IActionResult> Historial(string fechaInicio, string fechaFin, string buscar = "")
         {
             try
@@ -167,7 +169,8 @@ namespace SistemaVenta.API.Controllers
                 if (!isAdmin)
                 {
                     // Si no es administrador, solo mostrar sus propias ventas
-                    ventasFiltradas = listaEntidades.Where(v => v.UsuarioRegistrado?.IdUsuario == userId).ToList();
+                    var nombreUsuario = User.FindFirst(ClaimTypes.Name)?.Value;
+                    ventasFiltradas = listaEntidades.Where(v => v.UsuarioRegistrado?.NombreUsuario == nombreUsuario).ToList();
                 }
 
                 var listaDto = ventasFiltradas.Select(v => new VentaDTO
@@ -191,7 +194,7 @@ namespace SistemaVenta.API.Controllers
         /// PASO 4: Endpoint de búsqueda segura de ventas con validación y sanitización
         /// </summary>
         [HttpGet("search")]
-        [Authorize(Roles = "Administrador,Vendedor")]
+        [Authorize(Roles = "Administrador,Ventas")]
         public async Task<IActionResult> BusquedaSegura([FromQuery] string searchTerm = "", [FromQuery] string fechaInicio = "", [FromQuery] string fechaFin = "")
         {
             try
@@ -252,7 +255,8 @@ namespace SistemaVenta.API.Controllers
                 var ventasFiltradas = listaEntidades;
                 if (!isAdmin)
                 {
-                    ventasFiltradas = listaEntidades.Where(v => v.UsuarioRegistrado?.IdUsuario == userId).ToList();
+                    var nombreUsuario = User.FindFirst(ClaimTypes.Name)?.Value;
+                    ventasFiltradas = listaEntidades.Where(v => v.UsuarioRegistrado?.NombreUsuario == nombreUsuario).ToList();
                 }
 
                 // Mapear a DTOs
@@ -285,7 +289,7 @@ namespace SistemaVenta.API.Controllers
         }
 
         [HttpGet("Detalle/{numeroVenta}")]
-        [Authorize(Roles = "Administrador,Vendedor")] // Administradores y vendedores pueden ver detalles
+        [Authorize(Roles = "Administrador,Ventas")] // Administradores y vendedores pueden ver detalles
         public async Task<IActionResult> Detalle(string numeroVenta)
         {
             try
@@ -308,7 +312,8 @@ namespace SistemaVenta.API.Controllers
                 }
 
                 // Verificar propiedad del recurso
-                if (!isAdmin && venta.UsuarioRegistrado?.IdUsuario != userId)
+                var nombreUsuario = User.FindFirst(ClaimTypes.Name)?.Value;
+                if (!isAdmin && venta.UsuarioRegistrado?.NombreUsuario != nombreUsuario)
                 {
                     return Forbid("No tiene permisos para acceder al detalle de esta venta.");
                 }
@@ -332,8 +337,7 @@ namespace SistemaVenta.API.Controllers
         }
 
         [HttpPost("Registrar")]
-        [Authorize(Roles = "Administrador,Vendedor")] // Administradores y vendedores pueden registrar ventas
-        [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Administrador,Ventas")] // Administradores y vendedores pueden registrar ventas
         public async Task<IActionResult> Registrar([FromBody] VentaDTO venta)
         {
             if (venta == null || venta.DetalleVenta == null || !venta.DetalleVenta.Any())
@@ -414,7 +418,6 @@ namespace SistemaVenta.API.Controllers
 
         [HttpPost("GenerarReporteExcel")]
         [Authorize(Roles = "Administrador")] // Solo administradores pueden generar reportes Excel
-        [ValidateAntiForgeryToken]
         public IActionResult GenerarReporteExcel([FromBody] List<ReporteVentaDTO> listaReporte)
         {
             try
@@ -465,7 +468,7 @@ namespace SistemaVenta.API.Controllers
         }
 
         [HttpGet("Lista")]
-        [Authorize(Roles = "Administrador,Vendedor")] // Administradores y vendedores pueden ver lista de productos
+        [Authorize(Roles = "Administrador,Ventas")] // Administradores y vendedores pueden ver lista de productos
         public async Task<IActionResult> Lista()
         {
             try
@@ -481,7 +484,7 @@ namespace SistemaVenta.API.Controllers
         }
 
         [HttpGet("TestAcceso/{numeroVenta}")]
-        [Authorize(Roles = "Administrador,Vendedor")] // Endpoint de prueba para verificar acceso
+        [Authorize(Roles = "Administrador,Ventas")] // Endpoint de prueba para verificar acceso
         public async Task<IActionResult> TestAcceso(string numeroVenta)
         {
             try
@@ -507,9 +510,9 @@ namespace SistemaVenta.API.Controllers
                 }
 
                 // Verificar propiedad del recurso
-                if (!isAdmin && v.UsuarioRegistrado?.IdUsuario != userId)
+                if (!isAdmin && v.UsuarioRegistrado?.NombreUsuario != nombreUsuario)
                 {
-                    return Forbid($"No tiene permisos para acceder a esta venta. Venta pertenece al usuario ID: {v.UsuarioRegistrado?.IdUsuario}, su ID: {userId}");
+                    return Forbid($"No tiene permisos para acceder a esta venta. Venta pertenece al usuario: {v.UsuarioRegistrado?.NombreUsuario}, su usuario: {nombreUsuario}");
                 }
 
                 // Respuesta de prueba con información detallada

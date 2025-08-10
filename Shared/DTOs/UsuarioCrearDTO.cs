@@ -17,5 +17,9 @@ namespace Shared.DTOs
         [Required]
         [Range(1, int.MaxValue, ErrorMessage = "Debe seleccionar un rol.")]
         public int IdRol { get; set; }
+
+        // Campo opcional para contraseña personalizada
+        // Si está vacío, se generará una contraseña temporal automáticamente
+        public string? Contrasena { get; set; }
     }
 }
