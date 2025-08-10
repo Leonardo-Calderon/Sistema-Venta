@@ -57,7 +57,6 @@ namespace SVRepository.Implementation
                             NumeroVenta = dr["NumeroVenta"].ToString()!,
                             UsuarioRegistrado = new Usuario
                             {
-                                IdUsuario = Convert.ToInt32(dr["IdUsuario"]),
                                 NombreUsuario = dr["NombreUsuario"].ToString()!,
                             },
                             NombreCliente = dr["NombreCliente"].ToString()!,
@@ -163,7 +162,6 @@ namespace SVRepository.Implementation
                                 NumeroVenta = dr["NumeroVenta"].ToString()!,
                                 UsuarioRegistrado = new Usuario
                                 {
-                                    IdUsuario = Convert.ToInt32(dr["IdUsuario"]),
                                     NombreUsuario = dr["NombreUsuario"].ToString()!,
                                 },
                                 FechaRegistro = dr["FechaRegistro"].ToString()!

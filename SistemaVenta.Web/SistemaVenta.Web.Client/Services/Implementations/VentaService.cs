@@ -52,6 +52,19 @@ namespace SistemaVenta.Web.Client.Services.Implementations
             var result = await _httpClient.GetFromJsonAsync<List<ReporteVentaDTO>>(url);
             return result ?? new List<ReporteVentaDTO>();
         }
+
+        public async Task<byte[]> GenerarPDF(string numeroVenta)
+        {
+            var response = await _httpClient.GetAsync($"api/Ventas/GenerarPDF/{numeroVenta}");
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadAsByteArrayAsync();
+            }
+            else
+            {
+                throw new HttpRequestException($"Error al generar PDF: {response.StatusCode}");
+            }
+        }
     }
 
     internal class NumeroVentaResponse

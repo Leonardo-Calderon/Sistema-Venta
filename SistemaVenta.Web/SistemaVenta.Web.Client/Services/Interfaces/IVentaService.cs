@@ -9,5 +9,6 @@ namespace SistemaVenta.Web.Client.Services.Interfaces
         Task<VentaDTO> Obtener(string numeroVenta);
         Task<List<DetalleVentaDTO>> Detalle(string numeroVenta);
         Task<List<ReporteVentaDTO>> Reporte(string fechaInicio, string fechaFin);
+        Task<byte[]> GenerarPDF(string numeroVenta);
     }
 }

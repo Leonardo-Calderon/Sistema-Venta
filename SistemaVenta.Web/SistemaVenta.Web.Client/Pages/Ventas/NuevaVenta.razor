@@ -274,7 +274,7 @@
             var confirm = await JSRuntime.InvokeAsync<bool>("confirm", $"Venta registrada con éxito. Número: {numeroVenta}. ¿Desea ver el detalle de la venta?");
             if (confirm)
             {
-                NavigationManager.NavigateTo($"/ventas/detalle/{numeroVenta}", forceLoad: true);
+                NavigationManager.NavigateTo($"/ventas/detalle/{numeroVenta}");
             }
             else
             {
