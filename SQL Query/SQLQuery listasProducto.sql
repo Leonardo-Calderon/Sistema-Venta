@@ -1,3 +1,5 @@
+Use DBTienda
+
 select * from Producto
 
 GO
@@ -46,7 +48,7 @@ BEGIN
 
     IF EXISTS(SELECT 1 FROM Producto WHERE Descripcion = @Descripcion)  
     BEGIN  
-        SET @MsjError = 'La descripción ya existe';  
+        SET @MsjError = 'La descripciï¿½n ya existe';  
         RETURN;  
     END  
 
@@ -95,5 +97,7 @@ begin
  where IdProducto = @IdProducto  
   
 end  
+
+GO
 
 sp_help sp_listaProducto

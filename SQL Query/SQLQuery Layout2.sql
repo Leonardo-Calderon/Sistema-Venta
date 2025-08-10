@@ -1,11 +1,15 @@
--- Versión Mínima Requerida de sp_obtenerMenus
+-- VersiÃ³n MÃ­nima Requerida de sp_obtenerMenus
+Use DBTienda
+
+GO
+
 ALTER PROC sp_obtenerMenus(
     @IdRol int
 )
 as
 begin
     select
-        m.IdMenu, -- << AÑADE ESTA LÍNEA
+        m.IdMenu, -- << Aï¿½ADE ESTA Lï¿½NEA
         m.NombreMenu,
         m.IdMenuPadre,
         mr.Activo

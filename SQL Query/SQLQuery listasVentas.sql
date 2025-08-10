@@ -1,3 +1,7 @@
+Use DBTienda
+
+GO
+
 sp_help CorrelativoVenta
 
 insert into correlativoVenta(Serie,Numero,Activo)
@@ -153,5 +157,4 @@ begin
 	where v.NumeroVenta = @NumeroVenta
 end
 
-Go
 
