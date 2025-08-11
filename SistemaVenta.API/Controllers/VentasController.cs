@@ -68,7 +68,13 @@ namespace SistemaVenta.API.Controllers
                 var nombreUsuario = User.FindFirst(ClaimTypes.Name)?.Value;
                 if (!isAdmin && oVenta.UsuarioRegistrado?.NombreUsuario != nombreUsuario)
                 {
-                    return Forbid("No tiene permisos para generar el PDF de esta venta.");
+                    return StatusCode(403, new
+                    {
+                        message = "No tiene permisos para generar el PDF de esta venta.",
+                        error = "Forbidden",
+                        statusCode = 403,
+                        timestamp = DateTime.UtcNow
+                    });
                 }
 
                 oVenta.RefDetalleVenta = oDetalleVenta;
@@ -121,7 +127,13 @@ namespace SistemaVenta.API.Controllers
                 {
                     // Registrar autorización denegada
                     await _auditoriaService.RegistrarAutorizacion(User, $"Venta {numeroVenta}", "Consulta", "Denegado", "Usuario no es propietario de la venta");
-                    return Forbid("No tiene permisos para acceder a esta venta.");
+                    return StatusCode(403, new
+                    {
+                        message = "No tiene permisos para acceder a esta venta.",
+                        error = "Forbidden",
+                        statusCode = 403,
+                        timestamp = DateTime.UtcNow
+                    });
                 }
 
                 // Registrar autorización exitosa
@@ -315,7 +327,13 @@ namespace SistemaVenta.API.Controllers
                 var nombreUsuario = User.FindFirst(ClaimTypes.Name)?.Value;
                 if (!isAdmin && venta.UsuarioRegistrado?.NombreUsuario != nombreUsuario)
                 {
-                    return Forbid("No tiene permisos para acceder al detalle de esta venta.");
+                    return StatusCode(403, new
+                    {
+                        message = "No tiene permisos para acceder al detalle de esta venta.",
+                        error = "Forbidden",
+                        statusCode = 403,
+                        timestamp = DateTime.UtcNow
+                    });
                 }
 
                 var listaEntidad = await _ventaService.ObtenerDetalle(numeroVenta);
@@ -512,7 +530,13 @@ namespace SistemaVenta.API.Controllers
                 // Verificar propiedad del recurso
                 if (!isAdmin && v.UsuarioRegistrado?.NombreUsuario != nombreUsuario)
                 {
-                    return Forbid($"No tiene permisos para acceder a esta venta. Venta pertenece al usuario: {v.UsuarioRegistrado?.NombreUsuario}, su usuario: {nombreUsuario}");
+                    return StatusCode(403, new
+                    {
+                        message = $"No tiene permisos para acceder a esta venta. Venta pertenece al usuario: {v.UsuarioRegistrado?.NombreUsuario}, su usuario: {nombreUsuario}",
+                        error = "Forbidden",
+                        statusCode = 403,
+                        timestamp = DateTime.UtcNow
+                    });
                 }
 
                 // Respuesta de prueba con información detallada

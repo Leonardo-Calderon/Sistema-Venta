@@ -1,7 +1,7 @@
 # IMPLEMENTACIÓN DE PREVENCIÓN SQL INJECTION
 ## Sistema de Ventas (SistemaVenta)
 
-**Fecha:** 28 de julio del 2025  
+**Fecha:** 2025-07-28  
 **Autor:** José Leonardo Rafael Calderón Gallegos
 
 **Objetivo:** Implementar mecanismos de validación y parametrización de consultas para prevenir SQL Injection
@@ -1127,7 +1127,7 @@ GET /api/productos/search?searchTerm=laptop
 
 ### **3. Búsqueda de Ventas:**
 ```
-GET /api/ventas/search?searchTerm=cliente&fechaInicio=2024-01-01&fechaFin=2024-12-31
+GET /api/ventas/search?searchTerm=cliente&fechaInicio=2025-07-28&fechaFin=2025-07-28
 ```
 **Características:**
 - ✅ Validación y sanitización completa
@@ -1788,7 +1788,7 @@ curl -X POST "https://localhost:7206/api/usuarios" \
   "detectedChars": ["'", ";", "--"],
   "suggestion": "Use solo letras, números y guiones",
   "field": "nombreUsuario",
-  "timestamp": "2024-01-15T10:30:00Z"
+  "timestamp": "2025-07-28T10:30:00Z"
 }
 ```
 
@@ -1811,7 +1811,7 @@ curl -X POST "https://localhost:7206/api/usuarios" \
 ### **3. Logs de Seguridad**
 ```json
 {
-  "timestamp": "2024-01-15T10:30:00Z",
+  "timestamp": "2025-07-28T10:30:00Z",
   "level": "Warning",
   "message": "Se detectaron caracteres peligrosos en la búsqueda",
   "user": "juan.perez",
@@ -1877,28 +1877,28 @@ curl -X GET "https://localhost:7206/api/pruebasSeguridad/reporte-seguridad"
 
 ### **Historial de Cambios:**
 
-#### **v1.4.0 - FASE 4: Mantenimiento (2024-01-15)**
+#### **v1.4.0 - FASE 4: Mantenimiento (2025-07-28)**
 - ✅ **Agregados diagramas de flujo** de seguridad SQL Injection
 - ✅ **Implementadas validaciones** de entradas maliciosas
 - ✅ **Mejorados mensajes de error** con detección de caracteres
 - ✅ **Agregados logs de seguridad** estructurados
 
-#### **v1.3.0 - FASE 3: Usabilidad (2024-01-15)**
+#### **v1.3.0 - FASE 3: Usabilidad (2025-07-28)**
 - ✅ **Agregados diagramas ASCII** para comparación vulnerable vs seguro
 - ✅ **Implementadas validaciones** con comandos curl
 - ✅ **Mejorada usabilidad** con respuestas de seguridad
 
-#### **v1.2.0 - FASE 2: Contenido (2024-01-15)**
+#### **v1.2.0 - FASE 2: Contenido (2025-07-28)**
 - ✅ **Mejoradas explicaciones** de consultas parametrizadas
 - ✅ **Agregados casos de prueba** detallados
 - ✅ **Implementadas guías** de implementación
 
-#### **v1.1.0 - FASE 1: Estructura (2024-01-15)**
+#### **v1.1.0 - FASE 1: Estructura (2025-07-28)**
 - ✅ **Reorganizada estructura** del documento
 - ✅ **Agregado índice de contenidos** con navegación
 - ✅ **Implementadas secciones** de configuración técnica
 
-#### **v1.0.0 - Implementación Inicial (2024-01-15)**
+#### **v1.0.0 - Implementación Inicial (2025-07-28)**
 - ✅ **Sistema de validación** completo implementado
 - ✅ **7 DTOs protegidos** con sanitización
 - ✅ **3 servicios de seguridad** implementados
@@ -1908,8 +1908,8 @@ curl -X GET "https://localhost:7206/api/pruebasSeguridad/reporte-seguridad"
 ```json
 {
   "version": "1.4.0",
-  "lastUpdated": "2024-01-15T10:30:00Z",
-  "author": "Asistente IA",
+  "lastUpdated": "2025-07-28T10:30:00Z",
+  "author": "José Leonardo Rafael Calderón Gallegos",
   "status": "Completado",
   "phases": [
     "FASE 1: Estructura y Organización",
@@ -2029,7 +2029,7 @@ echo "=== ANÁLISIS COMPLETADO ==="
 ```json
 {
   "alert": "Posible Ataque SQL Injection Detectado",
-  "timestamp": "2024-01-15T14:30:00Z",
+  "timestamp": "2025-07-28T14:30:00Z",
   "user": "usuario_sospechoso",
   "ip": "192.168.1.100",
   "input": "admin' OR '1'='1",

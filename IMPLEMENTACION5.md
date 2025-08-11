@@ -1,7 +1,7 @@
 # IMPLEMENTACIÓN DE PROTECCIÓN CSRF (ANTI-FALSIFICACIÓN)
 ## Sistema de Ventas (SistemaVenta)
 
-**Fecha:** 28 de julio del 2025  
+**Fecha:** 2025-07-28  
 **Autor:** José Leonardo Rafael Calderón Gallegos
 
 **Objetivo:** Integrar y validar el uso de tokens anti-falsificación para proteger los endpoints que modifican estado (POST, PUT, DELETE) contra ataques de Falsificación de Solicitudes en Sitios Cruzados (CSRF).

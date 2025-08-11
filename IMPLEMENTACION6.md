@@ -1,7 +1,7 @@
 # IMPLEMENTACIÓN DE MANEJADOR DE EXCEPCIONES GLOBAL
 ## Sistema de Ventas (SistemaVenta)
 
-**Fecha:** 28 de julio del 2025  
+**Fecha:** 2025-07-28  
 **Autor:** José Leonardo Rafael Calderón Gallegos
 
 **Objetivo:** Implementar un manejador de excepciones global (Middleware) en una API REST para interceptar errores no controlados. El objetivo es evitar la fuga de información sensible (stack traces, rutas de sistema, consultas SQL) al cliente, mostrando en su lugar un mensaje de error genérico y seguro.
@@ -333,7 +333,7 @@ Probar el nuevo manejador. Volver a ejecutar la petición en Postman que provoca
 {
   "error": "Ha ocurrido un error interno en el servidor.",
   "message": "Por favor, inténtelo de nuevo más tarde. Si el problema persiste, contacte al administrador del sistema.",
-  "timestamp": "2024-01-15T10:30:00.000Z",
+  "timestamp": "2025-07-28T10:30:00.000Z",
   "requestId": "00-..."
 }
 ```

@@ -1,7 +1,7 @@
 # IMPLEMENTACIÓN DE AUTORIZACIÓN Y CONTROL DE ACCESO
 ## Sistema de Ventas (SistemaVenta)
 
-**Fecha:** 28 de julio del 2025  
+**Fecha:** 2025-07-28  
 **Autor:** José Leonardo Rafael Calderón Gallegos
 
 **Objetivo:** Configurar y aplicar reglas de autorización en la API web siguiendo el principio de mínimo privilegio
@@ -696,7 +696,7 @@ if (!isAdmin)
 ## Sistema de Ventas (SistemaVenta)
 
 **Fecha:** $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-**Desarrollador:** Asistente IA
+**Desarrollador:** José Leonardo Rafael Calderón Gallegos
 **Objetivo:** Probar el acceso permitido y verificar la funcionalidad de autorización implementada
 
 ---
@@ -889,14 +889,14 @@ GET https://localhost:7001/api/usuarios/testacceso/2
         "numeroVenta": "V001",
         "nombreCliente": "Juan Pérez",
         "precioTotal": 150.00,
-        "fechaRegistro": "2024-01-15T10:30:00",
+                    "fechaRegistro": "2025-07-28T10:30:00",
         "usuarioRegistrado": "vendedor1",
         "idUsuarioRegistrado": 2
     },
     "verificacion": {
         "propiedadVerificada": true,
         "motivoAcceso": "Usuario es propietario de la venta",
-        "timestamp": "2024-01-15T15:45:30.123Z"
+                    "timestamp": "2025-07-28T15:45:30.123Z"
     }
 }
 ```
@@ -1026,7 +1026,7 @@ GET https://localhost:7001/api/usuarios/testacceso/2
 ## Sistema de Ventas (SistemaVenta)
 
 **Fecha:** $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
-**Desarrollador:** Asistente IA
+**Desarrollador:** José Leonardo Rafael Calderón Gallegos
 **Objetivo:** Implementar sistema completo de auditoría de acceso y autorización
 
 ---
@@ -1213,22 +1213,22 @@ private string GetClientIpAddress(HttpContext context)
 
 ### **Log de Acceso Exitoso:**
 ```
-ACCESO - Usuario: vendedor1 (ID: 2, Rol: Vendedor) | Endpoint: GET /api/ventas/obtener/V001 | Resultado: Permitido | Detalles: IP: 192.168.1.100, User-Agent: Mozilla/5.0..., Status: 200 | Timestamp: 2024-01-15 15:45:30 UTC
+ACCESO - Usuario: vendedor1 (ID: 2, Rol: Vendedor) | Endpoint: GET /api/ventas/obtener/V001 | Resultado: Permitido | Detalles: IP: 192.168.1.100, User-Agent: Mozilla/5.0..., Status: 200 | Timestamp: 2025-07-28 15:45:30 UTC
 ```
 
 ### **Log de Autorización Denegada:**
 ```
-AUTORIZACIÓN - Usuario: vendedor1 (ID: 2, Rol: Vendedor) | Recurso: Venta V002 | Acción: Consulta | Resultado: Denegado | Motivo: Usuario no es propietario de la venta | Timestamp: 2024-01-15 15:46:15 UTC
+AUTORIZACIÓN - Usuario: vendedor1 (ID: 2, Rol: Vendedor) | Recurso: Venta V002 | Acción: Consulta | Resultado: Denegado | Motivo: Usuario no es propietario de la venta | Timestamp: 2025-07-28 15:46:15 UTC
 ```
 
 ### **Log de Autenticación Exitosa:**
 ```
-AUTENTICACIÓN - Usuario: admin1 | Resultado: Exitoso | IP: 192.168.1.100 | Detalles: Login exitoso - Rol: Administrador | Timestamp: 2024-01-15 15:30:00 UTC
+AUTENTICACIÓN - Usuario: admin1 | Resultado: Exitoso | IP: 192.168.1.100 | Detalles: Login exitoso - Rol: Administrador | Timestamp: 2025-07-28 15:30:00 UTC
 ```
 
 ### **Log de Autenticación Fallida:**
 ```
-AUTENTICACIÓN - Usuario: usuario_inexistente | Resultado: Fallido | IP: 192.168.1.101 | Detalles: Credenciales incorrectas | Timestamp: 2024-01-15 15:35:22 UTC
+AUTENTICACIÓN - Usuario: usuario_inexistente | Resultado: Fallido | IP: 192.168.1.101 | Detalles: Credenciales incorrectas | Timestamp: 2025-07-28 15:35:22 UTC
 ```
 
 ---
@@ -1266,12 +1266,12 @@ GET https://localhost:7001/api/ventas/testacceso/V002
 
 #### **Consulta de Estadísticas:**
 ```
-GET https://localhost:7001/api/auditoria/estadisticas?fechaInicio=2024-01-15&fechaFin=2024-01-15
+GET https://localhost:7001/api/auditoria/estadisticas?fechaInicio=2025-07-28&fechaFin=2025-07-28
 ```
 
 #### **Consulta de Actividad Personal:**
 ```
-GET https://localhost:7001/api/auditoria/mi-actividad?fechaInicio=2024-01-15&fechaFin=2024-01-15
+GET https://localhost:7001/api/auditoria/mi-actividad?fechaInicio=2025-07-28&fechaFin=2025-07-28
 ```
 
 ---
@@ -1383,7 +1383,7 @@ GET https://localhost:7001/api/auditoria/mi-actividad?fechaInicio=2024-01-15&fec
 
 #### **1. Historial de Usuario Específico:**
 ```bash
-GET /api/auditoria/historial/2?fechaInicio=2024-01-15&fechaFin=2024-01-15
+GET /api/auditoria/historial/2?fechaInicio=2025-07-28&fechaFin=2025-07-28
 ```
 **Respuesta Esperada:**
 ```json
@@ -1391,7 +1391,7 @@ GET /api/auditoria/historial/2?fechaInicio=2024-01-15&fechaFin=2024-01-15
   "usuarioId": 2,
   "actividades": [
     {
-      "timestamp": "2024-01-15T10:30:00Z",
+      "timestamp": "2025-07-28T10:30:00Z",
       "accion": "Login",
       "resultado": "Exitoso",
       "ip": "192.168.1.100",
@@ -1404,7 +1404,7 @@ GET /api/auditoria/historial/2?fechaInicio=2024-01-15&fechaFin=2024-01-15
 
 #### **2. Estadísticas Generales:**
 ```bash
-GET /api/auditoria/estadisticas?fechaInicio=2024-01-15&fechaFin=2024-01-15
+GET /api/auditoria/estadisticas?fechaInicio=2025-07-28&fechaFin=2025-07-28
 ```
 **Respuesta Esperada:**
 ```json
@@ -1423,14 +1423,14 @@ GET /api/auditoria/estadisticas?fechaInicio=2024-01-15&fechaFin=2024-01-15
 
 #### **3. Actividad Personal:**
 ```bash
-GET /api/auditoria/mi-actividad?fechaInicio=2024-01-15&fechaFin=2024-01-15
+GET /api/auditoria/mi-actividad?fechaInicio=2025-07-28&fechaFin=2025-07-28
 ```
 **Respuesta Esperada:**
 ```json
 {
   "miActividad": [
     {
-      "timestamp": "2024-01-15T14:30:00Z",
+      "timestamp": "2025-07-28T14:30:00Z",
       "accion": "Consulta de ventas",
       "recurso": "Venta V001",
       "resultado": "Permitido",
@@ -1447,12 +1447,12 @@ GET /api/auditoria/mi-actividad?fechaInicio=2024-01-15&fechaFin=2024-01-15
 
 #### **4. Resumen Diario:**
 ```bash
-GET /api/auditoria/resumen-diario?fecha=2024-01-15
+GET /api/auditoria/resumen-diario?fecha=2025-07-28
 ```
 **Respuesta Esperada:**
 ```json
 {
-  "fecha": "2024-01-15",
+  "fecha": "2025-07-28",
   "resumen": {
     "totalAccesos": 150,
     "usuariosUnicos": 12,
@@ -1631,7 +1631,7 @@ curl -H "Authorization: Bearer {token_admin}" \
   "requiredRole": "Administrador",
   "currentRole": "Vendedor",
   "resource": "/api/usuarios",
-  "timestamp": "2024-01-15T10:30:00Z"
+  "timestamp": "28 de julio del 2025T10:30:00Z"
 }
 ```
 
@@ -1717,28 +1717,28 @@ tail -f logs/auditoria.log
 
 ### **Historial de Cambios:**
 
-#### **v1.4.0 - FASE 4: Mantenimiento (2024-01-15)**
+#### **v1.4.0 - FASE 4: Mantenimiento (2025-07-28)**
 - ✅ **Agregados diagramas de flujo** de autorización
 - ✅ **Implementadas validaciones** y pruebas automáticas
 - ✅ **Mejoradas mensajes de error** con contexto
 - ✅ **Agregados headers de seguridad** documentados
 
-#### **v1.3.0 - FASE 3: Usabilidad (2024-01-15)**
+#### **v1.3.0 - FASE 3: Usabilidad (2025-07-28)**
 - ✅ **Agregados diagramas ASCII** para visualización
 - ✅ **Implementadas validaciones** con comandos curl
 - ✅ **Mejorada usabilidad** con mensajes detallados
 
-#### **v1.2.0 - FASE 2: Contenido (2024-01-15)**
+#### **v1.2.0 - FASE 2: Contenido (2025-07-28)**
 - ✅ **Mejoradas explicaciones técnicas** con contexto
 - ✅ **Agregados ejemplos prácticos** y casos de uso
 - ✅ **Implementadas guías paso a paso** para desarrolladores
 
-#### **v1.1.0 - FASE 1: Estructura (2024-01-15)**
+#### **v1.1.0 - FASE 1: Estructura (2025-07-28)**
 - ✅ **Reorganizada estructura** del documento
 - ✅ **Agregado índice de contenidos** con navegación
 - ✅ **Implementadas secciones** de configuración y troubleshooting
 
-#### **v1.0.0 - Implementación Inicial (2024-01-15)**
+#### **v1.0.0 - Implementación Inicial (2025-07-28)**
 - ✅ **Sistema de autorización** completo implementado
 - ✅ **15 endpoints protegidos** con roles y propiedad
 - ✅ **Sistema de auditoría** automático
@@ -1748,8 +1748,8 @@ tail -f logs/auditoria.log
 ```json
 {
   "version": "1.4.0",
-  "lastUpdated": "2024-01-15T10:30:00Z",
-  "author": "Asistente IA",
+  "lastUpdated": "2025-07-28T10:30:00Z",
+  "author": "José Leonardo Rafael Calderón Gallegos",
   "status": "Completado",
   "phases": [
     "FASE 1: Estructura y Organización",
@@ -1800,7 +1800,7 @@ curl -X GET "https://localhost:7206/api/roles" \
 #### **Mensuales:**
 ```bash
 # Análisis completo de seguridad
-curl -X GET "https://localhost:7206/api/auditoria/historial/1?fechaInicio=2024-01-01&fechaFin=2024-01-31" \
+curl -X GET "https://localhost:7206/api/auditoria/historial/1?fechaInicio=2025-07-28&fechaFin=2025-07-28" \
      -H "Authorization: Bearer {token_admin}"
 
 # Revisión de políticas de autorización
@@ -1871,7 +1871,7 @@ echo "=== ANÁLISIS COMPLETADO ==="
 ```json
 {
   "alert": "Acceso Sospechoso Detectado",
-  "timestamp": "2024-01-15T23:30:00Z",
+  "timestamp": "2025-07-28T23:30:00Z",
   "user": "usuario_sospechoso",
   "ip": "192.168.1.100",
   "action": "Intento de acceso a /api/usuarios",

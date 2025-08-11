@@ -1,7 +1,7 @@
 # IMPLEMENTACIÓN DE CABECERAS DE SEGURIDAD HTTP
 ## Sistema de Ventas (SistemaVenta)
 
-**Fecha:** 28 de julio del 2025  
+**Fecha:** 2025-07-28  
 **Autor:** José Leonardo Rafael Calderón Gallegos
 
 **Objetivo:** Añadir y configurar cabeceras de respuesta HTTP para mitigar ataques del lado del cliente como Clickjacking y XSS

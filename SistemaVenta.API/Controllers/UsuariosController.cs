@@ -322,7 +322,13 @@ public class UsuariosController : ControllerBase
         // Verificar propiedad del recurso
         if (!isAdmin && id != userId)
         {
-            return Forbid("Solo puede editar su propio perfil.");
+            return StatusCode(403, new
+            {
+                message = "Solo puede editar su propio perfil.",
+                error = "Forbidden",
+                statusCode = 403,
+                timestamp = DateTime.UtcNow
+            });
         }
 
         var entidad = new Usuario
@@ -385,7 +391,13 @@ public class UsuariosController : ControllerBase
             // Verificar propiedad del recurso
             if (!isAdmin && id != userId)
             {
-                return Forbid($"No tiene permisos para acceder a este usuario. Usuario solicitado ID: {id}, su ID: {userId}");
+                return StatusCode(403, new
+                {
+                    message = $"No tiene permisos para acceder a este usuario. Usuario solicitado ID: {id}, su ID: {userId}",
+                    error = "Forbidden",
+                    statusCode = 403,
+                    timestamp = DateTime.UtcNow
+                });
             }
 
             // Respuesta de prueba con información detallada

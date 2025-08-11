@@ -1,6 +1,6 @@
 # Sistema de Ventas (SistemaVenta)
 
-**Fecha:** 28 de julio del 2025  
+**Fecha:** 2025-07-28  
 **Autor:** José Leonardo Rafael Calderón Gallegos  
 **Versión:** 2.0.0  
 **Estado:** Activo y en desarrollo
