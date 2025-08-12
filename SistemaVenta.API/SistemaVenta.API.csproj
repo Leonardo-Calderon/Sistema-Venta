@@ -5,19 +5,29 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <UserSecretsId>4dc89622-f9ae-45a9-98b1-7b4d382c4974</UserSecretsId>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>SistemaVenta.API.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- ClosedXML: Biblioteca para crear y manipular archivos Excel -->
     <PackageReference Include="ClosedXML" Version="0.104.2" />
+    <!-- Microsoft.AspNetCore.Authentication.JwtBearer: Proporciona autenticación JWT para ASP.NET Core -->
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="8.0.17" />
+    <!-- Microsoft.AspNetCore.OpenApi: Integración con OpenAPI/Swagger -->
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.14" />
+    <!-- QuestPDF: Biblioteca para generar documentos PDF -->
     <PackageReference Include="QuestPDF" Version="2025.5.1" />
+    <!-- Swashbuckle.AspNetCore: Generación automática de documentación Swagger -->
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Referencia al proyecto Shared para modelos y DTOs compartidos -->
     <ProjectReference Include="..\Shared\Shared.csproj" />
+    <!-- Referencia al proyecto SVRepository para acceso a datos -->
     <ProjectReference Include="..\SVRepository\SVRepository.csproj" />
+    <!-- Referencia al proyecto SVServices para lógica de negocio -->
     <ProjectReference Include="..\SVServices\SVServices.csproj" />
   </ItemGroup>
 

@@ -5,15 +5,40 @@ using System.Text.Json;
 
 namespace SVServices.Implementation
 {
+    /// <summary>
+    /// Implementación del servicio para la ejecución de pruebas de seguridad.
+    /// </summary>
+    /// <remarks>
+    /// Esta clase implementa la interfaz IPruebasSeguridadService y proporciona métodos para
+    /// ejecutar pruebas automatizadas de seguridad, especialmente contra SQL Injection.
+    /// Incluye funcionalidades para probar endpoints con entradas maliciosas, generar
+    /// reportes de seguridad y validar respuestas del sistema.
+    /// </remarks>
     public class PruebasSeguridadService : IPruebasSeguridadService
     {
+        /// <summary>
+        /// Instancia del logger para registrar eventos de pruebas de seguridad.
+        /// </summary>
         private readonly ILogger<PruebasSeguridadService> _logger;
+
+        /// <summary>
+        /// Instancia del servicio de validación para sanitizar entradas.
+        /// </summary>
         private readonly IValidacionService _validacionService;
 
+        /// <summary>
+        /// Inicializa una nueva instancia de la clase PruebasSeguridadService.
+        /// </summary>
+        /// <param name="logger">Instancia del logger para registrar eventos de pruebas.</param>
+        /// <param name="validacionService">Instancia del servicio de validación.</param>
+        /// <remarks>
+        /// El constructor recibe las dependencias necesarias para ejecutar pruebas
+        /// de seguridad y registrar los resultados de manera estructurada.
+        /// </remarks>
         public PruebasSeguridadService(ILogger<PruebasSeguridadService> logger, IValidacionService validacionService)
         {
-            _logger = logger;
-            _validacionService = validacionService;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _validacionService = validacionService ?? throw new ArgumentNullException(nameof(validacionService));
         }
 
         public async Task<object> EjecutarPruebasSQLInjection(string baseUrl, string token)

@@ -3,36 +3,129 @@ using System.Windows.Forms;
 
 namespace SVPresentation.Utilidades
 {
+    /// <summary>
+    /// Clase estática que proporciona métodos de extensión para personalizar controles DataGridView.
+    /// </summary>
+    /// <remarks>
+    /// Esta clase contiene métodos de extensión que agregan funcionalidad adicional a los
+    /// controles DataGridView, incluyendo personalización visual, efectos hover y
+    /// configuración de botones de acción. Define un esquema de colores profesional
+    /// y consistente para toda la aplicación.
+    /// </remarks>
     public static class CustomDataGridView
     {
         // Colores de Encabezado
+        /// <summary>
+        /// Color normal del encabezado de columnas.
+        /// </summary>
         private static readonly Color HeaderNormalColor = Color.FromArgb(44, 110, 203);
+
+        /// <summary>
+        /// Color del encabezado cuando el mouse está sobre él (hover).
+        /// </summary>
         private static readonly Color HeaderHoverColor = Color.FromArgb(30, 90, 180);
+
+        /// <summary>
+        /// Color del texto en los encabezados.
+        /// </summary>
         private static readonly Color HeaderTextColor = Color.White;
+
+        /// <summary>
+        /// Índice de la columna del encabezado que está siendo hover.
+        /// </summary>
         private static int HoveredHeaderColumnIndex = -1;
 
         // Fuentes (creadas una vez para eficiencia)
+        /// <summary>
+        /// Fuente para los encabezados de columnas.
+        /// </summary>
         private static readonly Font HeaderFont = new Font("Segoe UI SemiBold", 9.5f, FontStyle.Bold);
+
+        /// <summary>
+        /// Fuente para las celdas de datos.
+        /// </summary>
         private static readonly Font CellFont = new Font("Segoe UI", 9);
+
+        /// <summary>
+        /// Fuente para los botones de acción.
+        /// </summary>
         private static readonly Font ButtonFont = new Font("Segoe UI", 9, FontStyle.Bold);
 
         // Colores de Celdas
+        /// <summary>
+        /// Color de fondo por defecto de las celdas.
+        /// </summary>
         private static readonly Color DefaultCellBackColor = Color.White;
+
+        /// <summary>
+        /// Color del texto por defecto de las celdas.
+        /// </summary>
         private static readonly Color DefaultCellForeColor = Color.FromArgb(64, 64, 64);
+
+        /// <summary>
+        /// Color de fondo de las celdas seleccionadas.
+        /// </summary>
         private static readonly Color DefaultSelectionBackColor = Color.FromArgb(223, 239, 255);
+
+        /// <summary>
+        /// Color del texto de las celdas seleccionadas.
+        /// </summary>
         private static readonly Color DefaultSelectionForeColor = Color.FromArgb(44, 110, 203);
+
+        /// <summary>
+        /// Color de fondo de las filas alternas.
+        /// </summary>
         private static readonly Color AlternatingRowBackColor = Color.FromArgb(250, 251, 253);
+
+        /// <summary>
+        /// Color de fondo del DataGridView.
+        /// </summary>
         private static readonly Color GridBackColor = Color.FromArgb(245, 247, 251);
+
+        /// <summary>
+        /// Color de las líneas de la cuadrícula.
+        /// </summary>
         private static readonly Color GridLinesColor = Color.FromArgb(228, 231, 237);
 
         // Colores de Botones
+        /// <summary>
+        /// Color de fondo del botón de eliminar.
+        /// </summary>
         private static readonly Color DeleteButtonBackColor = Color.FromArgb(219, 64, 64);
+
+        /// <summary>
+        /// Color de fondo del botón de eliminar en hover.
+        /// </summary>
         private static readonly Color DeleteButtonHoverBackColor = Color.FromArgb(183, 42, 42);
+
+        /// <summary>
+        /// Color de fondo por defecto de los botones.
+        /// </summary>
         private static readonly Color DefaultButtonBackColor = Color.FromArgb(44, 110, 203);
+
+        /// <summary>
+        /// Color de fondo de los botones en hover.
+        /// </summary>
         private static readonly Color DefaultButtonHoverBackColor = Color.FromArgb(30, 90, 180);
+
+        /// <summary>
+        /// Color del texto de los botones.
+        /// </summary>
         private static readonly Color ButtonTextColor = Color.White;
 
-
+        /// <summary>
+        /// Implementa la configuración personalizada para un DataGridView.
+        /// </summary>
+        /// <param name="datagrid">El DataGridView al que se aplicará la configuración.</param>
+        /// <param name="textosBotones">Array de textos para los botones de acción (opcional).</param>
+        /// <remarks>
+        /// Este método de extensión aplica una configuración completa y profesional al DataGridView:
+        /// - Configuración visual con colores corporativos
+        /// - Efectos hover en encabezados
+        /// - Configuración de botones de acción
+        /// - Optimización de rendimiento
+        /// - Estilo consistente con el resto de la aplicación
+        /// </remarks>
         public static void ImplementarConfiguracion(this DataGridView datagrid, params string[] textosBotones)
         {
             // Configuraciones base
@@ -41,7 +134,7 @@ namespace SVPresentation.Utilidades
             datagrid.AllowUserToDeleteRows = false;
             datagrid.AllowUserToResizeColumns = false;
             datagrid.AllowUserToResizeRows = false;
-            datagrid.AllowUserToOrderColumns = false; // Ya estaba
+            datagrid.AllowUserToOrderColumns = false;
             datagrid.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
             datagrid.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             datagrid.MultiSelect = false;
@@ -55,7 +148,6 @@ namespace SVPresentation.Utilidades
             datagrid.RowTemplate.Height = 36;
             datagrid.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
             datagrid.AdvancedRowHeadersBorderStyle.All = DataGridViewAdvancedCellBorderStyle.None;
-
 
             // Eventos para efecto hover en encabezados
             datagrid.CellMouseMove += (sender, e) =>

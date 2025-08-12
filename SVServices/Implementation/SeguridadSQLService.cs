@@ -5,13 +5,33 @@ using System.Text;
 
 namespace SVServices.Implementation
 {
+    /// <summary>
+    /// Implementación del servicio para la seguridad SQL y análisis de consultas.
+    /// </summary>
+    /// <remarks>
+    /// Esta clase implementa la interfaz ISeguridadSQLService y proporciona métodos para
+    /// analizar, documentar y verificar la seguridad de las consultas SQL. Incluye
+    /// funcionalidades para detectar vulnerabilidades de SQL Injection, generar reportes
+    /// de seguridad y documentar flujos seguros de operaciones de base de datos.
+    /// </remarks>
     public class SeguridadSQLService : ISeguridadSQLService
     {
+        /// <summary>
+        /// Instancia del logger para registrar eventos de seguridad SQL.
+        /// </summary>
         private readonly ILogger<SeguridadSQLService> _logger;
 
+        /// <summary>
+        /// Inicializa una nueva instancia de la clase SeguridadSQLService.
+        /// </summary>
+        /// <param name="logger">Instancia del logger para registrar eventos de seguridad.</param>
+        /// <remarks>
+        /// El constructor recibe una instancia del logger que será utilizada para
+        /// registrar eventos relacionados con la seguridad de las consultas SQL.
+        /// </remarks>
         public SeguridadSQLService(ILogger<SeguridadSQLService> logger)
         {
-            _logger = logger;
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
         public async Task<string> AnalizarConsultaParametrizada(string nombreProcedimiento, Dictionary<string, object> parametros)

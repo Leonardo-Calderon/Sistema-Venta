@@ -4,15 +4,21 @@
     <TargetFramework>net8.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>SVServices.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- CloudinaryDotNet: Proporciona funcionalidad para subir y gestionar imágenes en Cloudinary -->
     <PackageReference Include="CloudinaryDotNet" Version="1.27.5" />
+    <!-- MailKit: Biblioteca para envío de correos electrónicos -->
     <PackageReference Include="MailKit" Version="4.11.0" />
+    <!-- Microsoft.Extensions.Logging.Abstractions: Proporciona abstracciones para logging -->
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="8.0.2" />
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Referencia al proyecto SVRepository para acceder a entidades y repositorios -->
     <ProjectReference Include="..\SVRepository\SVRepository.csproj" />
   </ItemGroup>
 

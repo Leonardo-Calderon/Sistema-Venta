@@ -6,17 +6,31 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using SistemaVenta.API.Middleware;
 
-// Envolvemos todo en un bloque try-catch para capturar errores de arranque
+/// <summary>
+/// Punto de entrada principal de la aplicación API del Sistema de Ventas.
+/// </summary>
+/// <remarks>
+/// Este archivo configura toda la aplicación ASP.NET Core, incluyendo:
+/// - Configuración de servicios y dependencias
+/// - Configuración de autenticación JWT
+/// - Configuración de CORS y seguridad
+/// - Configuración del pipeline de middleware
+/// - Manejo global de excepciones
+/// 
+/// La aplicación está envuelta en un bloque try-catch para capturar
+/// errores fatales durante el arranque y proporcionar información
+/// detallada de depuración.
+/// </remarks>
 try
 {
     var builder = WebApplication.CreateBuilder(args);
 
-    // 1. Agregar servicios básicos para la API
+    // Configurar servicios básicos para la API
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
 
-    // Configurar servicios anti-CSRF
+    // Configurar servicios anti-CSRF para protección contra ataques Cross-Site Request Forgery
     builder.Services.AddAntiforgery(options =>
     {
         options.HeaderName = "X-CSRF-TOKEN";
@@ -26,13 +40,14 @@ try
         options.Cookie.SameSite = SameSiteMode.Strict;
     });
 
-    // 2. Configurar la Inyección de Dependencias de tus proyectos
+    // Configurar la Inyección de Dependencias de los proyectos de la solución
     builder.Services.RegisterRepositoryDependencies(builder.Configuration);
     builder.Services.RegisterServiceDependencies(builder.Configuration);
-    // Añadimos esto para el endpoint de descarga de PDF que creamos
+    
+    // Agregar HttpClient para operaciones HTTP externas (ej: descarga de PDF)
     builder.Services.AddHttpClient();
 
-    // 3. Configurar CORS
+    // Configurar CORS para permitir comunicación con aplicaciones cliente
     builder.Services.AddCors(options =>
     {
         options.AddPolicy("NuevaPolitica", app =>
@@ -43,7 +58,7 @@ try
         });
     });
 
-    // 4. Configurar la autenticación con JWT
+    // Configurar la autenticación con JWT Bearer Token
     builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         .AddJwtBearer(options =>
         {
@@ -61,14 +76,14 @@ try
 
     var app = builder.Build();
 
-    // 5. Configurar el pipeline de peticiones HTTP
+    // Configurar el pipeline de peticiones HTTP
     if (app.Environment.IsDevelopment())
     {
         app.UseSwagger();
         app.UseSwaggerUI();
     }
 
-    // Habilitar HSTS (HTTP Strict Transport Security)
+    // Habilitar HSTS (HTTP Strict Transport Security) para forzar conexiones HTTPS
     app.UseHsts();
 
     app.UseRouting();
@@ -78,6 +93,8 @@ try
     
     // Agregar middleware de cabeceras de seguridad
     app.UseMiddleware<SecurityHeadersMiddleware>();
+    
+    // Configurar CORS con orígenes específicos para mayor seguridad
     app.UseCors(builder => builder
         .WithOrigins(
             "https://localhost:7289",
@@ -88,10 +105,11 @@ try
         .AllowAnyHeader()
         .AllowCredentials()
     );
+    
     app.UseAuthentication();
     app.UseAuthorization();
     
-    // Agregar middleware de auditoría
+    // Agregar middleware de auditoría para registrar actividades
     app.UseMiddleware<AuditoriaMiddleware>();
     
     app.MapControllers();
@@ -100,7 +118,7 @@ try
 }
 catch (Exception ex)
 {
-    // Si algo falla durante el arranque, lo capturamos aquí
+    // Capturar errores fatales durante el arranque de la aplicación
     Console.ForegroundColor = ConsoleColor.Red;
     Console.WriteLine("!!!!!!!!!! ERROR FATAL AL INICIAR LA APLICACIÓN !!!!!!!!!!");
     Console.WriteLine(ex.ToString()); // Imprime el error completo con todos sus detalles

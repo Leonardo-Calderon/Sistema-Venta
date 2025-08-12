@@ -2,6 +2,23 @@
 @using Microsoft.AspNetCore.Components.Authorization
 @using SistemaVenta.Web.Client.Layout
 
+/// <summary>
+/// Componente principal de enrutamiento para la aplicación Blazor WebAssembly.
+/// </summary>
+/// <remarks>
+/// Este componente configura el sistema de enrutamiento de la aplicación y maneja
+/// la navegación entre páginas. Incluye:
+/// - Configuración del enrutador principal
+/// - Manejo de autorización para rutas protegidas
+/// - Páginas de error para rutas no encontradas
+/// - Estados de carga durante la autorización
+/// - Enfoque automático en elementos de página
+/// 
+/// El componente utiliza AuthorizeRouteView para proteger rutas que requieren
+/// autenticación y proporciona una experiencia de usuario consistente para
+/// diferentes estados de navegación.
+/// </remarks>
+
 <Router AppAssembly="typeof(Program).Assembly" AdditionalAssemblies="new[] { typeof(SistemaVenta.Web.Client.Pages.Usuarios).Assembly }">
     <Found Context="routeData">
         <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)">

@@ -5,6 +5,29 @@ using SVRepository.Entities;
 using SVServices.Interfaces;
 using Microsoft.Extensions.Logging;
 
+/// <summary>
+/// Controlador para gestionar las operaciones CRUD de productos en el sistema.
+/// </summary>
+/// <remarks>
+/// Este controlador proporciona endpoints para:
+/// - Obtener lista de productos con búsqueda opcional
+/// - Búsqueda segura de productos con validación y sanitización
+/// - Crear nuevos productos (solo administradores)
+/// - Editar productos existentes (solo administradores)
+/// - Eliminar productos (solo administradores)
+/// - Obtener un producto específico por ID
+/// - Actualizar stock de productos
+/// 
+/// Implementa medidas de seguridad:
+/// - Control de acceso basado en roles
+/// - Validación y sanitización de entrada de datos
+/// - Prevención de inyección SQL
+/// - Logging de actividades de seguridad
+/// 
+/// Roles requeridos:
+/// - Lectura: Administrador, Ventas
+/// - Escritura: Solo Administrador
+/// </remarks>
 [ApiController]
 [Route("api/[controller]")]
 [Authorize] // Autorización a nivel de controlador
@@ -14,20 +37,54 @@ public class ProductosController : ControllerBase
     private readonly IValidacionService _validacionService;
     private readonly ILogger<ProductosController> _logger;
 
+    /// <summary>
+    /// Inicializa una nueva instancia del controlador de productos.
+    /// </summary>
+    /// <param name="productoService">Servicio para operaciones de productos.</param>
+    /// <param name="validacionService">Servicio para validación y sanitización de datos.</param>
+    /// <param name="logger">Logger para registrar información de operaciones.</param>
+    /// <remarks>
+    /// El constructor recibe las dependencias necesarias para el funcionamiento
+    /// del controlador, incluyendo servicios de productos, validación y logging.
+    /// </remarks>
     public ProductosController(IProductoService productoService, IValidacionService validacionService, ILogger<ProductosController> logger)
     {
-        _productoService = productoService;
-        _validacionService = validacionService;
-        _logger = logger;
+        _productoService = productoService ?? throw new ArgumentNullException(nameof(productoService));
+        _validacionService = validacionService ?? throw new ArgumentNullException(nameof(validacionService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    /// <summary>
+    /// Obtiene una lista de todos los productos, con opción de búsqueda.
+    /// </summary>
+    /// <param name="buscar">Término de búsqueda opcional para filtrar productos.</param>
+    /// <returns>
+    /// - 200 OK con la lista de productos si la operación es exitosa
+    /// - 401 Unauthorized si el usuario no tiene permisos
+    /// - 500 Internal Server Error si ocurre un error interno
+    /// </returns>
+    /// <remarks>
+    /// Este endpoint permite obtener todos los productos disponibles en el sistema.
+    /// Si se proporciona un término de búsqueda, filtra los productos que coincidan
+    /// con el término especificado.
+    /// 
+    /// La respuesta incluye información completa de cada producto:
+    /// - ID y código del producto
+    /// - Descripción del producto
+    /// - Categoría asociada
+    /// - Precios de compra y venta
+    /// - Cantidad en stock
+    /// - Estado activo/inactivo
+    /// 
+    /// Requiere roles: Administrador o Ventas.
+    /// </remarks>
     [HttpGet]
     [Authorize(Roles = "Administrador,Ventas")]
     public async Task<IActionResult> Lista(string buscar = "")
     {
         var listaEntidades = await _productoService.Lista(buscar);
 
-        // El mapeo aquí es correcto.
+        // Mapeo de entidades a DTOs
         var listaDto = listaEntidades.Select(p => new ProductoDTO
         {
             IdProducto = p.IdProducto,
@@ -45,15 +102,35 @@ public class ProductosController : ControllerBase
     }
 
     /// <summary>
-    /// PASO 4: Endpoint de búsqueda segura de productos con validación y sanitización
+    /// Realiza una búsqueda segura de productos con validación y sanitización de entrada.
     /// </summary>
+    /// <param name="searchTerm">Término de búsqueda para filtrar productos.</param>
+    /// <returns>
+    /// - 200 OK con la lista de productos filtrados si la operación es exitosa
+    /// - 400 Bad Request si el término de búsqueda es inválido o contiene caracteres peligrosos
+    /// - 401 Unauthorized si el usuario no tiene permisos
+    /// - 500 Internal Server Error si ocurre un error interno
+    /// </returns>
+    /// <remarks>
+    /// Este endpoint implementa búsqueda segura con múltiples capas de validación:
+    /// 
+    /// Validaciones de seguridad:
+    /// - Sanitización del término de búsqueda
+    /// - Detección de caracteres peligrosos
+    /// - Validación de longitud mínima (2 caracteres) y máxima (50 caracteres)
+    /// - Prevención de inyección SQL
+    /// 
+    /// Si no se proporciona término de búsqueda, retorna la lista completa de productos.
+    /// 
+    /// Requiere roles: Administrador o Ventas.
+    /// </remarks>
     [HttpGet("search")]
     [Authorize(Roles = "Administrador,Ventas")]
     public async Task<IActionResult> BusquedaSegura([FromQuery] string searchTerm = "")
     {
         try
         {
-            // PASO 4: Validación y sanitización del término de búsqueda
+            // Validación y sanitización del término de búsqueda
             if (string.IsNullOrWhiteSpace(searchTerm))
             {
                 _logger.LogInformation("Búsqueda de productos sin término de búsqueda");
@@ -90,7 +167,7 @@ public class ProductosController : ControllerBase
                 return BadRequest("El término de búsqueda no puede exceder 50 caracteres.");
             }
 
-            // PASO 4: Realizar búsqueda segura usando el servicio
+            // Realizar búsqueda segura usando el servicio
             _logger.LogInformation("Iniciando búsqueda segura de productos con término: {SearchTerm}", searchTermSanitizado);
             
             var listaEntidades = await _productoService.Lista(searchTermSanitizado);

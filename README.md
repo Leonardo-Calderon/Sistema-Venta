@@ -2,7 +2,7 @@
 
 **Fecha:** 2025-07-28  
 **Autor:** José Leonardo Rafael Calderón Gallegos  
-**Versión:** 2.0.0  
+**Versión:** 3.0.0  
 **Estado:** Activo y en desarrollo
 
 [![.NET](https://img.shields.io/badge/.NET-8.0-blue.svg)](https://dotnet.microsoft.com/download/dotnet/8.0)
@@ -14,6 +14,7 @@
 ## 📋 Tabla de Contenidos
 
 - [🎯 Descripción del Proyecto](#-descripción-del-proyecto)
+- [🌿 Estrategia de Ramas y Evolución del Proyecto](#-estrategia-de-ramas-y-evolución-del-proyecto)
 - [🏗️ Arquitectura del Sistema](#️-arquitectura-del-sistema)
 - [✨ Características Principales](#-características-principales)
 - [🛡️ Seguridad Implementada](#️-seguridad-implementada)
@@ -45,6 +46,135 @@
 
 ---
 
+## 🌿 Estrategia de Ramas y Evolución del Proyecto
+
+Este proyecto ha evolucionado a través de diferentes ramas de Git, cada una representando una fase importante del desarrollo:
+
+### 📊 Diagrama de Evolución del Proyecto
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    EVOLUCIÓN DEL PROYECTO                  │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  🌿 main (rama principal)                                  │
+│  ├── Sistema de escritorio Windows Forms                   │
+│  ├── .NET Framework 4.8                                    │
+│  ├── Arquitectura monolítica                               │
+│  └── Base de datos SQL Server                              │
+│           │                                                │
+│           ├── 🌿 web-api                                   │
+│           │  ├── Migración a .NET 8                        │
+│           │  ├── Implementación de API REST                │
+│           │  ├── Arquitectura de N-Capas                   │
+│           │  ├── Separación de responsabilidades           │
+│           │  └── Aplicación web Blazor                     │
+│           │           │                                    │
+│           │           └── 🌿 web-api-segura (rama actual)  │
+│           │                ├── Implementación de seguridad │
+│           │                ├── Autenticación JWT           │
+│           │                ├── Middleware de seguridad     │
+│           │                ├── Auditoría completa          │
+│           │                ├── Validación y sanitización   │
+│           │                └── Documentación completa      │
+│           │                                                │
+│           └── 🌿 desarrollo                                │
+│                ├── Nuevas funcionalidades                  │
+│                ├── Mejoras de rendimiento                  │
+│                └── Correcciones de bugs                    │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### 🏗️ Fases de Desarrollo
+
+#### 🌿 **Rama Principal (main) - Versión 1.0**
+**Sistema de Escritorio Original**
+- **Tecnología:** Windows Forms con .NET Framework 4.8
+- **Arquitectura:** Monolítica, aplicación de escritorio tradicional
+- **Características:**
+  - Gestión básica de ventas e inventario
+  - Interfaz de usuario Windows Forms
+  - Base de datos SQL Server local
+  - Funcionalidades core del negocio
+- **Estado:** ✅ Completado y funcional
+
+#### 🌿 **Rama web-api - Versión 2.0**
+**Migración a Arquitectura Web**
+- **Tecnología:** .NET 8, ASP.NET Core, Blazor WebAssembly
+- **Arquitectura:** N-Capas con separación de responsabilidades
+- **Características:**
+  - API REST completa con ASP.NET Core
+  - Aplicación web con Blazor WebAssembly
+  - Arquitectura modular y escalable
+  - Mantenimiento de la aplicación de escritorio
+  - Inyección de dependencias
+  - Patrón Repository y Services
+- **Estado:** ✅ Completado y funcional
+
+#### 🌿 **Rama web-api-segura - Versión 3.0 (Actual)**
+**Implementación de Seguridad Avanzada**
+- **Tecnología:** .NET 8 con medidas de seguridad robustas
+- **Arquitectura:** N-Capas con múltiples capas de seguridad
+- **Características:**
+  - **Autenticación JWT:** Tokens seguros con expiración configurable
+  - **Autorización por Roles:** Control granular de acceso
+  - **Middleware de Seguridad:** Cabeceras HTTP, CSRF protection
+  - **Auditoría Completa:** Registro de todas las actividades del sistema
+  - **Validación y Sanitización:** Prevención de ataques de inyección
+  - **Manejo Global de Errores:** Respuestas seguras y logging
+  - **Documentación Completa:** XML documentation en todo el código
+  - **Secret Manager:** Gestión segura de credenciales
+- **Estado:** ✅ Completado y funcional
+
+### 🔄 Estrategia de Ramas
+
+#### **Ramas Principales**
+- **`main`:** Código estable de la aplicación de escritorio original
+- **`web-api`:** Versión web con API REST y Blazor
+- **`web-api-segura`:** Versión actual con seguridad avanzada
+- **`desarrollo`:** Rama para nuevas funcionalidades y mejoras
+
+#### **Ramas de Desarrollo**
+- **`feature/nombre-funcionalidad`:** Para nuevas características
+- **`bugfix/nombre-error`:** Para correcciones de bugs
+- **`hotfix/urgencia`:** Para correcciones urgentes
+
+### 📈 Beneficios de la Evolución
+
+#### **De Monolítica a Modular**
+- ✅ **Mantenibilidad:** Código organizado y fácil de mantener
+- ✅ **Escalabilidad:** Arquitectura que permite crecimiento
+- ✅ **Testabilidad:** Componentes independientes y testeables
+- ✅ **Reutilización:** Servicios y componentes reutilizables
+
+#### **De Escritorio a Web**
+- ✅ **Accesibilidad:** Acceso desde cualquier dispositivo
+- ✅ **Actualizaciones:** Despliegue centralizado
+- ✅ **Colaboración:** Múltiples usuarios simultáneos
+- ✅ **Móvil:** Interfaz responsiva para dispositivos móviles
+
+#### **De Básica a Segura**
+- ✅ **Protección:** Múltiples capas de seguridad
+- ✅ **Cumplimiento:** Estándares de seguridad empresarial
+- ✅ **Auditoría:** Trazabilidad completa de actividades
+- ✅ **Confianza:** Sistema seguro para datos sensibles
+
+### 🚀 Próximas Fases
+
+#### **Versión 4.0 - Escalabilidad Empresarial**
+- 🌐 **Multi-tenancy:** Soporte para múltiples negocios
+- 📱 **Aplicación Móvil:** React Native o Flutter
+- 🔄 **Sincronización:** Offline/Online sync
+- 📊 **Analytics:** Análisis avanzado de datos
+
+#### **Versión 5.0 - Inteligencia Artificial**
+- 🤖 **IA Predictiva:** Predicción de ventas y demanda
+- 📈 **Machine Learning:** Optimización de inventario
+- 🎯 **Personalización:** Experiencias personalizadas
+- 🔍 **Análisis Avanzado:** Insights de negocio
+
+---
+
 ## 🏗️ Arquitectura del Sistema
 
 El proyecto implementa una arquitectura de **N-Capas** con separación clara de responsabilidades:
@@ -64,11 +194,24 @@ El proyecto implementa una arquitectura de **N-Capas** con separación clara de 
 │  ┌─────────────────────────────────┼────────────────────────┐
 │  │           API REST              │                        │
 │  │      (ASP.NET Core 8)           │                        │
+│  │  ┌─────────────────────────────┐ │                        │
+│  │  │    MIDDLEWARE DE SEGURIDAD  │ │                        │
+│  │  │  - JWT Authentication       │ │                        │
+│  │  │  - Security Headers         │ │                        │
+│  │  │  - Global Exception Handler │ │                        │
+│  │  │  - Auditoría                │ │                        │
+│  │  └─────────────────────────────┘ │                        │
 │  └─────────────────────────────────┘                        │
 │                                   │                        │
 │  ┌─────────────────────────────────┼────────────────────────┐
 │  │           SERVICIOS             │                        │
 │  │      (Lógica de Negocio)        │                        │
+│  │  ┌─────────────────────────────┐ │                        │
+│  │  │    VALIDACIÓN Y SANITIZACIÓN│ │                        │
+│  │  │  - Input Validation         │ │                        │
+│  │  │  - SQL Injection Prevention │ │                        │
+│  │  │  - XSS Prevention           │ │                        │
+│  │  └─────────────────────────────┘ │                        │
 │  └─────────────────────────────────┘                        │
 │                                   │                        │
 │  ┌─────────────────────────────────┼────────────────────────┐
@@ -106,6 +249,9 @@ SistemaVenta/
 ├── 🔌 SistemaVenta.API/                 # API REST (.NET 8)
 │   ├── Controllers/                     # Controladores de la API
 │   ├── Middleware/                      # Middlewares personalizados
+│   │   ├── GlobalExceptionHandlerMiddleware.cs
+│   │   ├── SecurityHeadersMiddleware.cs
+│   │   └── AuditoriaMiddleware.cs
 │   ├── Utilidades/                      # Utilidades de la API
 │   └── Properties/                      # Configuración de la aplicación
 │
@@ -217,8 +363,12 @@ SistemaVenta/
 
 #### 1. Clonar el Repositorio
 ```bash
-git clone https://github.com/tu-usuario/SistemaVenta.git
+# Clonar la rama actual (web-api-segura)
+git clone -b web-api-segura https://github.com/tu-usuario/SistemaVenta.git
 cd SistemaVenta
+
+# O cambiar a la rama si ya tienes el repositorio
+git checkout web-api-segura
 ```
 
 #### 2. Configurar la Base de Datos
@@ -547,6 +697,7 @@ curl -X GET "https://localhost:7206/api/usuarios" \
 - [x] Aplicación de escritorio Windows Forms
 - [x] Sistema de auditoría
 - [x] Protección de seguridad completa
+- [x] Documentación completa del código
 
 ### 🚧 Funcionalidades en Desarrollo
 - [ ] Dashboard con gráficos en tiempo real
@@ -688,7 +839,4 @@ SOFTWARE.
 ### 👨‍💻 Desarrollador
 - **Nombre:** José Leonardo Rafael Calderón Gallegos
 - **Email:** leo_cg2000@hotmail.com
-
-
-</div>
 

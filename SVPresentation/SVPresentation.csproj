@@ -6,6 +6,8 @@
     <Nullable>enable</Nullable>
     <UseWindowsForms>true</UseWindowsForms>
     <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>SVPresentation.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,22 +15,28 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- ClosedXML: Biblioteca para crear y manipular archivos Excel -->
     <PackageReference Include="ClosedXML" Version="0.104.2" />
+    <!-- Microsoft.Extensions.Hosting: Proporciona funcionalidad de hosting para aplicaciones -->
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.2" />
+    <!-- QuestPDF: Biblioteca para generar documentos PDF -->
     <PackageReference Include="QuestPDF" Version="2025.4.2" />
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Archivo de configuración de la aplicación -->
     <Content Include="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Referencia al proyecto SVServices para acceder a servicios y lógica de negocio -->
     <ProjectReference Include="..\SVServices\SVServices.csproj" />
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Configuración para el generador de código de recursos -->
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>
@@ -37,6 +45,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Configuración para el archivo de recursos -->
     <EmbeddedResource Update="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>

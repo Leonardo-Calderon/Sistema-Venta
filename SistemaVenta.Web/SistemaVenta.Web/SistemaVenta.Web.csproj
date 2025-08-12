@@ -4,10 +4,14 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>SistemaVenta.Web.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Referencia al proyecto cliente Blazor WebAssembly -->
     <ProjectReference Include="..\SistemaVenta.Web.Client\SistemaVenta.Web.Client.csproj" />
+    <!-- Microsoft.AspNetCore.Components.WebAssembly.Server: Servidor para Blazor WebAssembly -->
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Server" Version="8.0.14" />
   </ItemGroup>
 

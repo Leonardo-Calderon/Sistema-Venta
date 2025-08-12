@@ -1,0 +1,1640 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SVServices</name>
+    </assembly>
+    <members>
+        <member name="T:SVServices.DependencyInjection">
+            <summary>
+            Clase estática que proporciona métodos de extensión para registrar las dependencias de servicios
+            en el contenedor de inyección de dependencias.
+            </summary>
+            <remarks>
+            Esta clase implementa el patrón de configuración de dependencias para el módulo de servicios,
+            permitiendo la inyección de dependencias de manera centralizada y configurable.
+            Los servicios incluyen funcionalidades de negocio, seguridad, validación y utilidades.
+            </remarks>
+        </member>
+        <member name="M:SVServices.DependencyInjection.RegisterServiceDependencies(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)">
+            <summary>
+            Registra todas las dependencias de servicios en el contenedor de servicios.
+            </summary>
+            <param name="services">Colección de servicios donde se registrarán las dependencias.</param>
+            <param name="configuration">Configuración de la aplicación.</param>
+            <remarks>
+            Este método registra todos los servicios de la capa de servicios como servicios transitorios:
+            - Servicios de negocio (categorías, productos, usuarios, ventas, etc.)
+            - Servicios de seguridad (auditoría, validación, pruebas de seguridad)
+            - Servicios de utilidades (correo, Cloudinary, etc.)
+            </remarks>
+            <example>
+            <code>
+            var services = new ServiceCollection();
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json")
+                .Build();
+            services.RegisterServiceDependencies(configuration);
+            </code>
+            </example>
+        </member>
+        <member name="T:SVServices.Implementation.AuditoriaService">
+            <summary>
+            Implementación del servicio para la auditoría de seguridad del sistema.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz IAuditoriaService y proporciona la funcionalidad
+            para registrar y consultar eventos de seguridad como accesos, autenticaciones
+            y autorizaciones. La auditoría es esencial para el cumplimiento de políticas
+            de seguridad y la detección de actividades sospechosas.
+            </remarks>
+        </member>
+        <member name="F:SVServices.Implementation.AuditoriaService._logger">
+            <summary>
+            Instancia del logger para registrar eventos de auditoría.
+            </summary>
+        </member>
+        <member name="M:SVServices.Implementation.AuditoriaService.#ctor(Microsoft.Extensions.Logging.ILogger{SVServices.Implementation.AuditoriaService})">
+            <summary>
+            Inicializa una nueva instancia de la clase AuditoriaService.
+            </summary>
+            <param name="logger">Instancia del logger para registrar eventos.</param>
+            <remarks>
+            El constructor recibe una instancia del logger que será utilizada para
+            registrar todos los eventos de auditoría de manera estructurada.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.AuditoriaService.RegistrarAcceso(System.Security.Claims.ClaimsPrincipal,System.String,System.String,System.String,System.String)">
+            <summary>
+            Registra un intento de acceso a un endpoint del sistema.
+            </summary>
+            <param name="usuario">Información del usuario que realiza el acceso.</param>
+            <param name="endpoint">Endpoint o ruta accedida en el sistema.</param>
+            <param name="metodo">Método HTTP utilizado (GET, POST, PUT, DELETE, etc.).</param>
+            <param name="resultado">Resultado del acceso (Permitido/Denegado).</param>
+            <param name="detalles">Detalles adicionales del acceso como parámetros, headers, etc.</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método registra cada intento de acceso a los endpoints del sistema,
+            proporcionando información detallada para análisis de seguridad y cumplimiento.
+            Los eventos se registran en el sistema de logging estructurado.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.AuditoriaService.RegistrarAutorizacion(System.Security.Claims.ClaimsPrincipal,System.String,System.String,System.String,System.String)">
+            <summary>
+            Registra un intento de autorización a un recurso específico.
+            </summary>
+            <param name="usuario">Información del usuario que intenta la autorización.</param>
+            <param name="recurso">Recurso al que se intenta acceder (archivo, función, dato, etc.).</param>
+            <param name="accion">Acción que se intenta realizar (leer, escribir, eliminar, etc.).</param>
+            <param name="resultado">Resultado de la autorización (Permitido/Denegado).</param>
+            <param name="motivo">Motivo del resultado de la autorización.</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método registra los intentos de autorización para recursos específicos,
+            permitiendo el seguimiento de permisos y la detección de accesos no autorizados.
+            Los eventos se registran en el sistema de logging estructurado.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.AuditoriaService.RegistrarAutenticacion(System.String,System.String,System.String,System.String)">
+            <summary>
+            Registra un intento de autenticación en el sistema.
+            </summary>
+            <param name="nombreUsuario">Nombre de usuario que intenta autenticarse.</param>
+            <param name="resultado">Resultado del intento de login (Exitoso/Fallido).</param>
+            <param name="ipAddress">Dirección IP del cliente que realiza el intento.</param>
+            <param name="detalles">Detalles adicionales como navegador, sistema operativo, etc.</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método registra todos los intentos de autenticación, exitosos y fallidos,
+            para detectar patrones de ataque como fuerza bruta o accesos desde ubicaciones sospechosas.
+            Los eventos se registran en el sistema de logging estructurado.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.AuditoriaService.ObtenerHistorialAuditoria(System.Int32,System.DateTime,System.DateTime)">
+            <summary>
+            Obtiene el historial de auditoría para un usuario específico en un rango de fechas.
+            </summary>
+            <param name="idUsuario">Identificador único del usuario.</param>
+            <param name="fechaInicio">Fecha de inicio del período de consulta.</param>
+            <param name="fechaFin">Fecha de fin del período de consulta.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de registros de auditoría.</returns>
+            <remarks>
+            Este método permite consultar el historial completo de actividades de un usuario
+            específico, útil para investigaciones de seguridad y cumplimiento de políticas.
+            Actualmente retorna una lista vacía como implementación base.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.AuditoriaService.ObtenerEstadisticasAuditoria(System.DateTime,System.DateTime)">
+            <summary>
+            Obtiene estadísticas de auditoría para administradores en un rango de fechas.
+            </summary>
+            <param name="fechaInicio">Fecha de inicio del período de análisis.</param>
+            <param name="fechaFin">Fecha de fin del período de análisis.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado son estadísticas de auditoría.</returns>
+            <remarks>
+            Este método genera estadísticas agregadas de auditoría para administradores,
+            incluyendo métricas como intentos de acceso fallidos, accesos no autorizados,
+            patrones de uso, etc. Actualmente retorna estadísticas simuladas como implementación base.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Implementation.CategoriaService">
+            <summary>
+            Implementación del servicio para la gestión de categorías de productos.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz ICategoriaService y proporciona la lógica de negocio
+            para la gestión de categorías. Actúa como una capa de abstracción entre los controladores
+            y los repositorios, permitiendo agregar validaciones y lógica de negocio adicional.
+            </remarks>
+        </member>
+        <member name="F:SVServices.Implementation.CategoriaService._categoriaRepository">
+            <summary>
+            Instancia del repositorio de categorías para acceder a los datos.
+            </summary>
+        </member>
+        <member name="M:SVServices.Implementation.CategoriaService.#ctor(SVRepository.Interfaces.ICategoriaRepository)">
+            <summary>
+            Inicializa una nueva instancia de la clase CategoriaService.
+            </summary>
+            <param name="categoriaRepository">Instancia del repositorio de categorías.</param>
+            <remarks>
+            El constructor recibe una instancia del repositorio de categorías que será utilizada
+            para realizar las operaciones de base de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.CategoriaService.Lista(System.String)">
+            <summary>
+            Obtiene una lista de categorías opcionalmente filtrada por un término de búsqueda.
+            </summary>
+            <param name="buscar">Término opcional para filtrar las categorías por nombre. Si está vacío, retorna todas las categorías.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de categorías.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones adicionales o lógica de negocio específica.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.CategoriaService.Crear(SVRepository.Entities.Categoria)">
+            <summary>
+            Crea una nueva categoría en el sistema.
+            </summary>
+            <param name="objeto">Objeto Categoria con los datos de la nueva categoría a crear.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones de negocio como verificar duplicados o validar reglas específicas.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.CategoriaService.Editar(SVRepository.Entities.Categoria)">
+            <summary>
+            Actualiza los datos de una categoría existente en el sistema.
+            </summary>
+            <param name="objeto">Objeto Categoria con los datos actualizados de la categoría.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones de negocio como verificar que la categoría existe
+            y que los cambios son válidos.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Implementation.CloudinaryService">
+            <summary>
+            Implementación del servicio para la gestión de imágenes en Cloudinary.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz ICloudinaryService y proporciona la funcionalidad
+            para subir y eliminar imágenes en el servicio de almacenamiento en la nube Cloudinary.
+            Cloudinary es una plataforma que permite gestionar, transformar y optimizar
+            imágenes y videos en la nube.
+            </remarks>
+        </member>
+        <member name="F:SVServices.Implementation.CloudinaryService._configuracion">
+            <summary>
+            Instancia de configuración para acceder a los parámetros de Cloudinary.
+            </summary>
+        </member>
+        <member name="F:SVServices.Implementation.CloudinaryService._cloudinary">
+            <summary>
+            Cliente de Cloudinary para realizar operaciones con imágenes.
+            </summary>
+        </member>
+        <member name="M:SVServices.Implementation.CloudinaryService.#ctor(Microsoft.Extensions.Configuration.IConfiguration)">
+            <summary>
+            Inicializa una nueva instancia de la clase CloudinaryService.
+            </summary>
+            <param name="configuracion">Instancia de configuración que contiene los parámetros de Cloudinary.</param>
+            <remarks>
+            El constructor lee la configuración de Cloudinary desde el archivo de configuración
+            y inicializa el cliente de Cloudinary con las credenciales correspondientes.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.CloudinaryService.SubirImagen(System.String,System.IO.Stream)">
+            <summary>
+            Sube una imagen al servicio Cloudinary.
+            </summary>
+            <param name="nombreImagen">Nombre que se asignará a la imagen en Cloudinary.</param>
+            <param name="formatoImagen">Stream que contiene los datos de la imagen a subir.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un objeto CloudinaryResponse con la información de la imagen subida.</returns>
+            <remarks>
+            Este método sube una imagen al servicio Cloudinary y retorna información sobre la imagen
+            subida, incluyendo el identificador público y la URL segura para acceder a la imagen.
+            Las imágenes se almacenan en la carpeta "SistemaDeVenta" para mejor organización.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.CloudinaryService.EliminarImagen(System.String)">
+            <summary>
+            Elimina una imagen del servicio Cloudinary.
+            </summary>
+            <param name="publicId">Identificador público de la imagen a eliminar.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es true si la eliminación fue exitosa, false en caso contrario.</returns>
+            <remarks>
+            Este método elimina permanentemente una imagen del servicio Cloudinary utilizando
+            su identificador público. La eliminación es irreversible.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Implementation.CorreoService">
+            <summary>
+            Implementación del servicio para el envío de correos electrónicos.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz ICorreoService y proporciona la funcionalidad
+            para enviar correos electrónicos utilizando el protocolo SMTP. Utiliza la biblioteca
+            MailKit para el envío seguro de correos con soporte para TLS/SSL.
+            </remarks>
+        </member>
+        <member name="F:SVServices.Implementation.CorreoService._configuracion">
+            <summary>
+            Instancia de configuración para acceder a los parámetros de SMTP.
+            </summary>
+        </member>
+        <member name="F:SVServices.Implementation.CorreoService._smtp">
+            <summary>
+            Cliente SMTP para el envío de correos.
+            </summary>
+        </member>
+        <member name="F:SVServices.Implementation.CorreoService._host">
+            <summary>
+            Host del servidor SMTP.
+            </summary>
+        </member>
+        <member name="F:SVServices.Implementation.CorreoService._port">
+            <summary>
+            Puerto del servidor SMTP.
+            </summary>
+        </member>
+        <member name="F:SVServices.Implementation.CorreoService._user">
+            <summary>
+            Usuario para la autenticación SMTP.
+            </summary>
+        </member>
+        <member name="F:SVServices.Implementation.CorreoService._pass">
+            <summary>
+            Contraseña para la autenticación SMTP.
+            </summary>
+        </member>
+        <member name="M:SVServices.Implementation.CorreoService.#ctor(Microsoft.Extensions.Configuration.IConfiguration)">
+            <summary>
+            Inicializa una nueva instancia de la clase CorreoService.
+            </summary>
+            <param name="configuracion">Instancia de configuración que contiene los parámetros SMTP.</param>
+            <remarks>
+            El constructor lee la configuración SMTP desde el archivo de configuración
+            y prepara el cliente SMTP para el envío de correos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.CorreoService.Enviar(System.String,System.String,System.String)">
+            <summary>
+            Envía un correo electrónico a un destinatario específico.
+            </summary>
+            <param name="para">Dirección de correo electrónico del destinatario.</param>
+            <param name="asunto">Asunto del correo electrónico.</param>
+            <param name="mensajeHTML">Contenido del correo en formato HTML.</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método establece una conexión SMTP segura, autentica con el servidor,
+            crea y envía el mensaje de correo, y finalmente cierra la conexión.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Implementation.MedidaService">
+            <summary>
+            Implementación del servicio para la gestión de unidades de medida.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz IMedidaService y proporciona la lógica de negocio
+            para la gestión de unidades de medida. Actúa como una capa de abstracción entre
+            los controladores y los repositorios, permitiendo agregar validaciones y lógica
+            de negocio adicional.
+            </remarks>
+        </member>
+        <member name="F:SVServices.Implementation.MedidaService._medidaRepository">
+            <summary>
+            Instancia del repositorio de medidas para acceder a los datos.
+            </summary>
+        </member>
+        <member name="M:SVServices.Implementation.MedidaService.#ctor(SVRepository.Interfaces.IMedidaRepository)">
+            <summary>
+            Inicializa una nueva instancia de la clase MedidaService.
+            </summary>
+            <param name="medidaRepository">Instancia del repositorio de medidas.</param>
+            <remarks>
+            El constructor recibe una instancia del repositorio de medidas que será utilizada
+            para realizar las operaciones de base de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.MedidaService.Lista">
+            <summary>
+            Obtiene una lista de todas las unidades de medida disponibles en el sistema.
+            </summary>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de unidades de medida.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones adicionales o lógica de negocio específica.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Implementation.MenuRolService">
+            <summary>
+            Implementación del servicio para la gestión de menús por rol.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz IMenuRolService y proporciona la lógica de negocio
+            para la gestión de menús asociados a roles específicos. Actúa como una capa de abstracción
+            entre los controladores y los repositorios, permitiendo agregar validaciones y lógica
+            de negocio adicional. Esta funcionalidad es esencial para el control de acceso basado en roles (RBAC).
+            </remarks>
+        </member>
+        <member name="F:SVServices.Implementation.MenuRolService._menuRolRepository">
+            <summary>
+            Instancia del repositorio de menús por rol para acceder a los datos.
+            </summary>
+        </member>
+        <member name="M:SVServices.Implementation.MenuRolService.#ctor(SVRepository.Interfaces.IMenuRolRepository)">
+            <summary>
+            Inicializa una nueva instancia de la clase MenuRolService.
+            </summary>
+            <param name="menuRolRepository">Instancia del repositorio de menús por rol.</param>
+            <remarks>
+            El constructor recibe una instancia del repositorio de menús por rol que será utilizada
+            para realizar las operaciones de base de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.MenuRolService.Lista(System.Int32)">
+            <summary>
+            Obtiene una lista de menús disponibles para un rol específico.
+            </summary>
+            <param name="idRol">Identificador único del rol para el cual se obtienen los menús.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de menús disponibles para el rol.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones adicionales o lógica de negocio específica,
+            como verificar que el rol existe o aplicar filtros adicionales.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Implementation.NegocioService">
+            <summary>
+            Implementación del servicio para la gestión de información del negocio.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz INegocioService y proporciona la lógica de negocio
+            para la gestión de información del negocio. Actúa como una capa de abstracción entre
+            los controladores y los repositorios, permitiendo agregar validaciones y lógica
+            de negocio adicional. La información del negocio incluye datos fiscales, de contacto
+            y configuración del sistema.
+            </remarks>
+        </member>
+        <member name="F:SVServices.Implementation.NegocioService._negocioRepository">
+            <summary>
+            Instancia del repositorio de negocio para acceder a los datos.
+            </summary>
+        </member>
+        <member name="M:SVServices.Implementation.NegocioService.#ctor(SVRepository.Interfaces.INegocioRepository)">
+            <summary>
+            Inicializa una nueva instancia de la clase NegocioService.
+            </summary>
+            <param name="negocioRepository">Instancia del repositorio de negocio.</param>
+            <remarks>
+            El constructor recibe una instancia del repositorio de negocio que será utilizada
+            para realizar las operaciones de base de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.NegocioService.Obtener">
+            <summary>
+            Obtiene la información de configuración del negocio.
+            </summary>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un objeto Negocio con la información del negocio.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones adicionales o lógica de negocio específica.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.NegocioService.Editar(SVRepository.Entities.Negocio)">
+            <summary>
+            Actualiza la información de configuración del negocio.
+            </summary>
+            <param name="objeto">Objeto Negocio con los datos actualizados del negocio.</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones de negocio antes de actualizar, como verificar
+            que los datos son válidos y cumplen con las reglas de negocio.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Implementation.ProductoService">
+            <summary>
+            Implementación del servicio para la gestión de productos del sistema de ventas.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz IProductoService y proporciona la lógica de negocio
+            para la gestión de productos. Actúa como una capa de abstracción entre los controladores
+            y los repositorios, permitiendo agregar validaciones y lógica de negocio adicional.
+            Los productos son los elementos que se venden en el sistema e incluyen información
+            sobre precios, stock y categoría.
+            </remarks>
+        </member>
+        <member name="F:SVServices.Implementation.ProductoService._productoRepository">
+            <summary>
+            Instancia del repositorio de productos para acceder a los datos.
+            </summary>
+        </member>
+        <member name="M:SVServices.Implementation.ProductoService.#ctor(SVRepository.Interfaces.IProductoRepository)">
+            <summary>
+            Inicializa una nueva instancia de la clase ProductoService.
+            </summary>
+            <param name="productoRepository">Instancia del repositorio de productos.</param>
+            <remarks>
+            El constructor recibe una instancia del repositorio de productos que será utilizada
+            para realizar las operaciones de base de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.ProductoService.Lista(System.String)">
+            <summary>
+            Obtiene una lista de productos opcionalmente filtrada por un término de búsqueda.
+            </summary>
+            <param name="buscar">Término opcional para filtrar los productos por código o descripción. Si está vacío, retorna todos los productos.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de productos.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones adicionales o lógica de negocio específica.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.ProductoService.Crear(SVRepository.Entities.Producto)">
+            <summary>
+            Crea un nuevo producto en el sistema.
+            </summary>
+            <param name="objeto">Objeto Producto con los datos del nuevo producto a crear.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones de negocio como verificar duplicados o validar reglas específicas.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.ProductoService.Editar(SVRepository.Entities.Producto)">
+            <summary>
+            Actualiza los datos de un producto existente en el sistema.
+            </summary>
+            <param name="objeto">Objeto Producto con los datos actualizados del producto.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones de negocio como verificar que el producto existe
+            y que los cambios son válidos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.ProductoService.Obtener(System.String)">
+            <summary>
+            Obtiene un producto específico por su código.
+            </summary>
+            <param name="codigo">Código único del producto a obtener.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el producto encontrado o un objeto vacío si no existe.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones adicionales o lógica de negocio específica.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Implementation.PruebasSeguridadService">
+            <summary>
+            Implementación del servicio para la ejecución de pruebas de seguridad.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz IPruebasSeguridadService y proporciona métodos para
+            ejecutar pruebas automatizadas de seguridad, especialmente contra SQL Injection.
+            Incluye funcionalidades para probar endpoints con entradas maliciosas, generar
+            reportes de seguridad y validar respuestas del sistema.
+            </remarks>
+        </member>
+        <member name="F:SVServices.Implementation.PruebasSeguridadService._logger">
+            <summary>
+            Instancia del logger para registrar eventos de pruebas de seguridad.
+            </summary>
+        </member>
+        <member name="F:SVServices.Implementation.PruebasSeguridadService._validacionService">
+            <summary>
+            Instancia del servicio de validación para sanitizar entradas.
+            </summary>
+        </member>
+        <member name="M:SVServices.Implementation.PruebasSeguridadService.#ctor(Microsoft.Extensions.Logging.ILogger{SVServices.Implementation.PruebasSeguridadService},SVServices.Interfaces.IValidacionService)">
+            <summary>
+            Inicializa una nueva instancia de la clase PruebasSeguridadService.
+            </summary>
+            <param name="logger">Instancia del logger para registrar eventos de pruebas.</param>
+            <param name="validacionService">Instancia del servicio de validación.</param>
+            <remarks>
+            El constructor recibe las dependencias necesarias para ejecutar pruebas
+            de seguridad y registrar los resultados de manera estructurada.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Implementation.RolService">
+            <summary>
+            Implementación del servicio para la gestión de roles de usuario.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz IRolService y proporciona la lógica de negocio
+            para la gestión de roles. Actúa como una capa de abstracción entre los controladores
+            y los repositorios, permitiendo agregar validaciones y lógica de negocio adicional.
+            </remarks>
+        </member>
+        <member name="F:SVServices.Implementation.RolService._rolRepository">
+            <summary>
+            Instancia del repositorio de roles para acceder a los datos.
+            </summary>
+        </member>
+        <member name="M:SVServices.Implementation.RolService.#ctor(SVRepository.Interfaces.IRolRepository)">
+            <summary>
+            Inicializa una nueva instancia de la clase RolService.
+            </summary>
+            <param name="rolRepository">Instancia del repositorio de roles.</param>
+            <remarks>
+            El constructor recibe una instancia del repositorio de roles que será utilizada
+            para realizar las operaciones de base de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.RolService.Lista">
+            <summary>
+            Obtiene una lista de todos los roles disponibles en el sistema.
+            </summary>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de roles.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones adicionales o lógica de negocio específica.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Implementation.SeguridadSQLService">
+            <summary>
+            Implementación del servicio para la seguridad SQL y análisis de consultas.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz ISeguridadSQLService y proporciona métodos para
+            analizar, documentar y verificar la seguridad de las consultas SQL. Incluye
+            funcionalidades para detectar vulnerabilidades de SQL Injection, generar reportes
+            de seguridad y documentar flujos seguros de operaciones de base de datos.
+            </remarks>
+        </member>
+        <member name="F:SVServices.Implementation.SeguridadSQLService._logger">
+            <summary>
+            Instancia del logger para registrar eventos de seguridad SQL.
+            </summary>
+        </member>
+        <member name="M:SVServices.Implementation.SeguridadSQLService.#ctor(Microsoft.Extensions.Logging.ILogger{SVServices.Implementation.SeguridadSQLService})">
+            <summary>
+            Inicializa una nueva instancia de la clase SeguridadSQLService.
+            </summary>
+            <param name="logger">Instancia del logger para registrar eventos de seguridad.</param>
+            <remarks>
+            El constructor recibe una instancia del logger que será utilizada para
+            registrar eventos relacionados con la seguridad de las consultas SQL.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.SeguridadSQLService.ContieneCaracteresPeligrosos(System.String)">
+            <summary>
+            Verifica si una entrada contiene caracteres peligrosos para SQL Injection
+            </summary>
+            <param name="entrada">Entrada a verificar</param>
+            <returns>True si contiene caracteres peligrosos</returns>
+        </member>
+        <member name="M:SVServices.Implementation.SeguridadSQLService.SanitizarContraSQLInjection(System.String)">
+            <summary>
+            Sanitiza una entrada contra SQL Injection
+            </summary>
+            <param name="entrada">Entrada a sanitizar</param>
+            <returns>Entrada sanitizada</returns>
+        </member>
+        <member name="T:SVServices.Implementation.UsuarioService">
+            <summary>
+            Implementación del servicio para la gestión de usuarios del sistema.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz IUsuarioService y proporciona la lógica de negocio
+            para la gestión de usuarios. Actúa como una capa de abstracción entre los controladores
+            y los repositorios, permitiendo agregar validaciones y lógica de negocio adicional.
+            Los usuarios son la base del sistema de autenticación y autorización, incluyendo
+            funcionalidades para login, gestión de contraseñas y administración de usuarios.
+            </remarks>
+        </member>
+        <member name="F:SVServices.Implementation.UsuarioService._usuarioRepository">
+            <summary>
+            Instancia del repositorio de usuarios para acceder a los datos.
+            </summary>
+        </member>
+        <member name="M:SVServices.Implementation.UsuarioService.#ctor(SVRepository.Interfaces.IUsuarioRepository)">
+            <summary>
+            Inicializa una nueva instancia de la clase UsuarioService.
+            </summary>
+            <param name="usuarioRepository">Instancia del repositorio de usuarios.</param>
+            <remarks>
+            El constructor recibe una instancia del repositorio de usuarios que será utilizada
+            para realizar las operaciones de base de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.UsuarioService.Lista(System.String)">
+            <summary>
+            Obtiene una lista de usuarios opcionalmente filtrada por un término de búsqueda.
+            </summary>
+            <param name="buscar">Término opcional para filtrar los usuarios por nombre completo o correo. Si está vacío, retorna todos los usuarios.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de usuarios.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones adicionales o lógica de negocio específica.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.UsuarioService.Crear(SVRepository.Entities.Usuario)">
+            <summary>
+            Crea un nuevo usuario en el sistema.
+            </summary>
+            <param name="objeto">Objeto Usuario con los datos del nuevo usuario a crear.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones de negocio como verificar duplicados o validar reglas específicas.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.UsuarioService.Editar(SVRepository.Entities.Usuario)">
+            <summary>
+            Actualiza los datos de un usuario existente en el sistema.
+            </summary>
+            <param name="objeto">Objeto Usuario con los datos actualizados del usuario.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones de negocio como verificar que el usuario existe
+            y que los cambios son válidos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.UsuarioService.Eliminar(System.Int32)">
+            <summary>
+            Elimina lógicamente un usuario del sistema.
+            </summary>
+            <param name="idUsuario">Identificador único del usuario a eliminar.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones de negocio como verificar que el usuario no tiene
+            operaciones pendientes.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.UsuarioService.Login(System.String,System.String)">
+            <summary>
+            Autentica un usuario con su nombre de usuario y contraseña.
+            </summary>
+            <param name="usuario">Nombre de usuario para la autenticación.</param>
+            <param name="clave">Contraseña del usuario.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el usuario autenticado o un objeto vacío si la autenticación falla.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar lógica adicional de seguridad como logging de intentos
+            de acceso, bloqueo temporal de cuentas, etc.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.UsuarioService.ObtenerPorId(System.Int32)">
+            <summary>
+            Obtiene un usuario específico por su identificador.
+            </summary>
+            <param name="idUsuario">Identificador único del usuario a obtener.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el usuario encontrado o un objeto vacío si no existe.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones adicionales o lógica de negocio específica.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.UsuarioService.VerificarCorreo(System.String)">
+            <summary>
+            Verifica si existe un usuario con el correo electrónico especificado.
+            </summary>
+            <param name="correo">Correo electrónico a verificar.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el ID del usuario si existe, o 0 si no existe.</returns>
+            <remarks>
+            Este método se utiliza principalmente para validar la unicidad del correo electrónico
+            durante el proceso de registro o recuperación de contraseña.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.UsuarioService.ActualizarClave(System.Int32,System.String,System.Int32)">
+            <summary>
+            Actualiza la contraseña de un usuario y opcionalmente resetea el flag de cambio de contraseña.
+            </summary>
+            <param name="idUsuario">Identificador único del usuario.</param>
+            <param name="nuevaClave">Nueva contraseña del usuario.</param>
+            <param name="resetear">Flag que indica si se debe resetear el flag de cambio de contraseña (1 = sí, 0 = no).</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones de seguridad como verificar la complejidad
+            de la contraseña o el historial de contraseñas utilizadas.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Implementation.ValidacionService">
+            <summary>
+            Implementación del servicio para la validación y sanitización de datos de entrada.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz IValidacionService y proporciona métodos para
+            validar y sanitizar diferentes tipos de datos de entrada, incluyendo protección
+            contra SQL Injection, validación de formatos y normalización de datos.
+            </remarks>
+        </member>
+        <member name="F:SVServices.Implementation.ValidacionService._logger">
+            <summary>
+            Instancia del logger para registrar eventos de validación.
+            </summary>
+        </member>
+        <member name="F:SVServices.Implementation.ValidacionService.CaracteresPeligrosos">
+            <summary>
+            Lista de caracteres y patrones peligrosos para SQL Injection.
+            </summary>
+        </member>
+        <member name="M:SVServices.Implementation.ValidacionService.#ctor(Microsoft.Extensions.Logging.ILogger{SVServices.Implementation.ValidacionService})">
+            <summary>
+            Inicializa una nueva instancia de la clase ValidacionService.
+            </summary>
+            <param name="logger">Instancia del logger para registrar eventos de validación.</param>
+            <remarks>
+            El constructor recibe una instancia del logger que será utilizada para
+            registrar eventos de validación y sanitización.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.ValidacionService.SanitizarString(System.String,System.Int32,System.Boolean)">
+            <summary>
+            Valida y sanitiza un string para prevenir SQL Injection.
+            </summary>
+            <param name="input">String de entrada a sanitizar.</param>
+            <param name="maxLength">Longitud máxima permitida para el string.</param>
+            <param name="allowNull">Indica si se permite retornar null cuando el input está vacío.</param>
+            <returns>String sanitizado o null si no es válido.</returns>
+            <remarks>
+            Este método realiza múltiples validaciones y sanitizaciones:
+            - Verifica la longitud máxima
+            - Sanitiza contra SQL Injection
+            - Remueve caracteres de control
+            - Normaliza espacios en blanco
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.ValidacionService.SanitizarEmail(System.String)">
+            <summary>
+            Valida y sanitiza un email.
+            </summary>
+            <param name="email">Email a validar y sanitizar.</param>
+            <returns>Email sanitizado o null si no es válido.</returns>
+            <remarks>
+            Este método valida el formato de email usando una expresión regular
+            y convierte el resultado a minúsculas para normalización.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.ValidacionService.SanitizarInt(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Valida y sanitiza un número entero.
+            </summary>
+            <param name="input">Valor entero a validar.</param>
+            <param name="minValue">Valor mínimo permitido.</param>
+            <param name="maxValue">Valor máximo permitido.</param>
+            <returns>Número validado o null si no está en el rango permitido.</returns>
+            <remarks>
+            Este método verifica que el valor esté dentro del rango especificado.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.ValidacionService.SanitizarDecimal(System.Decimal,System.Decimal,System.Decimal)">
+            <summary>
+            Valida y sanitiza un número decimal.
+            </summary>
+            <param name="input">Valor decimal a validar.</param>
+            <param name="minValue">Valor mínimo permitido.</param>
+            <param name="maxValue">Valor máximo permitido.</param>
+            <returns>Número validado y redondeado a 2 decimales, o null si no está en el rango permitido.</returns>
+            <remarks>
+            Este método verifica que el valor esté dentro del rango especificado
+            y lo redondea a 2 decimales para evitar problemas de precisión.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.ValidacionService.SanitizarUrl(System.String)">
+            <summary>
+            Valida y sanitiza una URL.
+            </summary>
+            <param name="url">URL a validar y sanitizar.</param>
+            <returns>URL sanitizada o null si no es válida.</returns>
+            <remarks>
+            Este método valida el formato de URL y verifica que use esquemas
+            HTTP o HTTPS permitidos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.ValidacionService.ValidarObjeto(System.Object)">
+            <summary>
+            Valida un objeto usando Data Annotations.
+            </summary>
+            <param name="obj">Objeto a validar.</param>
+            <returns>Lista de errores de validación encontrados.</returns>
+            <remarks>
+            Este método utiliza el sistema de validación de Data Annotations
+            para validar todas las propiedades del objeto que tengan atributos
+            de validación definidos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.ValidacionService.ContieneCaracteresPeligrosos(System.String)">
+            <summary>
+            Verifica si un string contiene caracteres peligrosos para SQL Injection.
+            </summary>
+            <param name="input">String a verificar.</param>
+            <returns>True si contiene caracteres peligrosos, false en caso contrario.</returns>
+            <remarks>
+            Este método verifica si el string contiene alguno de los caracteres
+            o patrones definidos como peligrosos para SQL Injection.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.ValidacionService.SanitizarContraSQLInjection(System.String)">
+            <summary>
+            Sanitiza un string removiendo caracteres peligrosos para SQL Injection.
+            </summary>
+            <param name="input">String a sanitizar.</param>
+            <returns>String sanitizado sin caracteres peligrosos.</returns>
+            <remarks>
+            Este método remueve caracteres y patrones peligrosos para SQL Injection,
+            incluyendo secuencias de escape SQL y comentarios.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Implementation.VentaService">
+            <summary>
+            Implementación del servicio para la gestión de ventas del sistema.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz IVentaService y proporciona la lógica de negocio
+            para la gestión de ventas. Actúa como una capa de abstracción entre los controladores
+            y los repositorios, permitiendo agregar validaciones y lógica de negocio adicional.
+            Las ventas son el núcleo del sistema de gestión comercial e incluyen funcionalidades
+            para registro de ventas, consulta de detalles y generación de reportes.
+            </remarks>
+        </member>
+        <member name="F:SVServices.Implementation.VentaService._ventaRepository">
+            <summary>
+            Instancia del repositorio de ventas para acceder a los datos.
+            </summary>
+        </member>
+        <member name="M:SVServices.Implementation.VentaService.#ctor(SVRepository.Interfaces.IVentaRepository)">
+            <summary>
+            Inicializa una nueva instancia de la clase VentaService.
+            </summary>
+            <param name="ventaRepository">Instancia del repositorio de ventas.</param>
+            <remarks>
+            El constructor recibe una instancia del repositorio de ventas que será utilizada
+            para realizar las operaciones de base de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.VentaService.Registrar(System.String)">
+            <summary>
+            Registra una nueva venta en el sistema a partir de un XML que contiene la información de la venta.
+            </summary>
+            <param name="ventaXML">Cadena XML que contiene la información completa de la venta y sus detalles.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el número de venta generado o un mensaje de error.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones de negocio como verificar stock disponible, validar precios, etc.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.VentaService.Obtener(System.String)">
+            <summary>
+            Obtiene la información completa de una venta específica por su número de venta.
+            </summary>
+            <param name="numeroVenta">Número único de la venta a obtener.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es la venta encontrada o un objeto vacío si no existe.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones adicionales o lógica de negocio específica.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.VentaService.ObtenerDetalle(System.String)">
+            <summary>
+            Obtiene los detalles de una venta específica por su número de venta.
+            </summary>
+            <param name="numeroVenta">Número único de la venta cuyos detalles se quieren obtener.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de detalles de la venta.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones adicionales o lógica de negocio específica.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.VentaService.Lista(System.String,System.String,System.String)">
+            <summary>
+            Obtiene una lista de ventas filtrada por rango de fechas y opcionalmente por término de búsqueda.
+            </summary>
+            <param name="fechaInicio">Fecha de inicio del rango de búsqueda en formato string.</param>
+            <param name="fechaFin">Fecha de fin del rango de búsqueda en formato string.</param>
+            <param name="buscar">Término opcional para filtrar las ventas por número de venta o nombre de cliente.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de ventas que cumplen con los criterios.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar validaciones adicionales o lógica de negocio específica.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Implementation.VentaService.Reporte(System.String,System.String)">
+            <summary>
+            Genera un reporte de ventas para un rango de fechas específico.
+            </summary>
+            <param name="fechaInicio">Fecha de inicio del reporte en formato string.</param>
+            <param name="fechaFin">Fecha de fin del reporte en formato string.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de detalles de ventas para el reporte.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente. En el futuro,
+            se pueden agregar lógica adicional de negocio como cálculos de totales, filtros adicionales, etc.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Interfaces.IAuditoriaService">
+            <summary>
+            Interfaz que define las operaciones de servicio para la auditoría de seguridad del sistema.
+            </summary>
+            <remarks>
+            Esta interfaz implementa el patrón Service para la auditoría de seguridad, proporcionando
+            métodos para registrar y consultar eventos de seguridad como accesos, autenticaciones
+            y autorizaciones. La auditoría es esencial para el cumplimiento de políticas de seguridad
+            y la detección de actividades sospechosas.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IAuditoriaService.RegistrarAcceso(System.Security.Claims.ClaimsPrincipal,System.String,System.String,System.String,System.String)">
+            <summary>
+            Registra un intento de acceso a un endpoint del sistema.
+            </summary>
+            <param name="usuario">Información del usuario que realiza el acceso.</param>
+            <param name="endpoint">Endpoint o ruta accedida en el sistema.</param>
+            <param name="metodo">Método HTTP utilizado (GET, POST, PUT, DELETE, etc.).</param>
+            <param name="resultado">Resultado del acceso (Permitido/Denegado).</param>
+            <param name="detalles">Detalles adicionales del acceso como parámetros, headers, etc.</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método registra cada intento de acceso a los endpoints del sistema,
+            proporcionando información detallada para análisis de seguridad y cumplimiento.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IAuditoriaService.RegistrarAutorizacion(System.Security.Claims.ClaimsPrincipal,System.String,System.String,System.String,System.String)">
+            <summary>
+            Registra un intento de autorización a un recurso específico.
+            </summary>
+            <param name="usuario">Información del usuario que intenta la autorización.</param>
+            <param name="recurso">Recurso al que se intenta acceder (archivo, función, dato, etc.).</param>
+            <param name="accion">Acción que se intenta realizar (leer, escribir, eliminar, etc.).</param>
+            <param name="resultado">Resultado de la autorización (Permitido/Denegado).</param>
+            <param name="motivo">Motivo del resultado de la autorización.</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método registra los intentos de autorización para recursos específicos,
+            permitiendo el seguimiento de permisos y la detección de accesos no autorizados.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IAuditoriaService.RegistrarAutenticacion(System.String,System.String,System.String,System.String)">
+            <summary>
+            Registra un intento de autenticación en el sistema.
+            </summary>
+            <param name="nombreUsuario">Nombre de usuario que intenta autenticarse.</param>
+            <param name="resultado">Resultado del intento de login (Exitoso/Fallido).</param>
+            <param name="ipAddress">Dirección IP del cliente que realiza el intento.</param>
+            <param name="detalles">Detalles adicionales como navegador, sistema operativo, etc.</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método registra todos los intentos de autenticación, exitosos y fallidos,
+            para detectar patrones de ataque como fuerza bruta o accesos desde ubicaciones sospechosas.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IAuditoriaService.ObtenerHistorialAuditoria(System.Int32,System.DateTime,System.DateTime)">
+            <summary>
+            Obtiene el historial de auditoría para un usuario específico en un rango de fechas.
+            </summary>
+            <param name="idUsuario">Identificador único del usuario.</param>
+            <param name="fechaInicio">Fecha de inicio del período de consulta.</param>
+            <param name="fechaFin">Fecha de fin del período de consulta.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de registros de auditoría.</returns>
+            <remarks>
+            Este método permite consultar el historial completo de actividades de un usuario
+            específico, útil para investigaciones de seguridad y cumplimiento de políticas.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IAuditoriaService.ObtenerEstadisticasAuditoria(System.DateTime,System.DateTime)">
+            <summary>
+            Obtiene estadísticas de auditoría para administradores en un rango de fechas.
+            </summary>
+            <param name="fechaInicio">Fecha de inicio del período de análisis.</param>
+            <param name="fechaFin">Fecha de fin del período de análisis.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado son estadísticas de auditoría.</returns>
+            <remarks>
+            Este método genera estadísticas agregadas de auditoría para administradores,
+            incluyendo métricas como intentos de acceso fallidos, accesos no autorizados,
+            patrones de uso, etc.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Interfaces.ICategoriaService">
+            <summary>
+            Interfaz que define las operaciones de servicio para la gestión de categorías de productos.
+            </summary>
+            <remarks>
+            Esta interfaz implementa el patrón Service para la gestión de categorías, proporcionando
+            una capa de abstracción entre los controladores y los repositorios. Los servicios
+            pueden incluir lógica de negocio, validaciones y transformaciones de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.ICategoriaService.Lista(System.String)">
+            <summary>
+            Obtiene una lista de categorías opcionalmente filtrada por un término de búsqueda.
+            </summary>
+            <param name="buscar">Término opcional para filtrar las categorías por nombre. Si está vacío, retorna todas las categorías.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de categorías.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente y puede incluir
+            lógica adicional de negocio como validaciones o transformaciones de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.ICategoriaService.Crear(SVRepository.Entities.Categoria)">
+            <summary>
+            Crea una nueva categoría en el sistema.
+            </summary>
+            <param name="objeto">Objeto Categoria con los datos de la nueva categoría a crear.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método puede incluir validaciones de negocio antes de delegar la operación
+            al repositorio, como verificar duplicados o validar reglas de negocio.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.ICategoriaService.Editar(SVRepository.Entities.Categoria)">
+            <summary>
+            Actualiza los datos de una categoría existente en el sistema.
+            </summary>
+            <param name="objeto">Objeto Categoria con los datos actualizados de la categoría.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método puede incluir validaciones de negocio antes de actualizar,
+            como verificar que la categoría existe y que los cambios son válidos.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Interfaces.ICloudinaryService">
+            <summary>
+            Interfaz que define las operaciones de servicio para la gestión de imágenes en Cloudinary.
+            </summary>
+            <remarks>
+            Esta interfaz proporciona métodos para subir y eliminar imágenes en el servicio de almacenamiento
+            en la nube Cloudinary. Cloudinary es una plataforma que permite gestionar, transformar y optimizar
+            imágenes y videos en la nube.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.ICloudinaryService.SubirImagen(System.String,System.IO.Stream)">
+            <summary>
+            Sube una imagen al servicio Cloudinary.
+            </summary>
+            <param name="nombreImagen">Nombre que se asignará a la imagen en Cloudinary.</param>
+            <param name="formatoImagen">Stream que contiene los datos de la imagen a subir.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un objeto CloudinaryResponse con la información de la imagen subida.</returns>
+            <remarks>
+            Este método sube una imagen al servicio Cloudinary y retorna información sobre la imagen
+            subida, incluyendo el identificador público y la URL segura para acceder a la imagen.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.ICloudinaryService.EliminarImagen(System.String)">
+            <summary>
+            Elimina una imagen del servicio Cloudinary.
+            </summary>
+            <param name="publicId">Identificador público de la imagen a eliminar.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es true si la eliminación fue exitosa, false en caso contrario.</returns>
+            <remarks>
+            Este método elimina permanentemente una imagen del servicio Cloudinary utilizando
+            su identificador público. La eliminación es irreversible.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Interfaces.ICorreoService">
+            <summary>
+            Interfaz que define las operaciones de servicio para el envío de correos electrónicos.
+            </summary>
+            <remarks>
+            Esta interfaz proporciona métodos para enviar correos electrónicos utilizando el servicio
+            de correo configurado en la aplicación. Utiliza la biblioteca MailKit para el envío
+            de correos de forma segura y confiable.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.ICorreoService.Enviar(System.String,System.String,System.String)">
+            <summary>
+            Envía un correo electrónico a un destinatario específico.
+            </summary>
+            <param name="para">Dirección de correo electrónico del destinatario.</param>
+            <param name="asunto">Asunto del correo electrónico.</param>
+            <param name="mensajeHTML">Contenido del correo en formato HTML.</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método envía un correo electrónico utilizando la configuración de SMTP
+            definida en la aplicación. El contenido del correo puede incluir HTML para
+            formateo avanzado del mensaje.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Interfaces.IMedidaService">
+            <summary>
+            Interfaz que define las operaciones de servicio para la gestión de unidades de medida.
+            </summary>
+            <remarks>
+            Esta interfaz implementa el patrón Service para la gestión de unidades de medida,
+            proporcionando una capa de abstracción entre los controladores y los repositorios.
+            Las unidades de medida definen cómo se cuantifican los productos en el sistema.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IMedidaService.Lista">
+            <summary>
+            Obtiene una lista de todas las unidades de medida disponibles en el sistema.
+            </summary>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de unidades de medida.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente y puede incluir
+            lógica adicional de negocio como validaciones o transformaciones de datos.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Interfaces.IMenuRolService">
+            <summary>
+            Interfaz que define las operaciones de servicio para la gestión de menús por rol.
+            </summary>
+            <remarks>
+            Esta interfaz implementa el patrón Service para la gestión de menús asociados a roles específicos,
+            proporcionando una capa de abstracción entre los controladores y los repositorios.
+            Esta funcionalidad es esencial para el control de acceso basado en roles (RBAC).
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IMenuRolService.Lista(System.Int32)">
+            <summary>
+            Obtiene una lista de menús disponibles para un rol específico.
+            </summary>
+            <param name="idRol">Identificador único del rol para el cual se obtienen los menús.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de menús disponibles para el rol.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente y puede incluir
+            lógica adicional de negocio como validaciones o transformaciones de datos.
+            Los menús retornados están filtrados según los permisos del rol especificado.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Interfaces.INegocioService">
+            <summary>
+            Interfaz que define las operaciones de servicio para la gestión de información del negocio.
+            </summary>
+            <remarks>
+            Esta interfaz implementa el patrón Service para la gestión de información del negocio,
+            proporcionando una capa de abstracción entre los controladores y los repositorios.
+            La información del negocio incluye datos fiscales, de contacto y configuración del sistema.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.INegocioService.Obtener">
+            <summary>
+            Obtiene la información de configuración del negocio.
+            </summary>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un objeto Negocio con la información del negocio.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente y puede incluir
+            lógica adicional de negocio como validaciones o transformaciones de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.INegocioService.Editar(SVRepository.Entities.Negocio)">
+            <summary>
+            Actualiza la información de configuración del negocio.
+            </summary>
+            <param name="objeto">Objeto Negocio con los datos actualizados del negocio.</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método puede incluir validaciones de negocio antes de actualizar,
+            como verificar que los datos son válidos y cumplen con las reglas de negocio.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Interfaces.IProductoService">
+            <summary>
+            Interfaz que define las operaciones de servicio para la gestión de productos del sistema de ventas.
+            </summary>
+            <remarks>
+            Esta interfaz implementa el patrón Service para la gestión de productos, proporcionando
+            una capa de abstracción entre los controladores y los repositorios. Los productos son
+            los elementos que se venden en el sistema e incluyen información sobre precios, stock y categoría.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IProductoService.Lista(System.String)">
+            <summary>
+            Obtiene una lista de productos opcionalmente filtrada por un término de búsqueda.
+            </summary>
+            <param name="buscar">Término opcional para filtrar los productos por código o descripción. Si está vacío, retorna todos los productos.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de productos.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente y puede incluir
+            lógica adicional de negocio como validaciones o transformaciones de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IProductoService.Crear(SVRepository.Entities.Producto)">
+            <summary>
+            Crea un nuevo producto en el sistema.
+            </summary>
+            <param name="objeto">Objeto Producto con los datos del nuevo producto a crear.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método puede incluir validaciones de negocio antes de delegar la operación
+            al repositorio, como verificar duplicados o validar reglas de negocio.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IProductoService.Editar(SVRepository.Entities.Producto)">
+            <summary>
+            Actualiza los datos de un producto existente en el sistema.
+            </summary>
+            <param name="objeto">Objeto Producto con los datos actualizados del producto.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método puede incluir validaciones de negocio antes de actualizar,
+            como verificar que el producto existe y que los cambios son válidos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IProductoService.Obtener(System.String)">
+            <summary>
+            Obtiene un producto específico por su código.
+            </summary>
+            <param name="codigo">Código único del producto a obtener.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el producto encontrado o un objeto vacío si no existe.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente y puede incluir
+            lógica adicional de negocio como validaciones o transformaciones de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IPruebasSeguridadService.EjecutarPruebasSQLInjection(System.String,System.String)">
+            <summary>
+            Ejecuta pruebas de SQL Injection contra los endpoints de búsqueda
+            </summary>
+            <param name="baseUrl">URL base de la API</param>
+            <param name="token">Token de autenticación</param>
+            <returns>Resultado de las pruebas de seguridad</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.IPruebasSeguridadService.ProbarEndpointConEntradasMaliciosas(System.String,System.Collections.Generic.List{System.String},System.Net.Http.HttpClient)">
+            <summary>
+            Prueba un endpoint específico con entradas maliciosas
+            </summary>
+            <param name="endpoint">Endpoint a probar</param>
+            <param name="entradasMaliciosas">Lista de entradas maliciosas</param>
+            <param name="httpClient">Cliente HTTP configurado</param>
+            <returns>Resultados de las pruebas</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.IPruebasSeguridadService.GenerarReportePruebasSeguridad(System.Collections.Generic.List{System.Object})">
+            <summary>
+            Genera un reporte de seguridad con los resultados de las pruebas
+            </summary>
+            <param name="resultados">Resultados de las pruebas</param>
+            <returns>Reporte detallado de seguridad</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.IPruebasSeguridadService.ValidarRespuestaSegura(System.String,System.String)">
+            <summary>
+            Valida que una respuesta sea segura (no contenga datos sensibles)
+            </summary>
+            <param name="respuesta">Respuesta HTTP</param>
+            <param name="entradaMaliciosa">Entrada maliciosa utilizada</param>
+            <returns>True si la respuesta es segura</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.IPruebasSeguridadService.ObtenerEntradasMaliciosas">
+            <summary>
+            Obtiene la lista de entradas maliciosas para pruebas
+            </summary>
+            <returns>Lista de entradas maliciosas</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.IPruebasSeguridadService.SimularAtaqueSQLInjection(System.String,System.String)">
+            <summary>
+            Simula un ataque de SQL Injection y documenta el resultado
+            </summary>
+            <param name="entradaMaliciosa">Entrada maliciosa a probar</param>
+            <param name="endpoint">Endpoint objetivo</param>
+            <returns>Documentación del resultado de la prueba</returns>
+        </member>
+        <member name="T:SVServices.Interfaces.IRolService">
+            <summary>
+            Interfaz que define las operaciones de servicio para la gestión de roles de usuario.
+            </summary>
+            <remarks>
+            Esta interfaz implementa el patrón Service para la gestión de roles, proporcionando
+            una capa de abstracción entre los controladores y los repositorios. Los roles definen
+            los permisos y accesos que tiene cada usuario en el sistema.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IRolService.Lista">
+            <summary>
+            Obtiene una lista de todos los roles disponibles en el sistema.
+            </summary>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de roles.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente y puede incluir
+            lógica adicional de negocio como validaciones o transformaciones de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.ISeguridadSQLService.AnalizarConsultaParametrizada(System.String,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Analiza cómo se ejecuta una consulta parametrizada y explica por qué es segura
+            </summary>
+            <param name="nombreProcedimiento">Nombre del stored procedure</param>
+            <param name="parametros">Parámetros de la consulta</param>
+            <returns>Análisis de seguridad de la consulta</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.ISeguridadSQLService.SimularConsultaVulnerable(System.String)">
+            <summary>
+            Simula una consulta vulnerable para demostrar la diferencia
+            </summary>
+            <param name="consultaVulnerable">Consulta SQL vulnerable</param>
+            <returns>Ejemplo de cómo sería vulnerable</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.ISeguridadSQLService.GenerarReporteSeguridad(System.String,System.Collections.Generic.Dictionary{System.String,System.Object})">
+            <summary>
+            Genera un reporte de seguridad para un stored procedure
+            </summary>
+            <param name="nombreProcedimiento">Nombre del SP</param>
+            <param name="parametros">Parámetros del SP</param>
+            <returns>Reporte detallado de seguridad</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.ISeguridadSQLService.VerificarUsoParametros(System.Data.IDbCommand)">
+            <summary>
+            Verifica si una consulta está usando parámetros correctamente
+            </summary>
+            <param name="comando">Comando SQL a verificar</param>
+            <returns>True si es seguro, false si es vulnerable</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.ISeguridadSQLService.DocumentarFlujoSeguridad(System.String,System.String)">
+            <summary>
+            Documenta el flujo de seguridad de una operación
+            </summary>
+            <param name="operacion">Tipo de operación (INSERT, UPDATE, DELETE, SELECT)</param>
+            <param name="entidad">Nombre de la entidad</param>
+            <returns>Documentación del flujo de seguridad</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.ISeguridadSQLService.ContieneCaracteresPeligrosos(System.String)">
+            <summary>
+            Verifica si una entrada contiene caracteres peligrosos para SQL Injection
+            </summary>
+            <param name="entrada">Entrada a verificar</param>
+            <returns>True si contiene caracteres peligrosos</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.ISeguridadSQLService.SanitizarContraSQLInjection(System.String)">
+            <summary>
+            Sanitiza una entrada contra SQL Injection
+            </summary>
+            <param name="entrada">Entrada a sanitizar</param>
+            <returns>Entrada sanitizada</returns>
+        </member>
+        <member name="T:SVServices.Interfaces.IUsuarioService">
+            <summary>
+            Interfaz que define las operaciones de servicio para la gestión de usuarios del sistema.
+            </summary>
+            <remarks>
+            Esta interfaz implementa el patrón Service para la gestión de usuarios, proporcionando
+            una capa de abstracción entre los controladores y los repositorios. Los usuarios son
+            la base del sistema de autenticación y autorización, incluyendo funcionalidades para
+            login, gestión de contraseñas y administración de usuarios.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IUsuarioService.Lista(System.String)">
+            <summary>
+            Obtiene una lista de usuarios opcionalmente filtrada por un término de búsqueda.
+            </summary>
+            <param name="buscar">Término opcional para filtrar los usuarios por nombre completo o correo. Si está vacío, retorna todos los usuarios.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de usuarios.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente y puede incluir
+            lógica adicional de negocio como validaciones o transformaciones de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IUsuarioService.Crear(SVRepository.Entities.Usuario)">
+            <summary>
+            Crea un nuevo usuario en el sistema.
+            </summary>
+            <param name="objeto">Objeto Usuario con los datos del nuevo usuario a crear.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método puede incluir validaciones de negocio antes de delegar la operación
+            al repositorio, como verificar duplicados o validar reglas de negocio.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IUsuarioService.Editar(SVRepository.Entities.Usuario)">
+            <summary>
+            Actualiza los datos de un usuario existente en el sistema.
+            </summary>
+            <param name="objeto">Objeto Usuario con los datos actualizados del usuario.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método puede incluir validaciones de negocio antes de actualizar,
+            como verificar que el usuario existe y que los cambios son válidos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IUsuarioService.Eliminar(System.Int32)">
+            <summary>
+            Elimina lógicamente un usuario del sistema.
+            </summary>
+            <param name="idUsuario">Identificador único del usuario a eliminar.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método puede incluir validaciones de negocio antes de eliminar,
+            como verificar que el usuario no tiene operaciones pendientes.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IUsuarioService.Login(System.String,System.String)">
+            <summary>
+            Autentica un usuario con su nombre de usuario y contraseña.
+            </summary>
+            <param name="usuario">Nombre de usuario para la autenticación.</param>
+            <param name="clave">Contraseña del usuario.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el usuario autenticado o un objeto vacío si la autenticación falla.</returns>
+            <remarks>
+            Este método puede incluir lógica adicional de seguridad como logging de intentos
+            de acceso, bloqueo temporal de cuentas, etc.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IUsuarioService.ObtenerPorId(System.Int32)">
+            <summary>
+            Obtiene un usuario específico por su identificador.
+            </summary>
+            <param name="idUsuario">Identificador único del usuario a obtener.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el usuario encontrado o un objeto vacío si no existe.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente y puede incluir
+            lógica adicional de negocio como validaciones o transformaciones de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IUsuarioService.VerificarCorreo(System.String)">
+            <summary>
+            Verifica si existe un usuario con el correo electrónico especificado.
+            </summary>
+            <param name="correo">Correo electrónico a verificar.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el ID del usuario si existe, o 0 si no existe.</returns>
+            <remarks>
+            Este método se utiliza principalmente para validar la unicidad del correo electrónico
+            durante el proceso de registro o recuperación de contraseña.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IUsuarioService.ActualizarClave(System.Int32,System.String,System.Int32)">
+            <summary>
+            Actualiza la contraseña de un usuario y opcionalmente resetea el flag de cambio de contraseña.
+            </summary>
+            <param name="idUsuario">Identificador único del usuario.</param>
+            <param name="nuevaClave">Nueva contraseña del usuario.</param>
+            <param name="resetear">Flag que indica si se debe resetear el flag de cambio de contraseña (1 = sí, 0 = no).</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método puede incluir validaciones de seguridad como verificar la complejidad
+            de la contraseña o el historial de contraseñas utilizadas.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IValidacionService.SanitizarString(System.String,System.Int32,System.Boolean)">
+            <summary>
+            Valida y sanitiza un string para prevenir SQL Injection
+            </summary>
+            <param name="input">String de entrada</param>
+            <param name="maxLength">Longitud máxima permitida</param>
+            <param name="allowNull">Permitir valores null</param>
+            <returns>String sanitizado o null si no es válido</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.IValidacionService.SanitizarEmail(System.String)">
+            <summary>
+            Valida y sanitiza un email
+            </summary>
+            <param name="email">Email a validar</param>
+            <returns>Email sanitizado o null si no es válido</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.IValidacionService.SanitizarInt(System.Int32,System.Int32,System.Int32)">
+            <summary>
+            Valida y sanitiza un número entero
+            </summary>
+            <param name="input">Valor de entrada</param>
+            <param name="minValue">Valor mínimo</param>
+            <param name="maxValue">Valor máximo</param>
+            <returns>Número validado o null si no es válido</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.IValidacionService.SanitizarDecimal(System.Decimal,System.Decimal,System.Decimal)">
+            <summary>
+            Valida y sanitiza un número decimal
+            </summary>
+            <param name="input">Valor de entrada</param>
+            <param name="minValue">Valor mínimo</param>
+            <param name="maxValue">Valor máximo</param>
+            <returns>Número validado o null si no es válido</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.IValidacionService.SanitizarUrl(System.String)">
+            <summary>
+            Valida y sanitiza una URL
+            </summary>
+            <param name="url">URL a validar</param>
+            <returns>URL sanitizada o null si no es válida</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.IValidacionService.ValidarObjeto(System.Object)">
+            <summary>
+            Valida un objeto usando Data Annotations
+            </summary>
+            <param name="obj">Objeto a validar</param>
+            <returns>Lista de errores de validación</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.IValidacionService.ContieneCaracteresPeligrosos(System.String)">
+            <summary>
+            Verifica si un string contiene caracteres peligrosos para SQL
+            </summary>
+            <param name="input">String a verificar</param>
+            <returns>True si contiene caracteres peligrosos</returns>
+        </member>
+        <member name="M:SVServices.Interfaces.IValidacionService.SanitizarContraSQLInjection(System.String)">
+            <summary>
+            Sanitiza un string removiendo caracteres peligrosos
+            </summary>
+            <param name="input">String a sanitizar</param>
+            <returns>String sanitizado</returns>
+        </member>
+        <member name="T:SVServices.Interfaces.IVentaService">
+            <summary>
+            Interfaz que define las operaciones de servicio para la gestión de ventas del sistema.
+            </summary>
+            <remarks>
+            Esta interfaz implementa el patrón Service para la gestión de ventas, proporcionando
+            una capa de abstracción entre los controladores y los repositorios. Las ventas son
+            el núcleo del sistema de gestión comercial e incluyen funcionalidades para registro
+            de ventas, consulta de detalles y generación de reportes.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IVentaService.Registrar(System.String)">
+            <summary>
+            Registra una nueva venta en el sistema a partir de un XML que contiene la información de la venta.
+            </summary>
+            <param name="ventaXML">Cadena XML que contiene la información completa de la venta y sus detalles.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el número de venta generado o un mensaje de error.</returns>
+            <remarks>
+            Este método puede incluir validaciones de negocio antes de registrar la venta,
+            como verificar stock disponible, validar precios, etc.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IVentaService.Obtener(System.String)">
+            <summary>
+            Obtiene la información completa de una venta específica por su número de venta.
+            </summary>
+            <param name="numeroVenta">Número único de la venta a obtener.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es la venta encontrada o un objeto vacío si no existe.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente y puede incluir
+            lógica adicional de negocio como validaciones o transformaciones de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IVentaService.ObtenerDetalle(System.String)">
+            <summary>
+            Obtiene los detalles de una venta específica por su número de venta.
+            </summary>
+            <param name="numeroVenta">Número único de la venta cuyos detalles se quieren obtener.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de detalles de la venta.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente y puede incluir
+            lógica adicional de negocio como validaciones o transformaciones de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IVentaService.Lista(System.String,System.String,System.String)">
+            <summary>
+            Obtiene una lista de ventas filtrada por rango de fechas y opcionalmente por término de búsqueda.
+            </summary>
+            <param name="fechaInicio">Fecha de inicio del rango de búsqueda en formato string.</param>
+            <param name="fechaFin">Fecha de fin del rango de búsqueda en formato string.</param>
+            <param name="buscar">Término opcional para filtrar las ventas por número de venta o nombre de cliente.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de ventas que cumplen con los criterios.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente y puede incluir
+            lógica adicional de negocio como validaciones o transformaciones de datos.
+            </remarks>
+        </member>
+        <member name="M:SVServices.Interfaces.IVentaService.Reporte(System.String,System.String)">
+            <summary>
+            Genera un reporte de ventas para un rango de fechas específico.
+            </summary>
+            <param name="fechaInicio">Fecha de inicio del reporte en formato string.</param>
+            <param name="fechaFin">Fecha de fin del reporte en formato string.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de detalles de ventas para el reporte.</returns>
+            <remarks>
+            Este método delega la operación al repositorio correspondiente y puede incluir
+            lógica adicional de negocio como cálculos de totales, filtros adicionales, etc.
+            </remarks>
+        </member>
+        <member name="T:SVServices.Recursos.Cloudinary.CloudinaryResponse">
+            <summary>
+            Representa la respuesta de una operación de Cloudinary.
+            </summary>
+            <remarks>
+            Esta clase encapsula la información retornada por Cloudinary después de una operación
+            de subida o eliminación de imagen, proporcionando el identificador público y la URL segura.
+            </remarks>
+        </member>
+        <member name="P:SVServices.Recursos.Cloudinary.CloudinaryResponse.PublicId">
+            <summary>
+            Identificador público único de la imagen en Cloudinary.
+            </summary>
+            <remarks>
+            Este identificador se utiliza para referenciar la imagen en operaciones posteriores
+            como eliminación, transformación o generación de URLs.
+            </remarks>
+        </member>
+        <member name="P:SVServices.Recursos.Cloudinary.CloudinaryResponse.SecureUrl">
+            <summary>
+            URL segura (HTTPS) de la imagen almacenada en Cloudinary.
+            </summary>
+            <remarks>
+            Esta URL proporciona acceso directo a la imagen a través de HTTPS,
+            garantizando una conexión segura para el acceso a la imagen.
+            </remarks>
+        </member>
+    </members>
+</doc>

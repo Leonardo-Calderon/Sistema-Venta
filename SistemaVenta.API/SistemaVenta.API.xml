@@ -1,0 +1,587 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SistemaVenta.API</name>
+    </assembly>
+    <members>
+        <member name="M:SistemaVenta.API.Controllers.PruebasSeguridadController.EjecutarPruebasSQLInjection">
+            <summary>
+            PASO 5: Ejecuta pruebas automáticas de SQL Injection
+            </summary>
+        </member>
+        <member name="M:SistemaVenta.API.Controllers.PruebasSeguridadController.ProbarEntradaMaliciosa(System.String)">
+            <summary>
+            PASO 5: Prueba específica con la entrada maliciosa ' OR 1=1 --
+            </summary>
+        </member>
+        <member name="M:SistemaVenta.API.Controllers.PruebasSeguridadController.DemostrarBusquedaLiteral">
+            <summary>
+            PASO 5: Demuestra que la búsqueda literal funciona correctamente
+            </summary>
+        </member>
+        <member name="M:SistemaVenta.API.Controllers.PruebasSeguridadController.ObtenerEntradasMaliciosas">
+            <summary>
+            PASO 5: Lista todas las entradas maliciosas disponibles para pruebas
+            </summary>
+        </member>
+        <member name="M:SistemaVenta.API.Controllers.PruebasSeguridadController.GenerarReporteSeguridad">
+            <summary>
+            PASO 5: Genera un reporte completo de seguridad
+            </summary>
+        </member>
+        <member name="M:SistemaVenta.API.Controllers.SeguridadController.AnalizarCreacionUsuario">
+            <summary>
+            Analiza la seguridad de la creación de usuarios
+            </summary>
+        </member>
+        <member name="M:SistemaVenta.API.Controllers.SeguridadController.SimularConsultaVulnerable">
+            <summary>
+            Simula una consulta vulnerable para demostrar la diferencia
+            </summary>
+        </member>
+        <member name="M:SistemaVenta.API.Controllers.SeguridadController.ReporteSeguridadUsuario">
+            <summary>
+            Genera un reporte de seguridad para el stored procedure de usuarios
+            </summary>
+        </member>
+        <member name="M:SistemaVenta.API.Controllers.SeguridadController.DocumentarFlujo(System.String,System.String)">
+            <summary>
+            Documenta el flujo de seguridad para operaciones CRUD
+            </summary>
+        </member>
+        <member name="M:SistemaVenta.API.Controllers.SeguridadController.CompararConsultas">
+            <summary>
+            Compara consultas seguras vs vulnerables
+            </summary>
+        </member>
+        <member name="M:SistemaVenta.API.Controllers.VentasController.BusquedaSegura(System.String,System.String,System.String)">
+            <summary>
+            PASO 4: Endpoint de búsqueda segura de ventas con validación y sanitización
+            </summary>
+        </member>
+        <member name="T:SistemaVenta.API.Middleware.AuditoriaMiddleware">
+            <summary>
+            Middleware para registrar auditoría de todas las peticiones HTTP en la API.
+            </summary>
+            <remarks>
+            Este middleware captura y registra información detallada de todas las peticiones
+            HTTP que llegan a la API, incluyendo:
+            - Información del usuario autenticado
+            - Detalles de la petición (endpoint, método, IP, User-Agent)
+            - Información de la respuesta (código de estado, tiempo de respuesta)
+            - Intentos de autenticación (exitosos y fallidos)
+            - Errores y excepciones
+            
+            Proporciona trazabilidad completa de las actividades en el sistema
+            para fines de seguridad, cumplimiento y depuración.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Middleware.AuditoriaMiddleware.#ctor(Microsoft.AspNetCore.Http.RequestDelegate,Microsoft.Extensions.Logging.ILogger{SistemaVenta.API.Middleware.AuditoriaMiddleware})">
+            <summary>
+            Inicializa una nueva instancia del middleware de auditoría.
+            </summary>
+            <param name="next">El siguiente middleware en el pipeline.</param>
+            <param name="logger">Logger para registrar información de auditoría.</param>
+            <remarks>
+            El constructor recibe el siguiente middleware en el pipeline y un logger
+            para registrar información detallada de las actividades de auditoría.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Middleware.AuditoriaMiddleware.InvokeAsync(Microsoft.AspNetCore.Http.HttpContext,SVServices.Interfaces.IAuditoriaService)">
+            <summary>
+            Procesa la petición HTTP y registra información de auditoría.
+            </summary>
+            <param name="context">El contexto HTTP de la petición actual.</param>
+            <param name="auditoriaService">Servicio de auditoría para registrar las actividades.</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método es el punto de entrada del middleware. Captura información
+            de la petición, procesa la respuesta y registra los detalles de auditoría
+            según el tipo de actividad (acceso autenticado, autenticación, errores).
+            
+            Utiliza un MemoryStream para capturar el cuerpo de la respuesta sin
+            interferir con el flujo normal de la petición.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Middleware.AuditoriaMiddleware.GetClientIpAddress(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Obtiene la dirección IP real del cliente, considerando headers de proxy.
+            </summary>
+            <param name="context">El contexto HTTP de la petición actual.</param>
+            <returns>La dirección IP del cliente o "Desconocida" si no se puede determinar.</returns>
+            <remarks>
+            Este método verifica múltiples headers para obtener la IP real del cliente,
+            considerando que la aplicación puede estar detrás de un proxy o load balancer.
+            Verifica en orden: X-Forwarded-For, X-Real-IP, y finalmente la IP de conexión.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Middleware.AuditoriaMiddleware.DetermineResult(System.Int32)">
+            <summary>
+            Determina el resultado de la petición basándose en el código de estado HTTP.
+            </summary>
+            <param name="statusCode">El código de estado HTTP de la respuesta.</param>
+            <returns>Una cadena que describe el resultado de la petición.</returns>
+            <remarks>
+            Este método categoriza los códigos de estado HTTP en resultados legibles:
+            - 2xx: "Exitoso"
+            - 4xx: "Error del Cliente"
+            - 5xx: "Error del Servidor"
+            - Otros: "Desconocido"
+            </remarks>
+        </member>
+        <member name="T:SistemaVenta.API.Middleware.GlobalExceptionHandlerMiddleware">
+            <summary>
+            Middleware para el manejo global de excepciones en la aplicación API.
+            </summary>
+            <remarks>
+            Este middleware captura todas las excepciones no controladas que ocurren
+            durante el procesamiento de las peticiones HTTP. Proporciona:
+            - Logging detallado de errores para el equipo de desarrollo
+            - Respuestas de error estructuradas y consistentes para los clientes
+            - Manejo específico de diferentes tipos de excepciones
+            - Información de contexto útil para depuración
+            
+            Se ejecuta temprano en el pipeline para asegurar que todas las excepciones
+            sean capturadas y manejadas de manera uniforme.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Middleware.GlobalExceptionHandlerMiddleware.#ctor(Microsoft.AspNetCore.Http.RequestDelegate,Microsoft.Extensions.Logging.ILogger{SistemaVenta.API.Middleware.GlobalExceptionHandlerMiddleware})">
+            <summary>
+            Inicializa una nueva instancia del middleware de manejo global de excepciones.
+            </summary>
+            <param name="next">El siguiente middleware en el pipeline.</param>
+            <param name="logger">Logger para registrar información de errores.</param>
+            <remarks>
+            El constructor recibe el siguiente middleware en el pipeline y un logger
+            para registrar información detallada de las excepciones que ocurran.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Middleware.GlobalExceptionHandlerMiddleware.InvokeAsync(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Procesa la petición HTTP y maneja cualquier excepción que ocurra.
+            </summary>
+            <param name="context">El contexto HTTP de la petición actual.</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método es el punto de entrada del middleware. Ejecuta el siguiente
+            middleware en el pipeline y captura cualquier excepción que ocurra,
+            delegando el manejo específico al método HandleExceptionAsync.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Middleware.GlobalExceptionHandlerMiddleware.HandleExceptionAsync(Microsoft.AspNetCore.Http.HttpContext,System.Exception)">
+            <summary>
+            Maneja una excepción específica y genera una respuesta HTTP apropiada.
+            </summary>
+            <param name="context">El contexto HTTP de la petición actual.</param>
+            <param name="exception">La excepción que se debe manejar.</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método:
+            1. Registra el error detallado para el equipo de desarrollo
+            2. Determina el tipo de error y código de estado apropiado
+            3. Maneja tipos específicos de excepciones (SQL, Argument, Unauthorized)
+            4. Genera una respuesta JSON estructurada con información útil
+            5. Incluye información de contexto para facilitar la depuración
+            </remarks>
+        </member>
+        <member name="T:SistemaVenta.API.Middleware.SecurityHeadersMiddleware">
+            <summary>
+            Middleware para agregar cabeceras de seguridad HTTP a todas las respuestas de la API.
+            </summary>
+            <remarks>
+            Este middleware implementa medidas de seguridad defensivas agregando cabeceras HTTP
+            que protegen contra diversos tipos de ataques web comunes:
+            - Clickjacking (X-Frame-Options)
+            - Cross-Site Scripting (Content-Security-Policy)
+            - MIME sniffing (X-Content-Type-Options)
+            - Information disclosure (Referrer-Policy)
+            - Cross-domain policies (X-Permitted-Cross-Domain-Policies)
+            - Feature policies (Permissions-Policy)
+            
+            Se ejecuta en cada petición para asegurar que todas las respuestas incluyan
+            estas cabeceras de seguridad.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Middleware.SecurityHeadersMiddleware.#ctor(Microsoft.AspNetCore.Http.RequestDelegate)">
+            <summary>
+            Inicializa una nueva instancia del middleware de cabeceras de seguridad.
+            </summary>
+            <param name="next">El siguiente middleware en el pipeline.</param>
+            <remarks>
+            El constructor recibe el siguiente middleware en el pipeline para
+            continuar el procesamiento de la petición después de agregar las
+            cabeceras de seguridad.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Middleware.SecurityHeadersMiddleware.InvokeAsync(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Procesa la petición HTTP y agrega cabeceras de seguridad a la respuesta.
+            </summary>
+            <param name="context">El contexto HTTP de la petición actual.</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método es el punto de entrada del middleware. Agrega las cabeceras
+            de seguridad antes de procesar la petición y luego continúa con el
+            siguiente middleware en el pipeline.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Middleware.SecurityHeadersMiddleware.AddSecurityHeaders(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Agrega las cabeceras de seguridad HTTP a la respuesta.
+            </summary>
+            <param name="context">El contexto HTTP de la petición actual.</param>
+            <remarks>
+            Este método agrega múltiples cabeceras de seguridad que protegen contra:
+            - X-Frame-Options: Previene que la página sea embebida en iframes (Clickjacking)
+            - Content-Security-Policy: Define políticas de seguridad de contenido (XSS)
+            - X-Content-Type-Options: Previene el sniffing de tipos MIME
+            - Referrer-Policy: Controla qué información de referente se envía
+            - X-Permitted-Cross-Domain-Policies: Restringe políticas cross-domain
+            - Permissions-Policy: Controla el acceso a características del navegador
+            </remarks>
+        </member>
+        <member name="T:SistemaVenta.API.Utilidades.Util">
+            <summary>
+            Clase estática que proporciona métodos de utilidad para la API del Sistema de Ventas.
+            </summary>
+            <remarks>
+            Esta clase contiene métodos de utilidad que se utilizan en toda la API,
+            incluyendo generación de códigos, encriptación de contraseñas y generación
+            de documentos PDF para tickets de venta.
+            
+            Los métodos están diseñados para ser thread-safe y eficientes para uso
+            en un entorno de API web.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Utilidades.Util.GenerarCode">
+            <summary>
+            Genera un código aleatorio único de 8 caracteres basado en un GUID.
+            </summary>
+            <returns>Un código único de 8 caracteres alfanuméricos.</returns>
+            <remarks>
+            Este método genera un GUID, lo convierte a una cadena sin guiones y
+            toma los primeros 8 caracteres. Es útil para generar códigos únicos
+            para productos, ventas, etc. en la API.
+            
+            El código generado es thread-safe y garantiza unicidad en la práctica.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Utilidades.Util.ConvertirASha256(System.String)">
+            <summary>
+            Convierte una cadena de texto a su representación hash SHA256.
+            </summary>
+            <param name="input">La cadena de texto a convertir.</param>
+            <returns>El hash SHA256 de la cadena de entrada como una cadena hexadecimal.</returns>
+            <remarks>
+            Este método utiliza el algoritmo SHA256 para generar un hash seguro
+            de la cadena de entrada. Es especialmente útil para encriptar contraseñas
+            antes de almacenarlas en la base de datos.
+            
+            Nota: Para contraseñas en producción, se recomiendan algoritmos más
+            seguros como BCrypt, Argon2 o PBKDF2 que incluyen salt y son más
+            resistentes a ataques de fuerza bruta.
+            
+            El resultado es una cadena hexadecimal de 64 caracteres que representa
+            el hash SHA256 de la entrada.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Utilidades.Util.GeneratePDFVenta(SVRepository.Entities.Negocio,SVRepository.Entities.Venta,System.IO.Stream)">
+            <summary>
+            Genera un documento PDF para un ticket de venta usando QuestPDF.
+            </summary>
+            <param name="oNegocio">Información del negocio que se incluirá en el PDF.</param>
+            <param name="oVenta">Información de la venta que se incluirá en el PDF.</param>
+            <param name="imageLogo">Stream que contiene el logo del negocio.</param>
+            <returns>Un array de bytes que representa el documento PDF generado.</returns>
+            <remarks>
+            Este método utiliza la biblioteca QuestPDF para generar un documento PDF
+            profesional para tickets de venta que incluye:
+            - Encabezado con logo del negocio e información de contacto
+            - Información del cliente y fecha de la venta
+            - Tabla detallada de productos vendidos con precios y cantidades
+            - Totales de la venta
+            - Diseño profesional optimizado para impresión
+            
+            El PDF se genera con un diseño limpio y profesional que es adecuado
+            para tickets de venta físicos o digitales.
+            </remarks>
+        </member>
+        <member name="T:AuthController">
+            <summary>
+            Controlador para manejar la autenticación y autorización de usuarios en la API.
+            </summary>
+            <remarks>
+            Este controlador proporciona endpoints para:
+            - Autenticación de usuarios mediante login
+            - Generación de tokens JWT
+            - Validación de credenciales
+            - Registro de auditoría de intentos de autenticación
+            
+            Implementa medidas de seguridad como:
+            - Encriptación de contraseñas con SHA256
+            - Logging detallado de intentos de autenticación
+            - Auditoría de actividades de seguridad
+            - Validación de entrada de datos
+            </remarks>
+        </member>
+        <member name="M:AuthController.#ctor(SVServices.Interfaces.IUsuarioService,Microsoft.Extensions.Configuration.IConfiguration,Microsoft.Extensions.Logging.ILogger{AuthController},SVServices.Interfaces.IAuditoriaService)">
+            <summary>
+            Inicializa una nueva instancia del controlador de autenticación.
+            </summary>
+            <param name="usuarioService">Servicio para operaciones de usuario.</param>
+            <param name="configuration">Configuración de la aplicación.</param>
+            <param name="logger">Logger para registrar información de autenticación.</param>
+            <param name="auditoriaService">Servicio para registrar auditoría de autenticación.</param>
+            <remarks>
+            El constructor recibe las dependencias necesarias para el funcionamiento
+            del controlador, incluyendo servicios de usuario, configuración JWT,
+            logging y auditoría.
+            </remarks>
+        </member>
+        <member name="M:AuthController.Login(Shared.DTOs.LoginDTO)">
+            <summary>
+            Autentica un usuario y genera un token JWT si las credenciales son válidas.
+            </summary>
+            <param name="loginDto">Datos de login del usuario (nombre de usuario y contraseña).</param>
+            <returns>
+            - 200 OK con datos de sesión si la autenticación es exitosa
+            - 400 Bad Request si las credenciales son incorrectas o faltan datos
+            - 500 Internal Server Error si ocurre un error interno
+            </returns>
+            <remarks>
+            Este endpoint:
+            1. Valida los datos de entrada
+            2. Encripta la contraseña con SHA256
+            3. Valida las credenciales contra la base de datos
+            4. Genera un token JWT si la autenticación es exitosa
+            5. Registra la actividad en el sistema de auditoría
+            6. Retorna los datos de sesión incluyendo el token JWT
+            
+            Tanto los intentos exitosos como fallidos son registrados para
+            fines de seguridad y auditoría.
+            </remarks>
+        </member>
+        <member name="M:AuthController.GenerateJwtToken(SVRepository.Entities.Usuario)">
+            <summary>
+            Genera un token JWT para un usuario autenticado.
+            </summary>
+            <param name="usuario">El usuario para el cual se generará el token.</param>
+            <returns>Un token JWT válido que contiene los claims del usuario.</returns>
+            <remarks>
+            Este método genera un token JWT que incluye:
+            - ID del usuario
+            - Nombre de usuario
+            - Nombre completo
+            - Correo electrónico
+            - Rol del usuario
+            - Fecha de expiración (configurada en appsettings.json)
+            
+            El token se firma usando la clave secreta configurada en la aplicación
+            y utiliza el algoritmo HMAC-SHA256 para la firma.
+            </remarks>
+        </member>
+        <member name="T:CategoriasController">
+            <summary>
+            Controlador para gestionar las operaciones CRUD de categorías de productos.
+            </summary>
+            <remarks>
+            Este controlador proporciona endpoints para:
+            - Obtener lista de categorías con búsqueda opcional
+            - Crear nuevas categorías (solo administradores)
+            - Editar categorías existentes (solo administradores)
+            - Eliminar categorías (solo administradores)
+            - Obtener una categoría específica por ID
+            
+            Implementa control de acceso basado en roles:
+            - Lectura: Usuarios autenticados
+            - Escritura: Solo administradores
+            
+            Todas las operaciones están protegidas por autenticación JWT.
+            </remarks>
+        </member>
+        <member name="M:CategoriasController.#ctor(SVServices.Interfaces.ICategoriaService,Microsoft.Extensions.Logging.ILogger{CategoriasController})">
+            <summary>
+            Inicializa una nueva instancia del controlador de categorías.
+            </summary>
+            <param name="categoriaService">Servicio para operaciones de categorías.</param>
+            <param name="logger">Logger para registrar información de operaciones.</param>
+            <remarks>
+            El constructor recibe las dependencias necesarias para el funcionamiento
+            del controlador, incluyendo el servicio de categorías y logging.
+            </remarks>
+        </member>
+        <member name="M:CategoriasController.Lista(System.String)">
+            <summary>
+            Obtiene una lista de todas las categorías, con opción de búsqueda.
+            </summary>
+            <param name="buscar">Término de búsqueda opcional para filtrar categorías por nombre.</param>
+            <returns>
+            - 200 OK con la lista de categorías si la operación es exitosa
+            - 500 Internal Server Error si ocurre un error interno
+            </returns>
+            <remarks>
+            Este endpoint permite obtener todas las categorías disponibles en el sistema.
+            Si se proporciona un término de búsqueda, filtra las categorías cuyo nombre
+            contenga el término especificado (búsqueda no sensible a mayúsculas/minúsculas).
+            
+            La respuesta incluye información completa de cada categoría:
+            - ID de la categoría
+            - Nombre de la categoría
+            - ID y nombre de la medida asociada
+            - Estado activo/inactivo
+            
+            Accesible para cualquier usuario autenticado.
+            </remarks>
+        </member>
+        <member name="M:CategoriasController.Crear(Shared.DTOs.CategoriaDTO)">
+            <summary>
+            Crea una nueva categoría en el sistema.
+            </summary>
+            <param name="dto">Datos de la categoría a crear.</param>
+            <returns>
+            - 200 OK si la categoría se crea exitosamente
+            - 400 Bad Request si los datos son inválidos o hay errores de validación
+            - 401 Unauthorized si el usuario no tiene permisos de administrador
+            - 500 Internal Server Error si ocurre un error interno
+            </returns>
+            <remarks>
+            Este endpoint permite crear una nueva categoría en el sistema.
+            La categoría se crea con estado activo por defecto.
+            
+            Validaciones realizadas:
+            - ModelState validation
+            - Validación de datos en el servicio de categorías
+            
+            Requiere rol de Administrador para acceder.
+            </remarks>
+        </member>
+        <member name="M:CategoriasController.Editar(System.Int32,Shared.DTOs.CategoriaDTO)">
+            <summary>
+            Edita una categoría existente en el sistema.
+            </summary>
+            <param name="id">ID de la categoría a editar.</param>
+            <param name="dto">Datos actualizados de la categoría.</param>
+            <returns>
+            - 200 OK si la categoría se edita exitosamente
+            - 400 Bad Request si los datos son inválidos o hay errores de validación
+            - 401 Unauthorized si el usuario no tiene permisos de administrador
+            - 500 Internal Server Error si ocurre un error interno
+            </returns>
+            <remarks>
+            Este endpoint permite editar una categoría existente en el sistema.
+            
+            Validaciones realizadas:
+            - Verificación de que el ID en la URL coincida con el ID en el DTO
+            - ModelState validation
+            - Validación de datos en el servicio de categorías
+            
+            Requiere rol de Administrador para acceder.
+            </remarks>
+        </member>
+        <member name="M:MedidasController.Lista">
+            <summary>
+            Endpoint para obtener la lista completa de unidades de medida.
+            </summary>
+            <returns>Una lista de medidas en formato DTO.</returns>
+        </member>
+        <member name="T:ProductosController">
+            <summary>
+            Controlador para gestionar las operaciones CRUD de productos en el sistema.
+            </summary>
+            <remarks>
+            Este controlador proporciona endpoints para:
+            - Obtener lista de productos con búsqueda opcional
+            - Búsqueda segura de productos con validación y sanitización
+            - Crear nuevos productos (solo administradores)
+            - Editar productos existentes (solo administradores)
+            - Eliminar productos (solo administradores)
+            - Obtener un producto específico por ID
+            - Actualizar stock de productos
+            
+            Implementa medidas de seguridad:
+            - Control de acceso basado en roles
+            - Validación y sanitización de entrada de datos
+            - Prevención de inyección SQL
+            - Logging de actividades de seguridad
+            
+            Roles requeridos:
+            - Lectura: Administrador, Ventas
+            - Escritura: Solo Administrador
+            </remarks>
+        </member>
+        <member name="M:ProductosController.#ctor(SVServices.Interfaces.IProductoService,SVServices.Interfaces.IValidacionService,Microsoft.Extensions.Logging.ILogger{ProductosController})">
+            <summary>
+            Inicializa una nueva instancia del controlador de productos.
+            </summary>
+            <param name="productoService">Servicio para operaciones de productos.</param>
+            <param name="validacionService">Servicio para validación y sanitización de datos.</param>
+            <param name="logger">Logger para registrar información de operaciones.</param>
+            <remarks>
+            El constructor recibe las dependencias necesarias para el funcionamiento
+            del controlador, incluyendo servicios de productos, validación y logging.
+            </remarks>
+        </member>
+        <member name="M:ProductosController.Lista(System.String)">
+            <summary>
+            Obtiene una lista de todos los productos, con opción de búsqueda.
+            </summary>
+            <param name="buscar">Término de búsqueda opcional para filtrar productos.</param>
+            <returns>
+            - 200 OK con la lista de productos si la operación es exitosa
+            - 401 Unauthorized si el usuario no tiene permisos
+            - 500 Internal Server Error si ocurre un error interno
+            </returns>
+            <remarks>
+            Este endpoint permite obtener todos los productos disponibles en el sistema.
+            Si se proporciona un término de búsqueda, filtra los productos que coincidan
+            con el término especificado.
+            
+            La respuesta incluye información completa de cada producto:
+            - ID y código del producto
+            - Descripción del producto
+            - Categoría asociada
+            - Precios de compra y venta
+            - Cantidad en stock
+            - Estado activo/inactivo
+            
+            Requiere roles: Administrador o Ventas.
+            </remarks>
+        </member>
+        <member name="M:ProductosController.BusquedaSegura(System.String)">
+            <summary>
+            Realiza una búsqueda segura de productos con validación y sanitización de entrada.
+            </summary>
+            <param name="searchTerm">Término de búsqueda para filtrar productos.</param>
+            <returns>
+            - 200 OK con la lista de productos filtrados si la operación es exitosa
+            - 400 Bad Request si el término de búsqueda es inválido o contiene caracteres peligrosos
+            - 401 Unauthorized si el usuario no tiene permisos
+            - 500 Internal Server Error si ocurre un error interno
+            </returns>
+            <remarks>
+            Este endpoint implementa búsqueda segura con múltiples capas de validación:
+            
+            Validaciones de seguridad:
+            - Sanitización del término de búsqueda
+            - Detección de caracteres peligrosos
+            - Validación de longitud mínima (2 caracteres) y máxima (50 caracteres)
+            - Prevención de inyección SQL
+            
+            Si no se proporciona término de búsqueda, retorna la lista completa de productos.
+            
+            Requiere roles: Administrador o Ventas.
+            </remarks>
+        </member>
+        <member name="M:RolesController.Lista">
+            <summary>
+            Devuelve la lista de todos los roles.
+            Solo administradores pueden ver la lista de roles.
+            </summary>
+        </member>
+        <member name="M:UsuariosController.BusquedaSegura(System.String)">
+            <summary>
+            PASO 4: Endpoint de búsqueda segura con validación y sanitización
+            </summary>
+        </member>
+    </members>
+</doc>

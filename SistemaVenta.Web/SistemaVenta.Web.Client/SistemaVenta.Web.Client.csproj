@@ -6,17 +6,25 @@
     <Nullable>enable</Nullable>
     <NoDefaultLaunchSettingsFile>true</NoDefaultLaunchSettingsFile>
     <StaticWebAssetProjectMode>Default</StaticWebAssetProjectMode>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <DocumentationFile>SistemaVenta.Web.Client.xml</DocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- Blazored.LocalStorage: Almacenamiento local para Blazor WebAssembly -->
     <PackageReference Include="Blazored.LocalStorage" Version="4.5.0" />
+    <!-- Microsoft.AspNetCore.Components.Authorization: Autenticación para Blazor -->
     <PackageReference Include="Microsoft.AspNetCore.Components.Authorization" Version="8.0.17" />
+    <!-- Microsoft.AspNetCore.Components.WebAssembly: Framework principal de Blazor WebAssembly -->
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="8.0.14" />
+    <!-- Microsoft.Extensions.Http: Cliente HTTP para llamadas a la API -->
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.1" />
+    <!-- System.IdentityModel.Tokens.Jwt: Manejo de tokens JWT -->
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.12.0" />
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Referencia al proyecto Shared para modelos y DTOs compartidos -->
     <ProjectReference Include="..\..\Shared\Shared.csproj" />
   </ItemGroup>
 

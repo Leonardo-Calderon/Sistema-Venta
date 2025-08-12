@@ -4,17 +4,55 @@ using System.Security.Claims;
 
 namespace SistemaVenta.API.Middleware
 {
+    /// <summary>
+    /// Middleware para registrar auditoría de todas las peticiones HTTP en la API.
+    /// </summary>
+    /// <remarks>
+    /// Este middleware captura y registra información detallada de todas las peticiones
+    /// HTTP que llegan a la API, incluyendo:
+    /// - Información del usuario autenticado
+    /// - Detalles de la petición (endpoint, método, IP, User-Agent)
+    /// - Información de la respuesta (código de estado, tiempo de respuesta)
+    /// - Intentos de autenticación (exitosos y fallidos)
+    /// - Errores y excepciones
+    /// 
+    /// Proporciona trazabilidad completa de las actividades en el sistema
+    /// para fines de seguridad, cumplimiento y depuración.
+    /// </remarks>
     public class AuditoriaMiddleware
     {
         private readonly RequestDelegate _next;
         private readonly ILogger<AuditoriaMiddleware> _logger;
 
+        /// <summary>
+        /// Inicializa una nueva instancia del middleware de auditoría.
+        /// </summary>
+        /// <param name="next">El siguiente middleware en el pipeline.</param>
+        /// <param name="logger">Logger para registrar información de auditoría.</param>
+        /// <remarks>
+        /// El constructor recibe el siguiente middleware en el pipeline y un logger
+        /// para registrar información detallada de las actividades de auditoría.
+        /// </remarks>
         public AuditoriaMiddleware(RequestDelegate next, ILogger<AuditoriaMiddleware> logger)
         {
-            _next = next;
-            _logger = logger;
+            _next = next ?? throw new ArgumentNullException(nameof(next));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
 
+        /// <summary>
+        /// Procesa la petición HTTP y registra información de auditoría.
+        /// </summary>
+        /// <param name="context">El contexto HTTP de la petición actual.</param>
+        /// <param name="auditoriaService">Servicio de auditoría para registrar las actividades.</param>
+        /// <returns>Una tarea que representa la operación asíncrona.</returns>
+        /// <remarks>
+        /// Este método es el punto de entrada del middleware. Captura información
+        /// de la petición, procesa la respuesta y registra los detalles de auditoría
+        /// según el tipo de actividad (acceso autenticado, autenticación, errores).
+        /// 
+        /// Utiliza un MemoryStream para capturar el cuerpo de la respuesta sin
+        /// interferir con el flujo normal de la petición.
+        /// </remarks>
         public async Task InvokeAsync(HttpContext context, IAuditoriaService auditoriaService)
         {
             var startTime = DateTime.UtcNow;
@@ -33,7 +71,7 @@ namespace SistemaVenta.API.Middleware
                 var resultado = "Pendiente";
                 var detalles = "";
 
-                // Continuar con el pipeline
+                // Continuar con el pipeline usando MemoryStream para capturar la respuesta
                 using var memoryStream = new MemoryStream();
                 context.Response.Body = memoryStream;
 
@@ -80,6 +118,16 @@ namespace SistemaVenta.API.Middleware
             }
         }
 
+        /// <summary>
+        /// Obtiene la dirección IP real del cliente, considerando headers de proxy.
+        /// </summary>
+        /// <param name="context">El contexto HTTP de la petición actual.</param>
+        /// <returns>La dirección IP del cliente o "Desconocida" si no se puede determinar.</returns>
+        /// <remarks>
+        /// Este método verifica múltiples headers para obtener la IP real del cliente,
+        /// considerando que la aplicación puede estar detrás de un proxy o load balancer.
+        /// Verifica en orden: X-Forwarded-For, X-Real-IP, y finalmente la IP de conexión.
+        /// </remarks>
         private string GetClientIpAddress(HttpContext context)
         {
             var ip = context.Connection.RemoteIpAddress?.ToString();
@@ -97,6 +145,18 @@ namespace SistemaVenta.API.Middleware
             return ip ?? "Desconocida";
         }
 
+        /// <summary>
+        /// Determina el resultado de la petición basándose en el código de estado HTTP.
+        /// </summary>
+        /// <param name="statusCode">El código de estado HTTP de la respuesta.</param>
+        /// <returns>Una cadena que describe el resultado de la petición.</returns>
+        /// <remarks>
+        /// Este método categoriza los códigos de estado HTTP en resultados legibles:
+        /// - 2xx: "Exitoso"
+        /// - 4xx: "Error del Cliente"
+        /// - 5xx: "Error del Servidor"
+        /// - Otros: "Desconocido"
+        /// </remarks>
         private string DetermineResult(int statusCode)
         {
             return statusCode switch

@@ -1,0 +1,1624 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SVRepository</name>
+    </assembly>
+    <members>
+        <member name="T:SVRepository.DB.Conexion">
+            <summary>
+            Clase responsable de gestionar la conexión a la base de datos SQL Server.
+            </summary>
+            <remarks>
+            Esta clase encapsula la lógica de conexión a la base de datos, proporcionando
+            una interfaz unificada para obtener conexiones SQL Server configuradas.
+            Utiliza el patrón de inyección de dependencias para recibir la configuración.
+            </remarks>
+        </member>
+        <member name="F:SVRepository.DB.Conexion.connectionString">
+            <summary>
+            Cadena de conexión a la base de datos SQL Server.
+            </summary>
+        </member>
+        <member name="M:SVRepository.DB.Conexion.#ctor(Microsoft.Extensions.Configuration.IConfiguration)">
+            <summary>
+            Inicializa una nueva instancia de la clase Conexion con la configuración proporcionada.
+            </summary>
+            <param name="configuration">Configuración de la aplicación que contiene la cadena de conexión.</param>
+            <remarks>
+            El constructor extrae la cadena de conexión del archivo de configuración
+            utilizando la clave "cadenaSQL". Esta cadena debe estar definida en el
+            archivo appsettings.json o en la configuración de la aplicación.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Se lanza cuando configuration es null.</exception>
+        </member>
+        <member name="M:SVRepository.DB.Conexion.ObtenerSQLConexion">
+            <summary>
+            Crea y retorna una nueva conexión SQL Server configurada.
+            </summary>
+            <returns>Una nueva instancia de SqlConnection configurada con la cadena de conexión.</returns>
+            <remarks>
+            Este método crea una nueva conexión SQL Server pero no la abre.
+            Es responsabilidad del código cliente abrir, usar y cerrar la conexión.
+            Se recomienda usar la conexión dentro de un bloque using para garantizar
+            la liberación adecuada de recursos.
+            </remarks>
+            <example>
+            <code>
+            using (var connection = conexion.ObtenerSQLConexion())
+            {
+                await connection.OpenAsync();
+                // Usar la conexión
+            }
+            </code>
+            </example>
+        </member>
+        <member name="T:SVRepository.DependencyInjection">
+            <summary>
+            Clase estática que proporciona métodos de extensión para registrar las dependencias del repositorio
+            en el contenedor de inyección de dependencias.
+            </summary>
+            <remarks>
+            Esta clase implementa el patrón de configuración de dependencias para el módulo de repositorio,
+            permitiendo la inyección de dependencias de manera centralizada y configurable.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.DependencyInjection.RegisterRepositoryDependencies(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)">
+            <summary>
+            Registra todas las dependencias del repositorio en el contenedor de servicios.
+            </summary>
+            <param name="services">Colección de servicios donde se registrarán las dependencias.</param>
+            <param name="configuration">Configuración de la aplicación que contiene la cadena de conexión.</param>
+            <remarks>
+            Este método registra:
+            - La clase de conexión a la base de datos como singleton
+            - Todos los repositorios como servicios transitorios
+            - Las interfaces y sus implementaciones correspondientes
+            </remarks>
+            <example>
+            <code>
+            var services = new ServiceCollection();
+            var configuration = new ConfigurationBuilder()
+                .AddJsonFile("appsettings.json")
+                .Build();
+            services.RegisterRepositoryDependencies(configuration);
+            </code>
+            </example>
+        </member>
+        <member name="T:SVRepository.Entities.Categoria">
+            <summary>
+            Representa una categoría de productos en el sistema de ventas.
+            </summary>
+            <remarks>
+            Las categorías se utilizan para organizar y clasificar los productos del sistema.
+            Cada categoría está asociada a una unidad de medida específica que define
+            cómo se venden los productos de esa categoría.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Categoria.IdCategoria">
+            <summary>
+            Identificador único de la categoría.
+            </summary>
+            <remarks>
+            Este valor es generado automáticamente por la base de datos
+            y se utiliza como clave primaria en la tabla de categorías.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Categoria.Nombre">
+            <summary>
+            Nombre descriptivo de la categoría.
+            </summary>
+            <remarks>
+            Este campo es obligatorio y debe ser único en el sistema.
+            Se utiliza para identificar y mostrar la categoría en la interfaz de usuario.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Categoria.RefMedida">
+            <summary>
+            Unidad de medida asociada a esta categoría.
+            </summary>
+            <remarks>
+            Define la unidad de medida que se utilizará para los productos
+            de esta categoría (ej: kilogramos, litros, unidades, etc.).
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Categoria.Activo">
+            <summary>
+            Indica si la categoría está activa en el sistema.
+            </summary>
+            <remarks>
+            Valores posibles:
+            - 1: Categoría activa (visible y utilizable)
+            - 0: Categoría inactiva (oculta y no utilizable)
+            </remarks>
+        </member>
+        <member name="T:SVRepository.Entities.DetalleVenta">
+            <summary>
+            Representa un detalle individual de una venta en el sistema.
+            </summary>
+            <remarks>
+            Cada detalle de venta contiene información sobre un producto específico vendido,
+            incluyendo la cantidad, precio unitario y precio total. Esta entidad es parte
+            de una relación uno a muchos con la entidad Venta.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.DetalleVenta.IdDetalleVenta">
+            <summary>
+            Identificador único del detalle de venta.
+            </summary>
+            <remarks>
+            Este valor es generado automáticamente por la base de datos
+            y se utiliza como clave primaria en la tabla de detalles de venta.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.DetalleVenta.IdVenta">
+            <summary>
+            Identificador de la venta a la que pertenece este detalle.
+            </summary>
+            <remarks>
+            Este campo establece la relación con la tabla de ventas
+            y permite agrupar todos los detalles de una venta específica.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.DetalleVenta.UsuarioRegistrado">
+            <summary>
+            Usuario que registró la venta.
+            </summary>
+            <remarks>
+            Contiene información del usuario que procesó la venta,
+            incluyendo su nombre y permisos en el sistema.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.DetalleVenta.RefVenta">
+            <summary>
+            Referencia a la venta principal.
+            </summary>
+            <remarks>
+            Proporciona acceso a la información completa de la venta
+            desde el detalle, incluyendo fecha, cliente y totales.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.DetalleVenta.RefProducto">
+            <summary>
+            Producto vendido en este detalle.
+            </summary>
+            <remarks>
+            Contiene toda la información del producto vendido,
+            incluyendo código, descripción, categoría y unidad de medida.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.DetalleVenta.Cantidad">
+            <summary>
+            Cantidad del producto vendido.
+            </summary>
+            <remarks>
+            Representa la cantidad vendida del producto específico.
+            Debe ser mayor que cero y respetar las unidades de medida del producto.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.DetalleVenta.PrecioVenta">
+            <summary>
+            Precio unitario del producto al momento de la venta.
+            </summary>
+            <remarks>
+            Este valor se captura al momento de la venta para mantener
+            un historial preciso de los precios, independientemente de
+            cambios futuros en el precio del producto.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.DetalleVenta.PrecioTotal">
+            <summary>
+            Precio total del detalle (cantidad * precio unitario).
+            </summary>
+            <remarks>
+            Este valor se calcula automáticamente como el producto
+            de la cantidad por el precio unitario del producto.
+            </remarks>
+        </member>
+        <member name="T:SVRepository.Entities.Medida">
+            <summary>
+            Representa una unidad de medida en el sistema de ventas.
+            </summary>
+            <remarks>
+            Las unidades de medida definen cómo se cuantifican y venden los productos.
+            Cada medida tiene una abreviatura, nombre descriptivo y puede tener
+            equivalencias con otras unidades de medida.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Medida.IdMedida">
+            <summary>
+            Identificador único de la unidad de medida.
+            </summary>
+            <remarks>
+            Este valor es generado automáticamente por la base de datos
+            y se utiliza como clave primaria en la tabla de medidas.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Medida.Abreviatura">
+            <summary>
+            Abreviatura corta de la unidad de medida.
+            </summary>
+            <remarks>
+            Ejemplos: kg (kilogramos), l (litros), pza (piezas), etc.
+            Se utiliza para mostrar de forma concisa la unidad en la interfaz de usuario.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Medida.Nombre">
+            <summary>
+            Nombre completo de la unidad de medida.
+            </summary>
+            <remarks>
+            Ejemplos: Kilogramos, Litros, Piezas, Metros, etc.
+            Se utiliza para mostrar el nombre completo en la interfaz de usuario.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Medida.Equivalente">
+            <summary>
+            Descripción de la equivalencia de esta unidad de medida.
+            </summary>
+            <remarks>
+            Proporciona información sobre cómo esta unidad se relaciona
+            con otras unidades de medida del sistema.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Medida.Valor">
+            <summary>
+            Valor numérico asociado a la equivalencia de la unidad de medida.
+            </summary>
+            <remarks>
+            Este valor se utiliza para cálculos de conversión entre
+            diferentes unidades de medida cuando sea necesario.
+            </remarks>
+        </member>
+        <member name="T:SVRepository.Entities.MenuRol">
+            <summary>
+            Representa un menú del sistema asociado a un rol específico.
+            </summary>
+            <remarks>
+            Esta entidad implementa el patrón de control de acceso basado en roles (RBAC),
+            permitiendo definir qué menús y funcionalidades están disponibles para cada rol
+            de usuario en el sistema.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.MenuRol.IdMenu">
+            <summary>
+            Identificador único del menú.
+            </summary>
+            <remarks>
+            Este valor identifica de forma única cada menú en el sistema
+            y se utiliza para establecer las relaciones de permisos con los roles.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.MenuRol.NombreMenu">
+            <summary>
+            Nombre descriptivo del menú.
+            </summary>
+            <remarks>
+            Este campo contiene el nombre que se mostrará en la interfaz de usuario
+            para identificar la funcionalidad o sección del sistema.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.MenuRol.IdMenuPadre">
+            <summary>
+            Identificador del menú padre, si existe.
+            </summary>
+            <remarks>
+            Permite crear una estructura jerárquica de menús (menús y submenús).
+            Si el valor es 0, indica que es un menú principal sin padre.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.MenuRol.Activo">
+            <summary>
+            Indica si el menú está activo y disponible para el rol.
+            </summary>
+            <remarks>
+            Controla si el menú es visible y accesible para los usuarios
+            que tienen asignado el rol correspondiente.
+            </remarks>
+        </member>
+        <member name="T:SVRepository.Entities.Negocio">
+            <summary>
+            Representa la información de configuración del negocio en el sistema.
+            </summary>
+            <remarks>
+            Esta entidad contiene todos los datos de identificación y configuración
+            del negocio, incluyendo información fiscal, de contacto y configuración
+            del sistema como símbolo de moneda y logo.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Negocio.IdNegocio">
+            <summary>
+            Identificador único del negocio.
+            </summary>
+            <remarks>
+            Este valor es generado automáticamente por la base de datos
+            y se utiliza como clave primaria en la tabla de negocio.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Negocio.RazonSocial">
+            <summary>
+            Razón social o nombre legal del negocio.
+            </summary>
+            <remarks>
+            Este campo contiene el nombre oficial del negocio tal como
+            aparece en los documentos fiscales y legales.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Negocio.RFC">
+            <summary>
+            Registro Federal de Contribuyentes del negocio.
+            </summary>
+            <remarks>
+            Número fiscal único que identifica al negocio ante las autoridades fiscales.
+            Se utiliza para la emisión de facturas y reportes fiscales.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Negocio.Direccion">
+            <summary>
+            Dirección física del negocio.
+            </summary>
+            <remarks>
+            Dirección completa donde se encuentra ubicado el negocio,
+            incluyendo calle, número, colonia, ciudad y código postal.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Negocio.Celular">
+            <summary>
+            Número de teléfono celular del negocio.
+            </summary>
+            <remarks>
+            Número de contacto principal del negocio para comunicación
+            con clientes y proveedores.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Negocio.Correo">
+            <summary>
+            Dirección de correo electrónico del negocio.
+            </summary>
+            <remarks>
+            Email oficial del negocio para comunicación electrónica
+            y envío de facturas o reportes.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Negocio.SimboloMoneda">
+            <summary>
+            Símbolo de la moneda utilizada en el negocio.
+            </summary>
+            <remarks>
+            Símbolo que se utilizará para mostrar los precios en el sistema
+            (ej: $, €, ¥, etc.).
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Negocio.NombreLogo">
+            <summary>
+            Nombre del archivo del logo del negocio.
+            </summary>
+            <remarks>
+            Nombre del archivo de imagen que contiene el logo del negocio,
+            utilizado para mostrar en facturas, reportes y la interfaz del sistema.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Negocio.URL">
+            <summary>
+            URL del sitio web del negocio.
+            </summary>
+            <remarks>
+            Dirección web oficial del negocio, utilizada para referencia
+            en documentos y comunicación con clientes.
+            </remarks>
+        </member>
+        <member name="T:SVRepository.Entities.Producto">
+            <summary>
+            Representa un producto en el sistema de ventas.
+            </summary>
+            <remarks>
+            Los productos son los elementos que se venden en el sistema. Cada producto
+            tiene información sobre su categoría, precios, stock disponible y estado
+            de activación en el sistema.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Producto.IdProducto">
+            <summary>
+            Identificador único del producto.
+            </summary>
+            <remarks>
+            Este valor es generado automáticamente por la base de datos
+            y se utiliza como clave primaria en la tabla de productos.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Producto.RefCategoria">
+            <summary>
+            Categoría a la que pertenece el producto.
+            </summary>
+            <remarks>
+            Define la clasificación del producto y determina la unidad de medida
+            que se utilizará para su venta (ej: kilogramos, litros, piezas, etc.).
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Producto.Codigo">
+            <summary>
+            Código único del producto.
+            </summary>
+            <remarks>
+            Código alfanumérico que identifica de forma única al producto.
+            Se utiliza para búsquedas rápidas y referencia en inventarios.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Producto.Descripcion">
+            <summary>
+            Descripción o nombre del producto.
+            </summary>
+            <remarks>
+            Nombre descriptivo del producto que se mostrará en la interfaz
+            de usuario y en los documentos de venta.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Producto.PrecioCompra">
+            <summary>
+            Precio de compra del producto.
+            </summary>
+            <remarks>
+            Precio al que se adquirió el producto del proveedor.
+            Se utiliza para cálculos de ganancia y análisis de rentabilidad.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Producto.PrecioVenta">
+            <summary>
+            Precio de venta del producto.
+            </summary>
+            <remarks>
+            Precio al que se vende el producto al cliente.
+            Este es el precio que se utiliza en las transacciones de venta.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Producto.Cantidad">
+            <summary>
+            Cantidad disponible en inventario.
+            </summary>
+            <remarks>
+            Número de unidades disponibles del producto para la venta.
+            Se actualiza automáticamente con cada venta realizada.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Producto.Activo">
+            <summary>
+            Indica si el producto está activo en el sistema.
+            </summary>
+            <remarks>
+            Valores posibles:
+            - 1: Producto activo (disponible para venta)
+            - 0: Producto inactivo (no disponible para venta)
+            </remarks>
+        </member>
+        <member name="T:SVRepository.Entities.Rol">
+            <summary>
+            Representa un rol de usuario en el sistema.
+            </summary>
+            <remarks>
+            Los roles definen los permisos y accesos que tiene cada usuario en el sistema.
+            Cada rol puede tener diferentes niveles de acceso a las funcionalidades
+            y menús del sistema, implementando un control de acceso basado en roles (RBAC).
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Rol.IdRol">
+            <summary>
+            Identificador único del rol.
+            </summary>
+            <remarks>
+            Este valor es generado automáticamente por la base de datos
+            y se utiliza como clave primaria en la tabla de roles.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Rol.Nombre">
+            <summary>
+            Nombre descriptivo del rol.
+            </summary>
+            <remarks>
+            Nombre que identifica el rol y describe las responsabilidades
+            y permisos asociados (ej: Administrador, Vendedor, Cajero, etc.).
+            </remarks>
+        </member>
+        <member name="T:SVRepository.Entities.Usuario">
+            <summary>
+            Representa un usuario del sistema de ventas.
+            </summary>
+            <remarks>
+            Los usuarios son las personas que acceden al sistema y realizan operaciones
+            como ventas, gestión de productos, reportes, etc. Cada usuario tiene un rol
+            que define sus permisos y accesos en el sistema.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Usuario.IdUsuario">
+            <summary>
+            Identificador único del usuario.
+            </summary>
+            <remarks>
+            Este valor es generado automáticamente por la base de datos
+            y se utiliza como clave primaria en la tabla de usuarios.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Usuario.RefRol">
+            <summary>
+            Rol asignado al usuario.
+            </summary>
+            <remarks>
+            Define los permisos y accesos que tiene el usuario en el sistema.
+            El rol determina qué funcionalidades y menús están disponibles.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Usuario.NombreCompleto">
+            <summary>
+            Nombre completo del usuario.
+            </summary>
+            <remarks>
+            Nombre completo de la persona que utiliza el sistema.
+            Se utiliza para identificación y en reportes de actividad.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Usuario.Correo">
+            <summary>
+            Dirección de correo electrónico del usuario.
+            </summary>
+            <remarks>
+            Email único del usuario utilizado para comunicación,
+            recuperación de contraseña y notificaciones del sistema.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Usuario.NombreUsuario">
+            <summary>
+            Nombre de usuario para el acceso al sistema.
+            </summary>
+            <remarks>
+            Identificador único utilizado para el inicio de sesión.
+            Debe ser único en el sistema y no puede contener espacios.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Usuario.Clave">
+            <summary>
+            Contraseña del usuario.
+            </summary>
+            <remarks>
+            Contraseña encriptada utilizada para autenticar al usuario.
+            Se almacena de forma segura en la base de datos.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Usuario.ResetearClave">
+            <summary>
+            Indica si el usuario debe cambiar su contraseña en el próximo inicio de sesión.
+            </summary>
+            <remarks>
+            Valores posibles:
+            - 1: Usuario debe cambiar contraseña
+            - 0: Usuario no necesita cambiar contraseña
+            Se utiliza para forzar el cambio de contraseña por seguridad.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Usuario.Activo">
+            <summary>
+            Indica si el usuario está activo en el sistema.
+            </summary>
+            <remarks>
+            Valores posibles:
+            - 1: Usuario activo (puede acceder al sistema)
+            - 0: Usuario inactivo (no puede acceder al sistema)
+            Se utiliza para deshabilitar usuarios sin eliminarlos.
+            </remarks>
+        </member>
+        <member name="T:SVRepository.Entities.Venta">
+            <summary>
+            Representa una venta en el sistema de ventas.
+            </summary>
+            <remarks>
+            Una venta es una transacción comercial que incluye uno o más productos vendidos
+            a un cliente. Cada venta tiene un número único, información del cliente,
+            totales de pago y una lista de detalles que especifican los productos vendidos.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Venta.IdVenta">
+            <summary>
+            Identificador único de la venta.
+            </summary>
+            <remarks>
+            Este valor es generado automáticamente por la base de datos
+            y se utiliza como clave primaria en la tabla de ventas.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Venta.NumeroVenta">
+            <summary>
+            Número único de la venta.
+            </summary>
+            <remarks>
+            Número alfanumérico que identifica de forma única la venta.
+            Se genera automáticamente y se utiliza para referencia en documentos
+            como facturas, tickets y reportes.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Venta.UsuarioRegistrado">
+            <summary>
+            Usuario que registró la venta.
+            </summary>
+            <remarks>
+            Información del usuario que procesó la venta en el sistema,
+            incluyendo su nombre y permisos.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Venta.NombreCliente">
+            <summary>
+            Nombre del cliente que realizó la compra.
+            </summary>
+            <remarks>
+            Nombre del cliente para el cual se registra la venta.
+            Se utiliza para identificación en documentos y reportes.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Venta.precioTotal">
+            <summary>
+            Precio total de la venta.
+            </summary>
+            <remarks>
+            Suma total de todos los productos vendidos en esta venta.
+            Se calcula automáticamente sumando los precios totales de cada detalle.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Venta.PagoCon">
+            <summary>
+            Cantidad con la que pagó el cliente.
+            </summary>
+            <remarks>
+            Monto que entregó el cliente para pagar la venta.
+            Se utiliza para calcular el cambio a devolver.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Venta.Cambio">
+            <summary>
+            Cambio devuelto al cliente.
+            </summary>
+            <remarks>
+            Diferencia entre el monto pagado por el cliente y el total de la venta.
+            Se calcula automáticamente como PagoCon - precioTotal.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Venta.FechaRegistro">
+            <summary>
+            Fecha y hora en que se registró la venta.
+            </summary>
+            <remarks>
+            Timestamp que indica cuándo se procesó la venta en el sistema.
+            Se utiliza para reportes, auditorías y análisis de ventas por tiempo.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Venta.Activo">
+            <summary>
+            Indica si la venta está activa en el sistema.
+            </summary>
+            <remarks>
+            Valores posibles:
+            - 1: Venta activa (válida y procesada)
+            - 0: Venta inactiva (cancelada o anulada)
+            Se utiliza para controlar el estado de las ventas.
+            </remarks>
+        </member>
+        <member name="P:SVRepository.Entities.Venta.RefDetalleVenta">
+            <summary>
+            Lista de detalles de la venta.
+            </summary>
+            <remarks>
+            Colección que contiene todos los productos vendidos en esta venta,
+            incluyendo cantidades, precios unitarios y precios totales por producto.
+            </remarks>
+        </member>
+        <member name="T:SVRepository.Implementation.CategoriaRepository">
+            <summary>
+            Implementación del repositorio para la gestión de categorías de productos.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz ICategoriaRepository y proporciona métodos
+            para acceder a los datos de categorías almacenados en la base de datos SQL Server.
+            Las categorías se utilizan para organizar y clasificar los productos del sistema.
+            </remarks>
+        </member>
+        <member name="F:SVRepository.Implementation.CategoriaRepository._conexion">
+            <summary>
+            Instancia de la clase de conexión a la base de datos.
+            </summary>
+        </member>
+        <member name="M:SVRepository.Implementation.CategoriaRepository.#ctor(SVRepository.DB.Conexion)">
+            <summary>
+            Inicializa una nueva instancia de la clase CategoriaRepository.
+            </summary>
+            <param name="conexion">Instancia de la clase Conexion para acceder a la base de datos.</param>
+            <remarks>
+            El constructor recibe una instancia de Conexion que será utilizada
+            para establecer conexiones a la base de datos en todas las operaciones.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Implementation.CategoriaRepository.Lista(System.String)">
+            <summary>
+            Obtiene una lista de categorías opcionalmente filtrada por un término de búsqueda.
+            </summary>
+            <param name="buscar">Término opcional para filtrar las categorías por nombre. Si está vacío, retorna todas las categorías.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de categorías.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_listaCategoria' que retorna todas las categorías activas
+            o aquellas que coincidan con el término de búsqueda proporcionado. Incluye información de la medida asociada.
+            </remarks>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="M:SVRepository.Implementation.CategoriaRepository.Crear(SVRepository.Entities.Categoria)">
+            <summary>
+            Crea una nueva categoría en el sistema.
+            </summary>
+            <param name="objeto">Objeto Categoria con los datos de la nueva categoría a crear.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_crearCategoria' que valida los datos de la categoría
+            y la inserta en la base de datos. Retorna un mensaje de confirmación si la operación es exitosa,
+            o un mensaje de error en caso contrario.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Se lanza cuando el objeto categoria es null.</exception>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="M:SVRepository.Implementation.CategoriaRepository.Editar(SVRepository.Entities.Categoria)">
+            <summary>
+            Actualiza los datos de una categoría existente en el sistema.
+            </summary>
+            <param name="objeto">Objeto Categoria con los datos actualizados de la categoría.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_editarCategoria' que actualiza los datos de una categoría existente,
+            incluyendo su estado activo/inactivo. Retorna un mensaje de confirmación si la operación es exitosa,
+            o un mensaje de error en caso contrario.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Se lanza cuando el objeto categoria es null.</exception>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="T:SVRepository.Implementation.MedidaRepository">
+            <summary>
+            Implementación del repositorio para la gestión de unidades de medida.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz IMedidaRepository y proporciona métodos
+            para acceder a los datos de unidades de medida almacenados en la base de datos SQL Server.
+            Las unidades de medida definen cómo se cuantifican los productos en el sistema.
+            </remarks>
+        </member>
+        <member name="F:SVRepository.Implementation.MedidaRepository._conexion">
+            <summary>
+            Instancia de la clase de conexión a la base de datos.
+            </summary>
+        </member>
+        <member name="M:SVRepository.Implementation.MedidaRepository.#ctor(SVRepository.DB.Conexion)">
+            <summary>
+            Inicializa una nueva instancia de la clase MedidaRepository.
+            </summary>
+            <param name="conexion">Instancia de la clase Conexion para acceder a la base de datos.</param>
+            <remarks>
+            El constructor recibe una instancia de Conexion que será utilizada
+            para establecer conexiones a la base de datos en todas las operaciones.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Implementation.MedidaRepository.Lista">
+            <summary>
+            Obtiene una lista de todas las unidades de medida disponibles en el sistema.
+            </summary>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de unidades de medida.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_listaMedida' que retorna todas las unidades
+            de medida configuradas en el sistema. La lista incluye abreviatura, nombre, equivalente y valor.
+            </remarks>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="T:SVRepository.Implementation.MenuRolRepository">
+            <summary>
+            Implementación del repositorio para la gestión de menús por rol.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz IMenuRolRepository y proporciona métodos
+            para acceder a los datos de menús asociados a roles específicos en la base de datos SQL Server.
+            Esta funcionalidad es esencial para el control de acceso basado en roles (RBAC).
+            </remarks>
+        </member>
+        <member name="F:SVRepository.Implementation.MenuRolRepository._conexion">
+            <summary>
+            Instancia de la clase de conexión a la base de datos.
+            </summary>
+        </member>
+        <member name="M:SVRepository.Implementation.MenuRolRepository.#ctor(SVRepository.DB.Conexion)">
+            <summary>
+            Inicializa una nueva instancia de la clase MenuRolRepository.
+            </summary>
+            <param name="conexion">Instancia de la clase Conexion para acceder a la base de datos.</param>
+            <remarks>
+            El constructor recibe una instancia de Conexion que será utilizada
+            para establecer conexiones a la base de datos en todas las operaciones.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Implementation.MenuRolRepository.Lista(System.Int32)">
+            <summary>
+            Obtiene una lista de menús disponibles para un rol específico.
+            </summary>
+            <param name="idRol">Identificador único del rol para el cual se obtienen los menús.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de menús disponibles para el rol.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_obtenerMenus' que retorna todos los menús
+            habilitados para el rol especificado. La lista incluye información sobre menús padre
+            y el estado activo de cada menú.
+            </remarks>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="T:SVRepository.Implementation.NegocioRepository">
+            <summary>
+            Implementación del repositorio para la gestión de información del negocio.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz INegocioRepository y proporciona métodos
+            para acceder y actualizar los datos de configuración del negocio en la base de datos SQL Server.
+            La información del negocio incluye datos fiscales, de contacto y configuración del sistema.
+            </remarks>
+        </member>
+        <member name="F:SVRepository.Implementation.NegocioRepository._conexion">
+            <summary>
+            Instancia de la clase de conexión a la base de datos.
+            </summary>
+        </member>
+        <member name="M:SVRepository.Implementation.NegocioRepository.#ctor(SVRepository.DB.Conexion)">
+            <summary>
+            Inicializa una nueva instancia de la clase NegocioRepository.
+            </summary>
+            <param name="conexion">Instancia de la clase Conexion para acceder a la base de datos.</param>
+            <remarks>
+            El constructor recibe una instancia de Conexion que será utilizada
+            para establecer conexiones a la base de datos en todas las operaciones.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Implementation.NegocioRepository.Obtener">
+            <summary>
+            Obtiene la información de configuración del negocio.
+            </summary>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un objeto Negocio con la información del negocio.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_obtenerNegocio' que retorna la información completa
+            del negocio, incluyendo datos de contacto, dirección, configuración de moneda y logo.
+            </remarks>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="M:SVRepository.Implementation.NegocioRepository.Editar(SVRepository.Entities.Negocio)">
+            <summary>
+            Actualiza la información de configuración del negocio.
+            </summary>
+            <param name="objeto">Objeto Negocio con los datos actualizados del negocio.</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_editarNegocio' que actualiza todos los datos
+            de configuración del negocio en la base de datos. Si ocurre un error durante la actualización,
+            se lanza una excepción con el mensaje de error.
+            </remarks>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="T:SVRepository.Implementation.ProductoRepository">
+            <summary>
+            Implementación del repositorio para la gestión de productos del sistema de ventas.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz IProductoRepository y proporciona métodos
+            para acceder a los datos de productos almacenados en la base de datos SQL Server.
+            Los productos son los elementos que se venden en el sistema y incluyen información
+            sobre precios, stock, categoría y estado de activación.
+            </remarks>
+        </member>
+        <member name="F:SVRepository.Implementation.ProductoRepository._conexion">
+            <summary>
+            Instancia de la clase de conexión a la base de datos.
+            </summary>
+        </member>
+        <member name="M:SVRepository.Implementation.ProductoRepository.#ctor(SVRepository.DB.Conexion)">
+            <summary>
+            Inicializa una nueva instancia de la clase ProductoRepository.
+            </summary>
+            <param name="conexion">Instancia de la clase Conexion para acceder a la base de datos.</param>
+            <remarks>
+            El constructor recibe una instancia de Conexion que será utilizada
+            para establecer conexiones a la base de datos en todas las operaciones.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Implementation.ProductoRepository.Crear(SVRepository.Entities.Producto)">
+            <summary>
+            Crea un nuevo producto en el sistema.
+            </summary>
+            <param name="objeto">Objeto Producto con los datos del nuevo producto a crear.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_crearProducto' que valida los datos del producto
+            y lo inserta en la base de datos. Incluye validación de conexión y manejo robusto de errores.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Se lanza cuando el objeto producto es null.</exception>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error específico de la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="M:SVRepository.Implementation.ProductoRepository.Editar(SVRepository.Entities.Producto)">
+            <summary>
+            Actualiza los datos de un producto existente en el sistema.
+            </summary>
+            <param name="objeto">Objeto Producto con los datos actualizados del producto.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_editarProducto' que actualiza los datos de un producto existente,
+            incluyendo su estado activo/inactivo. Retorna un mensaje de confirmación si la operación es exitosa,
+            o un mensaje de error en caso contrario.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Se lanza cuando el objeto producto es null.</exception>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="M:SVRepository.Implementation.ProductoRepository.Lista(System.String)">
+            <summary>
+            Obtiene una lista de productos opcionalmente filtrada por un término de búsqueda.
+            </summary>
+            <param name="buscar">Término opcional para filtrar los productos por código o descripción. Si está vacío, retorna todos los productos.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de productos.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_listaProducto' que retorna todos los productos activos
+            o aquellos que coincidan con el término de búsqueda proporcionado. Incluye información de la categoría.
+            </remarks>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="M:SVRepository.Implementation.ProductoRepository.Obtener(System.String)">
+            <summary>
+            Obtiene un producto específico por su código.
+            </summary>
+            <param name="codigo">Código único del producto a obtener.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el producto encontrado o un objeto vacío si no existe.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_obtenerProducto' que busca un producto específico por su código.
+            Retorna el producto completo con su información de categoría y medida si existe.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Se lanza cuando el código es null o vacío.</exception>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="T:SVRepository.Implementation.RolRepository">
+            <summary>
+            Implementación del repositorio para la gestión de roles de usuario.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz IRolRepository y proporciona métodos
+            para acceder a los datos de roles almacenados en la base de datos SQL Server.
+            Utiliza stored procedures para realizar las operaciones de base de datos.
+            </remarks>
+        </member>
+        <member name="F:SVRepository.Implementation.RolRepository._conexion">
+            <summary>
+            Instancia de la clase de conexión a la base de datos.
+            </summary>
+        </member>
+        <member name="M:SVRepository.Implementation.RolRepository.#ctor(SVRepository.DB.Conexion)">
+            <summary>
+            Inicializa una nueva instancia de la clase RolRepository.
+            </summary>
+            <param name="conexion">Instancia de la clase Conexion para acceder a la base de datos.</param>
+            <remarks>
+            El constructor recibe una instancia de Conexion que será utilizada
+            para establecer conexiones a la base de datos en todas las operaciones.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Implementation.RolRepository.Lista">
+            <summary>
+            Obtiene una lista de todos los roles disponibles en el sistema.
+            </summary>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de roles.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_listaRol' que retorna todos los roles
+            configurados en el sistema. La lista incluye el identificador y nombre de cada rol.
+            </remarks>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="T:SVRepository.Implementation.UsuarioRepository">
+            <summary>
+            Implementación del repositorio para la gestión de usuarios del sistema.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz IUsuarioRepository y proporciona métodos
+            para acceder a los datos de usuarios almacenados en la base de datos SQL Server.
+            Los usuarios son la base del sistema de autenticación y autorización, incluyendo
+            funcionalidades para login, gestión de contraseñas y administración de usuarios.
+            </remarks>
+        </member>
+        <member name="F:SVRepository.Implementation.UsuarioRepository._conexion">
+            <summary>
+            Instancia de la clase de conexión a la base de datos.
+            </summary>
+        </member>
+        <member name="M:SVRepository.Implementation.UsuarioRepository.#ctor(SVRepository.DB.Conexion)">
+            <summary>
+            Inicializa una nueva instancia de la clase UsuarioRepository.
+            </summary>
+            <param name="conexion">Instancia de la clase Conexion para acceder a la base de datos.</param>
+            <remarks>
+            El constructor recibe una instancia de Conexion que será utilizada
+            para establecer conexiones a la base de datos en todas las operaciones.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Implementation.UsuarioRepository.Lista(System.String)">
+            <summary>
+            Obtiene una lista de usuarios opcionalmente filtrada por un término de búsqueda.
+            </summary>
+            <param name="buscar">Término opcional para filtrar los usuarios por nombre completo o correo. Si está vacío, retorna todos los usuarios.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de usuarios.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_listaUsuario' que retorna todos los usuarios activos
+            o aquellos que coincidan con el término de búsqueda proporcionado. Incluye información del rol asignado.
+            </remarks>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="M:SVRepository.Implementation.UsuarioRepository.Crear(SVRepository.Entities.Usuario)">
+            <summary>
+            Crea un nuevo usuario en el sistema.
+            </summary>
+            <param name="objeto">Objeto Usuario con los datos del nuevo usuario a crear.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_crearUsuario' que valida los datos del usuario
+            y lo inserta en la base de datos. La contraseña se almacena de forma segura y se asigna un rol al usuario.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Se lanza cuando el objeto usuario es null.</exception>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="M:SVRepository.Implementation.UsuarioRepository.Editar(SVRepository.Entities.Usuario)">
+            <summary>
+            Actualiza los datos de un usuario existente en el sistema.
+            </summary>
+            <param name="objeto">Objeto Usuario con los datos actualizados del usuario.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_editarUsuario' que actualiza los datos de un usuario existente,
+            incluyendo su estado activo/inactivo. No permite cambiar la contraseña desde este método.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Se lanza cuando el objeto usuario es null.</exception>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="M:SVRepository.Implementation.UsuarioRepository.Eliminar(System.Int32)">
+            <summary>
+            Elimina lógicamente un usuario del sistema.
+            </summary>
+            <param name="idUsuario">Identificador único del usuario a eliminar.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_eliminarUsuario' que realiza una eliminación lógica del usuario,
+            marcándolo como inactivo en lugar de eliminarlo físicamente de la base de datos.
+            </remarks>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="M:SVRepository.Implementation.UsuarioRepository.Login(System.String,System.String)">
+            <summary>
+            Autentica un usuario con su nombre de usuario y contraseña.
+            </summary>
+            <param name="usuario">Nombre de usuario para la autenticación.</param>
+            <param name="clave">Contraseña del usuario.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el usuario autenticado o un objeto vacío si la autenticación falla.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_login' que valida las credenciales del usuario
+            y retorna la información completa del usuario si la autenticación es exitosa,
+            incluyendo su rol y permisos.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Se lanza cuando el usuario o clave son null o vacíos.</exception>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="M:SVRepository.Implementation.UsuarioRepository.VerificarCorreo(System.String)">
+            <summary>
+            Verifica si existe un usuario con el correo electrónico especificado.
+            </summary>
+            <param name="correo">Correo electrónico a verificar.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el ID del usuario si existe, o 0 si no existe.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_verificarCorreo' que busca un usuario
+            con el correo electrónico especificado. Se utiliza principalmente para validar
+            la unicidad del correo electrónico durante el proceso de registro o recuperación de contraseña.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Se lanza cuando el correo es null o vacío.</exception>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="M:SVRepository.Implementation.UsuarioRepository.ObtenerPorId(System.Int32)">
+            <summary>
+            Obtiene un usuario específico por su identificador.
+            </summary>
+            <param name="idUsuario">Identificador único del usuario a obtener.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el usuario encontrado o un objeto vacío si no existe.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_obtenerUsuarioPorId' que busca un usuario específico por su ID.
+            Retorna el usuario completo con su información de rol si existe.
+            </remarks>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="M:SVRepository.Implementation.UsuarioRepository.ActualizarClave(System.Int32,System.String,System.Int32)">
+            <summary>
+            Actualiza la contraseña de un usuario y opcionalmente resetea el flag de cambio de contraseña.
+            </summary>
+            <param name="idUsuario">Identificador único del usuario.</param>
+            <param name="nuevaClave">Nueva contraseña del usuario.</param>
+            <param name="resetear">Flag que indica si se debe resetear el flag de cambio de contraseña (1 = sí, 0 = no).</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_actualizarClave' que actualiza la contraseña del usuario
+            y opcionalmente resetea el flag que indica si el usuario debe cambiar su contraseña
+            en el próximo inicio de sesión.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Se lanza cuando la nueva clave es null o vacía.</exception>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="T:SVRepository.Implementation.VentaRepository">
+            <summary>
+            Implementación del repositorio para la gestión de ventas del sistema.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz IVentaRepository y proporciona métodos
+            para acceder a los datos de ventas almacenados en la base de datos SQL Server.
+            Las ventas son el núcleo del sistema de gestión comercial e incluyen funcionalidades
+            para registro de ventas, consulta de detalles y generación de reportes.
+            </remarks>
+        </member>
+        <member name="F:SVRepository.Implementation.VentaRepository._conexion">
+            <summary>
+            Instancia de la clase de conexión a la base de datos.
+            </summary>
+        </member>
+        <member name="M:SVRepository.Implementation.VentaRepository.#ctor(SVRepository.DB.Conexion)">
+            <summary>
+            Inicializa una nueva instancia de la clase VentaRepository.
+            </summary>
+            <param name="conexion">Instancia de la clase Conexion para acceder a la base de datos.</param>
+            <remarks>
+            El constructor recibe una instancia de Conexion que será utilizada
+            para establecer conexiones a la base de datos en todas las operaciones.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Implementation.VentaRepository.Registrar(System.String)">
+            <summary>
+            Registra una nueva venta en el sistema a partir de un XML que contiene la información de la venta.
+            </summary>
+            <param name="ventaXML">Cadena XML que contiene la información completa de la venta y sus detalles.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el número de venta generado o un mensaje de error.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_registrarVenta' que procesa un XML que contiene la información
+            de la venta y sus detalles, registra la venta en la base de datos y retorna el número de venta generado automáticamente.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Se lanza cuando el XML de venta es null o vacío.</exception>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="M:SVRepository.Implementation.VentaRepository.Obtener(System.String)">
+            <summary>
+            Obtiene la información completa de una venta específica por su número de venta.
+            </summary>
+            <param name="numeroVenta">Número único de la venta a obtener.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es la venta encontrada o un objeto vacío si no existe.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_ObtenerVenta' que busca una venta específica por su número
+            y retorna la información completa incluyendo datos del cliente y usuario que registró la venta.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Se lanza cuando el número de venta es null o vacío.</exception>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="M:SVRepository.Implementation.VentaRepository.ObtenerDetalle(System.String)">
+            <summary>
+            Obtiene los detalles de una venta específica por su número de venta.
+            </summary>
+            <param name="numeroVenta">Número único de la venta cuyos detalles se quieren obtener.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de detalles de la venta.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_ObtenerDetalleVenta' que retorna todos los productos vendidos
+            en una venta específica, incluyendo cantidades, precios y información del producto.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Se lanza cuando el número de venta es null o vacío.</exception>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="M:SVRepository.Implementation.VentaRepository.Lista(System.String,System.String,System.String)">
+            <summary>
+            Obtiene una lista de ventas filtrada por rango de fechas y opcionalmente por término de búsqueda.
+            </summary>
+            <param name="fechaInicio">Fecha de inicio del rango de búsqueda en formato string.</param>
+            <param name="fechaFin">Fecha de fin del rango de búsqueda en formato string.</param>
+            <param name="buscar">Término opcional para filtrar las ventas por número de venta o nombre de cliente.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de ventas que cumplen con los criterios.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_listaVenta' que retorna todas las ventas realizadas
+            en el rango de fechas especificado, opcionalmente filtradas por el término de búsqueda.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Se lanza cuando las fechas son null o vacías.</exception>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="M:SVRepository.Implementation.VentaRepository.Reporte(System.String,System.String)">
+            <summary>
+            Genera un reporte de ventas para un rango de fechas específico.
+            </summary>
+            <param name="fechaInicio">Fecha de inicio del reporte en formato string.</param>
+            <param name="fechaFin">Fecha de fin del reporte en formato string.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de detalles de ventas para el reporte.</returns>
+            <remarks>
+            Este método ejecuta el stored procedure 'sp_reporteVenta' que genera un reporte detallado de todas las ventas
+            realizadas en el rango de fechas especificado, incluyendo información de productos, precios y ganancias.
+            </remarks>
+            <exception cref="T:System.ArgumentNullException">Se lanza cuando las fechas son null o vacías.</exception>
+            <exception cref="T:Microsoft.Data.SqlClient.SqlException">Se lanza cuando ocurre un error en la base de datos.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error inesperado durante la operación.</exception>
+        </member>
+        <member name="T:SVRepository.Interfaces.ICategoriaRepository">
+            <summary>
+            Interfaz que define las operaciones de acceso a datos para la entidad Categoria.
+            </summary>
+            <remarks>
+            Esta interfaz implementa el patrón Repository para la gestión de categorías de productos,
+            proporcionando métodos para listar, crear y editar categorías en el sistema de ventas.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.ICategoriaRepository.Lista(System.String)">
+            <summary>
+            Obtiene una lista de categorías opcionalmente filtrada por un término de búsqueda.
+            </summary>
+            <param name="buscar">Término opcional para filtrar las categorías por nombre. Si está vacío, retorna todas las categorías.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de categorías.</returns>
+            <remarks>
+            Este método ejecuta un stored procedure que retorna todas las categorías activas
+            o aquellas que coincidan con el término de búsqueda proporcionado.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.ICategoriaRepository.Crear(SVRepository.Entities.Categoria)">
+            <summary>
+            Crea una nueva categoría en el sistema.
+            </summary>
+            <param name="objeto">Objeto Categoria con los datos de la nueva categoría a crear.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método valida los datos de la categoría y la inserta en la base de datos.
+            Retorna un mensaje de confirmación si la operación es exitosa, o un mensaje de error en caso contrario.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.ICategoriaRepository.Editar(SVRepository.Entities.Categoria)">
+            <summary>
+            Actualiza los datos de una categoría existente en el sistema.
+            </summary>
+            <param name="objeto">Objeto Categoria con los datos actualizados de la categoría.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método actualiza los datos de una categoría existente, incluyendo su estado activo/inactivo.
+            Retorna un mensaje de confirmación si la operación es exitosa, o un mensaje de error en caso contrario.
+            </remarks>
+        </member>
+        <member name="T:SVRepository.Interfaces.IMedidaRepository">
+            <summary>
+            Interfaz que define las operaciones de acceso a datos para la entidad Medida.
+            </summary>
+            <remarks>
+            Esta interfaz implementa el patrón Repository para la gestión de unidades de medida,
+            proporcionando métodos para obtener las unidades de medida disponibles en el sistema.
+            Las medidas se utilizan para categorizar productos y definir sus unidades de venta.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IMedidaRepository.Lista">
+            <summary>
+            Obtiene una lista de todas las unidades de medida disponibles en el sistema.
+            </summary>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de unidades de medida.</returns>
+            <remarks>
+            Este método ejecuta un stored procedure que retorna todas las unidades de medida
+            configuradas en el sistema, incluyendo su abreviatura, nombre, equivalente y valor.
+            </remarks>
+        </member>
+        <member name="T:SVRepository.Interfaces.IMenuRolRepository">
+            <summary>
+            Interfaz que define las operaciones de acceso a datos para la entidad MenuRol.
+            </summary>
+            <remarks>
+            Esta interfaz implementa el patrón Repository para la gestión de menús y permisos por rol,
+            proporcionando métodos para obtener los menús disponibles para un rol específico.
+            Esta funcionalidad es esencial para el control de acceso y la navegación del sistema.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IMenuRolRepository.Lista(System.Int32)">
+            <summary>
+            Obtiene una lista de menús disponibles para un rol específico.
+            </summary>
+            <param name="idRol">Identificador único del rol para el cual se obtienen los menús.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de menús disponibles para el rol.</returns>
+            <remarks>
+            Este método ejecuta un stored procedure que retorna todos los menús que están
+            habilitados para el rol especificado, incluyendo información sobre menús padre
+            y el estado activo de cada menú.
+            </remarks>
+        </member>
+        <member name="T:SVRepository.Interfaces.INegocioRepository">
+            <summary>
+            Interfaz que define las operaciones de acceso a datos para la entidad Negocio.
+            </summary>
+            <remarks>
+            Esta interfaz implementa el patrón Repository para la gestión de información del negocio,
+            proporcionando métodos para obtener y actualizar los datos de configuración del negocio.
+            Esta información incluye datos como razón social, RFC, dirección, contacto y configuración de moneda.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.INegocioRepository.Obtener">
+            <summary>
+            Obtiene la información de configuración del negocio.
+            </summary>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un objeto Negocio con la información del negocio.</returns>
+            <remarks>
+            Este método ejecuta un stored procedure que retorna la información completa del negocio,
+            incluyendo datos de contacto, dirección, configuración de moneda y logo.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.INegocioRepository.Editar(SVRepository.Entities.Negocio)">
+            <summary>
+            Actualiza la información de configuración del negocio.
+            </summary>
+            <param name="objeto">Objeto Negocio con los datos actualizados del negocio.</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método actualiza todos los datos de configuración del negocio en la base de datos.
+            Si ocurre un error durante la actualización, se lanza una excepción con el mensaje de error.
+            </remarks>
+            <exception cref="T:System.Exception">Se lanza cuando ocurre un error durante la actualización de los datos del negocio.</exception>
+        </member>
+        <member name="T:SVRepository.Interfaces.IProductoRepository">
+            <summary>
+            Interfaz que define las operaciones de acceso a datos para la entidad Producto.
+            </summary>
+            <remarks>
+            Esta interfaz implementa el patrón Repository para la gestión de productos del sistema de ventas,
+            proporcionando métodos para listar, crear, editar y obtener productos específicos.
+            Los productos incluyen información como código, descripción, precios, stock y categoría.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IProductoRepository.Lista(System.String)">
+            <summary>
+            Obtiene una lista de productos opcionalmente filtrada por un término de búsqueda.
+            </summary>
+            <param name="buscar">Término opcional para filtrar los productos por código o descripción. Si está vacío, retorna todos los productos.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de productos.</returns>
+            <remarks>
+            Este método ejecuta un stored procedure que retorna todos los productos activos
+            o aquellos que coincidan con el término de búsqueda proporcionado.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IProductoRepository.Crear(SVRepository.Entities.Producto)">
+            <summary>
+            Crea un nuevo producto en el sistema.
+            </summary>
+            <param name="objeto">Objeto Producto con los datos del nuevo producto a crear.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método valida los datos del producto y lo inserta en la base de datos.
+            Retorna un mensaje de confirmación si la operación es exitosa, o un mensaje de error en caso contrario.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IProductoRepository.Editar(SVRepository.Entities.Producto)">
+            <summary>
+            Actualiza los datos de un producto existente en el sistema.
+            </summary>
+            <param name="objeto">Objeto Producto con los datos actualizados del producto.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método actualiza los datos de un producto existente, incluyendo su estado activo/inactivo.
+            Retorna un mensaje de confirmación si la operación es exitosa, o un mensaje de error en caso contrario.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IProductoRepository.Obtener(System.String)">
+            <summary>
+            Obtiene un producto específico por su código.
+            </summary>
+            <param name="codigo">Código único del producto a obtener.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el producto encontrado o un objeto vacío si no existe.</returns>
+            <remarks>
+            Este método ejecuta un stored procedure que busca un producto específico por su código.
+            Retorna el producto completo con su información de categoría y medida si existe.
+            </remarks>
+        </member>
+        <member name="T:SVRepository.Interfaces.IRolRepository">
+            <summary>
+            Interfaz que define las operaciones de acceso a datos para la entidad Rol.
+            </summary>
+            <remarks>
+            Esta interfaz implementa el patrón Repository para la gestión de roles de usuario,
+            proporcionando métodos para obtener los roles disponibles en el sistema.
+            Los roles definen los permisos y accesos que tiene cada usuario en el sistema.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IRolRepository.Lista">
+            <summary>
+            Obtiene una lista de todos los roles disponibles en el sistema.
+            </summary>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de roles.</returns>
+            <remarks>
+            Este método ejecuta un stored procedure que retorna todos los roles
+            configurados en el sistema, incluyendo su identificador y nombre.
+            </remarks>
+        </member>
+        <member name="T:SVRepository.Interfaces.IUsuarioRepository">
+            <summary>
+            Interfaz que define las operaciones de acceso a datos para la entidad Usuario.
+            </summary>
+            <remarks>
+            Esta interfaz implementa el patrón Repository para la gestión de usuarios del sistema,
+            proporcionando métodos para autenticación, gestión de usuarios y recuperación de contraseñas.
+            Los usuarios son la base del sistema de autenticación y autorización.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IUsuarioRepository.Lista(System.String)">
+            <summary>
+            Obtiene una lista de usuarios opcionalmente filtrada por un término de búsqueda.
+            </summary>
+            <param name="buscar">Término opcional para filtrar los usuarios por nombre completo o correo. Si está vacío, retorna todos los usuarios.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de usuarios.</returns>
+            <remarks>
+            Este método ejecuta un stored procedure que retorna todos los usuarios activos
+            o aquellos que coincidan con el término de búsqueda proporcionado.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IUsuarioRepository.Crear(SVRepository.Entities.Usuario)">
+            <summary>
+            Crea un nuevo usuario en el sistema.
+            </summary>
+            <param name="objeto">Objeto Usuario con los datos del nuevo usuario a crear.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método valida los datos del usuario y lo inserta en la base de datos.
+            La contraseña se almacena de forma segura y se asigna un rol al usuario.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IUsuarioRepository.Editar(SVRepository.Entities.Usuario)">
+            <summary>
+            Actualiza los datos de un usuario existente en el sistema.
+            </summary>
+            <param name="objeto">Objeto Usuario con los datos actualizados del usuario.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método actualiza los datos de un usuario existente, incluyendo su estado activo/inactivo.
+            No permite cambiar la contraseña desde este método.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IUsuarioRepository.Eliminar(System.Int32)">
+            <summary>
+            Elimina lógicamente un usuario del sistema.
+            </summary>
+            <param name="idUsuario">Identificador único del usuario a eliminar.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es un mensaje indicando el éxito o error de la operación.</returns>
+            <remarks>
+            Este método realiza una eliminación lógica del usuario, marcándolo como inactivo
+            en lugar de eliminarlo físicamente de la base de datos.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IUsuarioRepository.Login(System.String,System.String)">
+            <summary>
+            Autentica un usuario con su nombre de usuario y contraseña.
+            </summary>
+            <param name="usuario">Nombre de usuario para la autenticación.</param>
+            <param name="clave">Contraseña del usuario.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el usuario autenticado o un objeto vacío si la autenticación falla.</returns>
+            <remarks>
+            Este método valida las credenciales del usuario y retorna la información completa
+            del usuario si la autenticación es exitosa, incluyendo su rol y permisos.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IUsuarioRepository.ObtenerPorId(System.Int32)">
+            <summary>
+            Obtiene un usuario específico por su identificador.
+            </summary>
+            <param name="idUsuario">Identificador único del usuario a obtener.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el usuario encontrado o un objeto vacío si no existe.</returns>
+            <remarks>
+            Este método ejecuta un stored procedure que busca un usuario específico por su ID.
+            Retorna el usuario completo con su información de rol si existe.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IUsuarioRepository.VerificarCorreo(System.String)">
+            <summary>
+            Verifica si existe un usuario con el correo electrónico especificado.
+            </summary>
+            <param name="correo">Correo electrónico a verificar.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el ID del usuario si existe, o 0 si no existe.</returns>
+            <remarks>
+            Este método se utiliza principalmente para validar la unicidad del correo electrónico
+            durante el proceso de registro o recuperación de contraseña.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IUsuarioRepository.ActualizarClave(System.Int32,System.String,System.Int32)">
+            <summary>
+            Actualiza la contraseña de un usuario y opcionalmente resetea el flag de cambio de contraseña.
+            </summary>
+            <param name="idUsuario">Identificador único del usuario.</param>
+            <param name="nuevaClave">Nueva contraseña del usuario.</param>
+            <param name="resetear">Flag que indica si se debe resetear el flag de cambio de contraseña (1 = sí, 0 = no).</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método actualiza la contraseña del usuario y opcionalmente resetea el flag
+            que indica si el usuario debe cambiar su contraseña en el próximo inicio de sesión.
+            </remarks>
+        </member>
+        <member name="T:SVRepository.Interfaces.IVentaRepository">
+            <summary>
+            Interfaz que define las operaciones de acceso a datos para la entidad Venta.
+            </summary>
+            <remarks>
+            Esta interfaz implementa el patrón Repository para la gestión de ventas del sistema,
+            proporcionando métodos para registrar ventas, obtener información de ventas específicas,
+            listar ventas por fechas y generar reportes de ventas.
+            Las ventas son el núcleo del sistema de gestión comercial.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IVentaRepository.Registrar(System.String)">
+            <summary>
+            Registra una nueva venta en el sistema a partir de un XML que contiene la información de la venta.
+            </summary>
+            <param name="ventaXML">Cadena XML que contiene la información completa de la venta y sus detalles.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es el número de venta generado o un mensaje de error.</returns>
+            <remarks>
+            Este método procesa un XML que contiene la información de la venta y sus detalles,
+            registra la venta en la base de datos y retorna el número de venta generado automáticamente.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IVentaRepository.Obtener(System.String)">
+            <summary>
+            Obtiene la información completa de una venta específica por su número de venta.
+            </summary>
+            <param name="numeroVenta">Número único de la venta a obtener.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es la venta encontrada o un objeto vacío si no existe.</returns>
+            <remarks>
+            Este método ejecuta un stored procedure que busca una venta específica por su número
+            y retorna la información completa incluyendo datos del cliente y usuario que registró la venta.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IVentaRepository.ObtenerDetalle(System.String)">
+            <summary>
+            Obtiene los detalles de una venta específica por su número de venta.
+            </summary>
+            <param name="numeroVenta">Número único de la venta cuyos detalles se quieren obtener.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de detalles de la venta.</returns>
+            <remarks>
+            Este método ejecuta un stored procedure que retorna todos los productos vendidos
+            en una venta específica, incluyendo cantidades, precios y información del producto.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IVentaRepository.Lista(System.String,System.String,System.String)">
+            <summary>
+            Obtiene una lista de ventas filtrada por rango de fechas y opcionalmente por término de búsqueda.
+            </summary>
+            <param name="fechaInicio">Fecha de inicio del rango de búsqueda en formato string.</param>
+            <param name="fechaFin">Fecha de fin del rango de búsqueda en formato string.</param>
+            <param name="buscar">Término opcional para filtrar las ventas por número de venta o nombre de cliente.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de ventas que cumplen con los criterios.</returns>
+            <remarks>
+            Este método ejecuta un stored procedure que retorna todas las ventas realizadas
+            en el rango de fechas especificado, opcionalmente filtradas por el término de búsqueda.
+            </remarks>
+        </member>
+        <member name="M:SVRepository.Interfaces.IVentaRepository.Reporte(System.String,System.String)">
+            <summary>
+            Genera un reporte de ventas para un rango de fechas específico.
+            </summary>
+            <param name="fechaInicio">Fecha de inicio del reporte en formato string.</param>
+            <param name="fechaFin">Fecha de fin del reporte en formato string.</param>
+            <returns>Una tarea que representa la operación asíncrona. El resultado es una lista de detalles de ventas para el reporte.</returns>
+            <remarks>
+            Este método ejecuta un stored procedure que genera un reporte detallado de todas las ventas
+            realizadas en el rango de fechas especificado, incluyendo información de productos, precios y ganancias.
+            </remarks>
+        </member>
+    </members>
+</doc>
