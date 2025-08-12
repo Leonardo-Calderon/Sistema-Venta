@@ -94,9 +94,7 @@
 </div>
 
 @code {
-    /// <summary>
-    /// Parámetro que recibe el número de la venta desde la URL.
-    /// </summary>
+    // Parámetro que recibe el número de la venta desde la URL.
     [Parameter]
     public string NumeroVenta { get; set; }
 
@@ -104,16 +102,12 @@
     private List<DetalleVentaDTO> detalleVenta;
     private bool estaDescargando = false;
 
-    /// <summary>
-    /// Referencia al módulo de JavaScript ('util.js') que contiene la función 'saveAsFile'.
-    /// Esta referencia se obtiene de forma asíncrona.
-    /// </summary>
+    // Referencia al módulo de JavaScript ('util.js') que contiene la función 'saveAsFile'.
+    // Esta referencia se obtiene de forma asíncrona.
     private IJSObjectReference? module;
 
-    /// <summary>
-    /// Método del ciclo de vida de Blazor que se ejecuta cuando el componente se ha inicializado.
-    /// Carga los datos de la venta y su detalle.
-    /// </summary>
+    // Método del ciclo de vida de Blazor que se ejecuta cuando el componente se ha inicializado.
+    // Carga los datos de la venta y su detalle.
     protected override async Task OnInitializedAsync()
     {
         if (!string.IsNullOrEmpty(NumeroVenta))
@@ -128,11 +122,9 @@
         }
     }
 
-    /// <summary>
-    /// Método del ciclo de vida de Blazor que se ejecuta después de que el componente se ha renderizado.
-    /// Es el lugar ideal para realizar interoperabilidad con JavaScript.
-    /// </summary>
-    /// <param name="firstRender">True si es la primera vez que el componente se renderiza.</param>
+    // Método del ciclo de vida de Blazor que se ejecuta después de que el componente se ha renderizado.
+    // Es el lugar ideal para realizar interoperabilidad con JavaScript.
+    // firstRender: True si es la primera vez que el componente se renderiza.
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -141,10 +133,8 @@
         }
     }
 
-    /// <summary>
-    /// Se ejecuta al hacer clic en el botón "Descargar PDF".
-    /// Llama a la API para generar el PDF y luego invoca la función JS para descargarlo.
-    /// </summary>
+    // Se ejecuta al hacer clic en el botón "Descargar PDF".
+    // Llama a la API para generar el PDF y luego invoca la función JS para descargarlo.
     private async Task Imprimir()
     {
         if (module is null)
@@ -175,11 +165,9 @@
         }
     }
 
-    /// <summary>
-    /// Método de la interfaz IAsyncDisposable. Se llama automáticamente cuando el componente
-    /// va a ser eliminado del DOM.
-    /// Libera la referencia al módulo de JavaScript para evitar fugas de memoria.
-    /// </summary>
+    // Método de la interfaz IAsyncDisposable. Se llama automáticamente cuando el componente
+    // va a ser eliminado del DOM.
+    // Libera la referencia al módulo de JavaScript para evitar fugas de memoria.
     public async ValueTask DisposeAsync()
     {
         if (module is not null)

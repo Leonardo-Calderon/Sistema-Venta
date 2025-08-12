@@ -1,0 +1,291 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SistemaVenta.Web.Client</name>
+    </assembly>
+    <members>
+        <member name="T:SistemaVenta.Web.Client.Services.Implementations.AuthService">
+            <summary>
+            Implementación del servicio de autenticación para la aplicación cliente.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz IAuthService y proporciona la funcionalidad
+            para manejar la autenticación de usuarios en la aplicación Blazor WebAssembly.
+            
+            Responsabilidades:
+            - Comunicación con la API de autenticación
+            - Gestión del estado de autenticación
+            - Almacenamiento y eliminación de tokens JWT
+            - Manejo de errores de autenticación
+            - Notificación de cambios en el estado de autenticación
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Implementations.AuthService.#ctor(System.Net.Http.HttpClient,Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider)">
+            <summary>
+            Inicializa una nueva instancia del servicio de autenticación.
+            </summary>
+            <param name="httpClient">Cliente HTTP para comunicación con la API.</param>
+            <param name="authenticationStateProvider">Proveedor de estado de autenticación.</param>
+            <remarks>
+            El constructor recibe las dependencias necesarias para el funcionamiento
+            del servicio, incluyendo el cliente HTTP para comunicación con la API
+            y el proveedor de estado de autenticación para gestionar el estado
+            de la sesión del usuario.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Implementations.AuthService.Login(Shared.DTOs.LoginDTO)">
+            <summary>
+            Autentica un usuario con las credenciales proporcionadas.
+            </summary>
+            <param name="loginDto">Datos de login del usuario (nombre de usuario y contraseña).</param>
+            <returns>
+            Los datos de sesión del usuario si la autenticación es exitosa.
+            </returns>
+            <exception cref="T:System.Net.Http.HttpRequestException">Se lanza cuando la petición HTTP falla.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando no se recibe un token válido.</exception>
+            <remarks>
+            Este método:
+            1. Envía las credenciales a la API de autenticación
+            2. Verifica que la respuesta sea exitosa
+            3. Deserializa la respuesta para obtener los datos de sesión
+            4. Valida que se haya recibido un token válido
+            5. Notifica al proveedor de autenticación sobre el inicio de sesión
+            6. Retorna los datos de sesión del usuario
+            
+            Si la autenticación falla, lanza una excepción con el mensaje de error.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Implementations.AuthService.Logout">
+            <summary>
+            Cierra la sesión del usuario actual.
+            </summary>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método:
+            1. Notifica al proveedor de autenticación sobre el cierre de sesión
+            2. El proveedor se encarga de eliminar el token del almacenamiento local
+            3. Limpia el estado de autenticación
+            
+            Después de llamar a este método, el usuario será redirigido a la página de login
+            y perderá acceso a las funcionalidades que requieren autenticación.
+            </remarks>
+        </member>
+        <member name="T:SistemaVenta.Web.Client.Services.Implementations.UsuarioService">
+            <summary>
+            Implementación del servicio de gestión de usuarios para la aplicación cliente.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz IUsuarioService y proporciona la funcionalidad
+            para manejar las operaciones CRUD de usuarios en la aplicación Blazor WebAssembly.
+            
+            Responsabilidades:
+            - Comunicación con la API de usuarios
+            - Manejo de respuestas HTTP
+            - Serialización y deserialización de datos
+            - Gestión de errores de comunicación
+            - Validación de respuestas HTTP
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Implementations.UsuarioService.#ctor(System.Net.Http.HttpClient)">
+            <summary>
+            Inicializa una nueva instancia del servicio de usuarios.
+            </summary>
+            <param name="httpClient">Cliente HTTP para comunicación con la API.</param>
+            <remarks>
+            El constructor recibe el cliente HTTP necesario para realizar las
+            peticiones a la API de usuarios. Este cliente debe estar configurado
+            con la URL base de la API.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Implementations.UsuarioService.Lista(System.String)">
+            <summary>
+            Obtiene una lista de usuarios con opción de búsqueda.
+            </summary>
+            <param name="buscar">Término de búsqueda opcional para filtrar usuarios por nombre.</param>
+            <returns>
+            Una lista de usuarios que coinciden con el criterio de búsqueda.
+            </returns>
+            <remarks>
+            Este método envía una petición GET a la API de usuarios con el término
+            de búsqueda opcional. Si no se proporciona término de búsqueda, retorna
+            todos los usuarios del sistema.
+            
+            La respuesta se deserializa automáticamente a una lista de UsuarioDTO.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Implementations.UsuarioService.Crear(Shared.DTOs.UsuarioCrearDTO)">
+            <summary>
+            Crea un nuevo usuario en el sistema.
+            </summary>
+            <param name="usuario">Datos del usuario a crear.</param>
+            <returns>
+            La respuesta HTTP de la operación de creación.
+            </returns>
+            <remarks>
+            Este método envía una petición POST a la API de usuarios con los datos
+            del nuevo usuario. Los datos se serializan automáticamente a JSON
+            antes de ser enviados.
+            
+            La respuesta HTTP indica si la operación fue exitosa o si hubo
+            errores de validación.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Implementations.UsuarioService.Editar(Shared.DTOs.UsuarioDTO)">
+            <summary>
+            Edita un usuario existente en el sistema.
+            </summary>
+            <param name="usuario">Datos actualizados del usuario.</param>
+            <returns>
+            La respuesta HTTP de la operación de edición.
+            </returns>
+            <remarks>
+            Este método envía una petición PUT a la API de usuarios con los datos
+            actualizados del usuario. Los datos se serializan automáticamente a JSON
+            antes de ser enviados.
+            
+            La respuesta HTTP indica si la operación fue exitosa o si hubo
+            errores de validación.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Implementations.UsuarioService.Eliminar(System.Int32)">
+            <summary>
+            Elimina un usuario del sistema.
+            </summary>
+            <param name="id">ID del usuario a eliminar.</param>
+            <returns>
+            La respuesta HTTP de la operación de eliminación.
+            </returns>
+            <remarks>
+            Este método envía una petición DELETE a la API de usuarios con el ID
+            del usuario a eliminar.
+            
+            La respuesta HTTP indica si la operación fue exitosa o si hubo errores.
+            </remarks>
+        </member>
+        <member name="T:SistemaVenta.Web.Client.Services.Interfaces.IAuthService">
+            <summary>
+            Interfaz para el servicio de autenticación en la aplicación cliente.
+            </summary>
+            <remarks>
+            Esta interfaz define los métodos necesarios para manejar la autenticación
+            de usuarios en la aplicación Blazor WebAssembly. Proporciona funcionalidad
+            para iniciar y cerrar sesión de usuarios.
+            
+            La implementación de esta interfaz se encarga de:
+            - Comunicación con la API de autenticación
+            - Almacenamiento local de tokens JWT
+            - Gestión del estado de autenticación
+            - Manejo de errores de autenticación
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Interfaces.IAuthService.Login(Shared.DTOs.LoginDTO)">
+            <summary>
+            Autentica un usuario con las credenciales proporcionadas.
+            </summary>
+            <param name="loginDto">Datos de login del usuario (nombre de usuario y contraseña).</param>
+            <returns>
+            Una tarea que representa la operación asíncrona. El resultado contiene
+            los datos de sesión del usuario si la autenticación es exitosa.
+            </returns>
+            <remarks>
+            Este método:
+            1. Envía las credenciales a la API de autenticación
+            2. Recibe un token JWT si las credenciales son válidas
+            3. Almacena el token en el almacenamiento local
+            4. Retorna los datos de sesión del usuario
+            
+            Si la autenticación falla, lanza una excepción con el mensaje de error.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Interfaces.IAuthService.Logout">
+            <summary>
+            Cierra la sesión del usuario actual.
+            </summary>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método:
+            1. Elimina el token JWT del almacenamiento local
+            2. Limpia cualquier estado de sesión
+            3. Notifica al sistema de autenticación sobre el cierre de sesión
+            
+            Después de llamar a este método, el usuario será redirigido a la página de login.
+            </remarks>
+        </member>
+        <member name="T:SistemaVenta.Web.Client.Services.Interfaces.IUsuarioService">
+            <summary>
+            Interfaz para el servicio de gestión de usuarios en la aplicación cliente.
+            </summary>
+            <remarks>
+            Esta interfaz define los métodos necesarios para manejar las operaciones CRUD
+            de usuarios en la aplicación Blazor WebAssembly. Proporciona funcionalidad
+            para listar, crear, editar y eliminar usuarios del sistema.
+            
+            La implementación de esta interfaz se encarga de:
+            - Comunicación con la API de usuarios
+            - Manejo de respuestas HTTP
+            - Validación de datos antes del envío
+            - Gestión de errores de comunicación
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Interfaces.IUsuarioService.Lista(System.String)">
+            <summary>
+            Obtiene una lista de usuarios con opción de búsqueda.
+            </summary>
+            <param name="buscar">Término de búsqueda opcional para filtrar usuarios por nombre.</param>
+            <returns>
+            Una tarea que representa la operación asíncrona. El resultado contiene
+            la lista de usuarios que coinciden con el criterio de búsqueda.
+            </returns>
+            <remarks>
+            Este método envía una petición GET a la API de usuarios con el término
+            de búsqueda opcional. Si no se proporciona término de búsqueda, retorna
+            todos los usuarios del sistema.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Interfaces.IUsuarioService.Crear(Shared.DTOs.UsuarioCrearDTO)">
+            <summary>
+            Crea un nuevo usuario en el sistema.
+            </summary>
+            <param name="usuario">Datos del usuario a crear.</param>
+            <returns>
+            Una tarea que representa la operación asíncrona. El resultado contiene
+            la respuesta HTTP de la operación de creación.
+            </returns>
+            <remarks>
+            Este método envía una petición POST a la API de usuarios con los datos
+            del nuevo usuario. La respuesta HTTP indica si la operación fue exitosa
+            o si hubo errores de validación.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Interfaces.IUsuarioService.Editar(Shared.DTOs.UsuarioDTO)">
+            <summary>
+            Edita un usuario existente en el sistema.
+            </summary>
+            <param name="usuario">Datos actualizados del usuario.</param>
+            <returns>
+            Una tarea que representa la operación asíncrona. El resultado contiene
+            la respuesta HTTP de la operación de edición.
+            </returns>
+            <remarks>
+            Este método envía una petición PUT a la API de usuarios con los datos
+            actualizados del usuario. La respuesta HTTP indica si la operación fue
+            exitosa o si hubo errores de validación.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Interfaces.IUsuarioService.Eliminar(System.Int32)">
+            <summary>
+            Elimina un usuario del sistema.
+            </summary>
+            <param name="id">ID del usuario a eliminar.</param>
+            <returns>
+            Una tarea que representa la operación asíncrona. El resultado contiene
+            la respuesta HTTP de la operación de eliminación.
+            </returns>
+            <remarks>
+            Este método envía una petición DELETE a la API de usuarios con el ID
+            del usuario a eliminar. La respuesta HTTP indica si la operación fue
+            exitosa o si hubo errores.
+            </remarks>
+        </member>
+    </members>
+</doc>
