@@ -4,9 +4,9 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
-    <UserSecretsId>4dc89622-f9ae-45a9-98b1-7b4d382c4974</UserSecretsId>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <DocumentationFile>SistemaVenta.API.xml</DocumentationFile>
+    <UserSecretsId>fb096d92-1e7e-4b58-9ff8-73cbac9f561a</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>

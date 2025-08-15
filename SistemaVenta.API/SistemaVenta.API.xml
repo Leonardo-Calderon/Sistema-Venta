@@ -54,6 +54,29 @@
             Compara consultas seguras vs vulnerables
             </summary>
         </member>
+        <member name="T:SistemaVenta.API.Controllers.TestController">
+            <summary>
+            Controlador temporal para probar la carga de secretos desde User Secrets
+            </summary>
+        </member>
+        <member name="M:SistemaVenta.API.Controllers.TestController.TestSecrets">
+            <summary>
+            Endpoint para verificar que los secretos se cargan correctamente desde User Secrets
+            </summary>
+            <returns>Estado de carga de cada secreto</returns>
+        </member>
+        <member name="M:SistemaVenta.API.Controllers.TestController.TestConfig">
+            <summary>
+            Endpoint para verificar la configuración general de la aplicación
+            </summary>
+            <returns>Información de configuración</returns>
+        </member>
+        <member name="M:SistemaVenta.API.Controllers.TestController.HealthCheck">
+            <summary>
+            Endpoint para verificar que la aplicación está funcionando
+            </summary>
+            <returns>Estado de la aplicación</returns>
+        </member>
         <member name="M:SistemaVenta.API.Controllers.VentasController.BusquedaSegura(System.String,System.String,System.String)">
             <summary>
             PASO 4: Endpoint de búsqueda segura de ventas con validación y sanitización
