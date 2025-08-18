@@ -24,6 +24,7 @@ namespace SistemaVenta.Web.Client.Services.Implementations
     {
         private readonly HttpClient _httpClient;
         private readonly AuthenticationStateProvider _authenticationStateProvider;
+        private readonly ICsrfService _csrfService;
 
         /// <summary>
         /// Inicializa una nueva instancia del servicio de autenticación.
@@ -36,10 +37,11 @@ namespace SistemaVenta.Web.Client.Services.Implementations
         /// y el proveedor de estado de autenticación para gestionar el estado
         /// de la sesión del usuario.
         /// </remarks>
-        public AuthService(HttpClient httpClient, AuthenticationStateProvider authenticationStateProvider)
+        public AuthService(HttpClient httpClient, AuthenticationStateProvider authenticationStateProvider, ICsrfService csrfService)
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
             _authenticationStateProvider = authenticationStateProvider ?? throw new ArgumentNullException(nameof(authenticationStateProvider));
+            _csrfService = csrfService ?? throw new ArgumentNullException(nameof(csrfService));
         }
 
         /// <summary>
@@ -72,6 +74,17 @@ namespace SistemaVenta.Web.Client.Services.Implementations
             if (sessionDto == null || string.IsNullOrWhiteSpace(sessionDto.Token))
                 throw new Exception("No se recibió un token de sesión válido.");
 
+            // Obtener token CSRF después del login exitoso
+            try
+            {
+                await _csrfService.GetCsrfTokenAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log del error pero no fallar el login
+                Console.WriteLine($"Error al obtener token CSRF después del login: {ex.Message}");
+            }
+
             await ((CustomAuthenticationStateProvider)_authenticationStateProvider)
                 .NotifyUserAuthentication(sessionDto.Token);
 
@@ -93,6 +106,17 @@ namespace SistemaVenta.Web.Client.Services.Implementations
         /// </remarks>
         public async Task Logout()
         {
+            // Limpiar token CSRF al cerrar sesión
+            try
+            {
+                await _csrfService.ClearCsrfTokenAsync();
+            }
+            catch (Exception ex)
+            {
+                // Log del error pero no fallar el logout
+                Console.WriteLine($"Error al limpiar token CSRF durante logout: {ex.Message}");
+            }
+
             await ((CustomAuthenticationStateProvider)_authenticationStateProvider).NotifyUserLogout();
         }
     }

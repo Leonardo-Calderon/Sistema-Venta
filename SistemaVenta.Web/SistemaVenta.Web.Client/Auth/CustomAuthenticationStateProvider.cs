@@ -30,7 +30,7 @@ namespace SistemaVenta.Web.Client.Auth
                 }
 
                 // Si hay un token, se configura la cabecera por defecto del HttpClient
-                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+                _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
                 var claimsPrincipal = CreateClaimsPrincipalFromToken(token);
                 return new AuthenticationState(claimsPrincipal);
@@ -50,7 +50,7 @@ namespace SistemaVenta.Web.Client.Auth
             await _localStorage.SetItemAsStringAsync("authToken", token);
 
             // Se añade el token a las cabeceras del HttpClient para uso inmediato
-            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("bearer", token);
+            _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
             NotifyAuthenticationStateChanged(authState);
         }

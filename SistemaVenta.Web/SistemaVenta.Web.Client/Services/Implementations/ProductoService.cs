@@ -8,10 +8,12 @@ namespace SistemaVenta.Web.Client.Services.Implementations
     public class ProductoService : IProductoService
     {
         private readonly HttpClient _httpClient;
+        private readonly ICsrfService _csrfService;
 
-        public ProductoService(HttpClient httpClient)
+        public ProductoService(HttpClient httpClient, ICsrfService csrfService)
         {
             _httpClient = httpClient;
+            _csrfService = csrfService;
         }
 
         public async Task<List<ProductoDTO>> Listar(string buscar = "")
@@ -32,12 +34,28 @@ namespace SistemaVenta.Web.Client.Services.Implementations
 
         public async Task<HttpResponseMessage> Crear(ProductoDTO producto)
         {
-            return await _httpClient.PostAsJsonAsync("api/productos", producto);
+            // Obtener token CSRF para la operación
+            var csrfToken = await _csrfService.GetCurrentCsrfTokenAsync();
+            
+            // Crear request con token CSRF
+            var request = new HttpRequestMessage(HttpMethod.Post, "api/productos");
+            request.Headers.Add("X-CSRF-TOKEN", csrfToken);
+            request.Content = JsonContent.Create(producto);
+            
+            return await _httpClient.SendAsync(request);
         }
 
         public async Task<HttpResponseMessage> Editar(ProductoDTO producto)
         {
-            return await _httpClient.PutAsJsonAsync("api/productos", producto);
+            // Obtener token CSRF para la operación
+            var csrfToken = await _csrfService.GetCurrentCsrfTokenAsync();
+            
+            // Crear request con token CSRF
+            var request = new HttpRequestMessage(HttpMethod.Put, "api/productos");
+            request.Headers.Add("X-CSRF-TOKEN", csrfToken);
+            request.Content = JsonContent.Create(producto);
+            
+            return await _httpClient.SendAsync(request);
         }
     }
 }

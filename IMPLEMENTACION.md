@@ -37,7 +37,7 @@ Sistema completo de autorización y control de acceso que protege todos los endp
 
 ### **Resultados Obtenidos:**
 - ✅ **15 endpoints protegidos** con autorización granular
-- ✅ **2 roles definidos** (Administrador, Vendedor)
+- ✅ **2 roles definidos** (Administrador, Ventas)
 - ✅ **Sistema de auditoría automático** para todas las actividades
 - ✅ **Verificación de propiedad** de recursos implementada
 - ✅ **8 archivos nuevos** creados para el sistema de auditoría
@@ -65,7 +65,7 @@ Sistema completo de autorización y control de acceso que protege todos los endp
 | Métrica | Objetivo | Resultado |
 |---------|----------|-----------|
 | Endpoints Protegidos | 100% | ✅ 100% |
-| Roles Implementados | 2+ | ✅ 2 (Admin, Vendedor) |
+| Roles Implementados | 2+ | ✅ 2 (Admin, Ventas) |
 | Auditoría Automática | Sí | ✅ Implementada |
 | Verificación de Propiedad | Sí | ✅ Implementada |
 | Tiempo de Respuesta | <100ms | ✅ Sin impacto |
@@ -120,7 +120,7 @@ Sistema completo de autorización y control de acceso que protege todos los endp
 │                              │                             │
 │                              ▼                             │
 │  ┌─────────────────────────────────────────────────────────┐ │
-│  │                  VENDEDOR                               │ │
+│  │                   VENTAS                                │ │
 │  │  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐     │ │
 │  │  │   Ventas    │  │  Productos  │  │   Perfil    │     │ │
 │  │  │   (Crear)   │  │   (Leer)    │  │  (Editar)   │     │ │
@@ -196,12 +196,12 @@ Sistema completo de autorización y control de acceso que protege todos los endp
 - ✅ Agregado `[Authorize]` a nivel de controlador para proteger todo el controlador
 - ✅ Agregado `[Authorize(Roles = "Administrador")]` al endpoint `Reporte` - Solo administradores pueden ver reportes
 - ✅ Agregado `[Authorize(Roles = "Administrador")]` al endpoint `GenerarReporteExcel` - Solo administradores pueden generar reportes Excel
-- ✅ Agregado `[Authorize(Roles = "Administrador,Vendedor")]` al endpoint `Historial` - Administradores y vendedores pueden ver historial
-- ✅ Agregado `[Authorize(Roles = "Administrador,Vendedor")]` al endpoint `Registrar` - Administradores y vendedores pueden registrar ventas
-- ✅ Agregado `[Authorize(Roles = "Administrador,Vendedor")]` al endpoint `Obtener` - Administradores y vendedores pueden ver ventas
-- ✅ Agregado `[Authorize(Roles = "Administrador,Vendedor")]` al endpoint `Detalle` - Administradores y vendedores pueden ver detalles
-- ✅ Agregado `[Authorize(Roles = "Administrador,Vendedor")]` al endpoint `GenerarPDF` - Administradores y vendedores pueden generar PDFs
-- ✅ Agregado `[Authorize(Roles = "Administrador,Vendedor")]` al endpoint `Lista` - Administradores y vendedores pueden ver lista de productos
+- ✅ Agregado `[Authorize(Roles = "Administrador,Ventas")]` al endpoint `Historial` - Administradores y ventas pueden ver historial
+- ✅ Agregado `[Authorize(Roles = "Administrador,Ventas")]` al endpoint `Registrar` - Administradores y ventas pueden registrar ventas
+- ✅ Agregado `[Authorize(Roles = "Administrador,Ventas")]` al endpoint `Obtener` - Administradores y ventas pueden ver ventas
+- ✅ Agregado `[Authorize(Roles = "Administrador,Ventas")]` al endpoint `Detalle` - Administradores y ventas pueden ver detalles
+- ✅ Agregado `[Authorize(Roles = "Administrador,Ventas")]` al endpoint `GenerarPDF` - Administradores y ventas pueden generar PDFs
+- ✅ Agregado `[Authorize(Roles = "Administrador,Ventas")]` al endpoint `Lista` - Administradores y ventas pueden ver lista de productos
 
 ### 2. **SistemaVenta.API/Controllers/RolesController.cs**
 
@@ -226,12 +226,12 @@ Sistema completo de autorización y control de acceso que protege todos los endp
 |----------|------------------|---------------|
 | Reporte | Administrador | Solo administradores pueden generar reportes de ventas |
 | GenerarReporteExcel | Administrador | Solo administradores pueden exportar a Excel |
-| Historial | Administrador, Vendedor | Ambos roles necesitan ver historial de ventas |
-| Registrar | Administrador, Vendedor | Ambos roles pueden registrar ventas |
-| Obtener | Administrador, Vendedor | Ambos roles pueden ver detalles de ventas |
-| Detalle | Administrador, Vendedor | Ambos roles pueden ver detalles de ventas |
-| GenerarPDF | Administrador, Vendedor | Ambos roles pueden generar boletas PDF |
-| Lista | Administrador, Vendedor | Ambos roles necesitan ver productos para ventas |
+| Historial | Administrador, Ventas | Ambos roles necesitan ver historial de ventas |
+| Registrar | Administrador, Ventas | Ambos roles pueden registrar ventas |
+| Obtener | Administrador, Ventas | Ambos roles pueden ver detalles de ventas |
+| Detalle | Administrador, Ventas | Ambos roles pueden ver detalles de ventas |
+| GenerarPDF | Administrador, Ventas | Ambos roles pueden generar boletas PDF |
+| Lista | Administrador, Ventas | Ambos roles necesitan ver productos para ventas |
 
 #### **UsuariosController** (Ya tenía autorización)
 | Endpoint | Roles Permitidos | Justificación |
@@ -295,7 +295,7 @@ Sistema completo de autorización y control de acceso que protege todos los endp
 - **Acceso**: Todos los endpoints
 - **Responsabilidades**: Usuarios, productos, categorías, reportes, configuración
 
-### **Vendedor**
+### **Ventas**
 - **Funciones**: Operaciones de venta
 - **Acceso**: Ventas, historial, productos para venta
 - **Responsabilidades**: Registrar ventas, generar boletas, consultar historial
@@ -312,7 +312,7 @@ Sistema completo de autorización y control de acceso que protege todos los endp
 ### **Decoradores de Autorización Utilizados:**
 - `[Authorize]` - Requiere autenticación
 - `[Authorize(Roles = "Administrador")]` - Solo administradores
-- `[Authorize(Roles = "Administrador,Vendedor")]` - Administradores o vendedores
+- `[Authorize(Roles = "Administrador,Ventas")]` - Administradores o ventas
 - `[AllowAnonymous]` - Acceso público
 
 ### **Estructura de Claims en JWT:**
@@ -337,7 +337,7 @@ Sistema completo de autorización y control de acceso que protege todos los endp
 - ✅ AuthController - Acceso público para login
 
 ### **Principio de Mínimo Privilegio Aplicado:**
-- ✅ Vendedores solo pueden vender y consultar
+- ✅ Usuarios Ventas solo pueden vender y consultar
 - ✅ Administradores tienen acceso completo
 - ✅ Usuarios básicos solo pueden navegar
 - ✅ Endpoints sensibles protegidos adecuadamente
@@ -386,7 +386,7 @@ Sistema completo de autorización y control de acceso que protege todos los endp
 ### **Endpoints de Creación (POST) - Ya Protegidos:**
 | Endpoint | Método | Protección | Justificación |
 |----------|--------|------------|---------------|
-| POST /api/ventas/registrar | HttpPost | `[Authorize(Roles = "Administrador,Vendedor")]` | Creación de ventas requiere roles específicos |
+| POST /api/ventas/registrar | HttpPost | `[Authorize(Roles = "Administrador,Ventas")]` | Creación de ventas requiere roles específicos |
 | POST /api/usuarios | HttpPost | `[Authorize(Roles = "Administrador")]` | Creación de usuarios solo para administradores |
 | POST /api/productos | HttpPost | `[Authorize(Roles = "Administrador")]` | Creación de productos solo para administradores |
 | POST /api/categorias | HttpPost | `[Authorize(Roles = "Administrador")]` | Creación de categorías solo para administradores |
@@ -396,9 +396,9 @@ Sistema completo de autorización y control de acceso que protege todos los endp
 ### **Endpoints de Obtención (GET) - Ya Protegidos:**
 | Endpoint | Método | Protección | Justificación |
 |----------|--------|------------|---------------|
-| GET /api/ventas/obtener/{numeroVenta} | HttpGet | `[Authorize(Roles = "Administrador,Vendedor")]` | Obtención de ventas requiere roles específicos |
-| GET /api/ventas/historial | HttpGet | `[Authorize(Roles = "Administrador,Vendedor")]` | Historial de ventas requiere roles específicos |
-| GET /api/ventas/detalle/{numeroVenta} | HttpGet | `[Authorize(Roles = "Administrador,Vendedor")]` | Detalle de ventas requiere roles específicos |
+| GET /api/ventas/obtener/{numeroVenta} | HttpGet | `[Authorize(Roles = "Administrador,Ventas")]` | Obtención de ventas requiere roles específicos |
+| GET /api/ventas/historial | HttpGet | `[Authorize(Roles = "Administrador,Ventas")]` | Historial de ventas requiere roles específicos |
+| GET /api/ventas/detalle/{numeroVenta} | HttpGet | `[Authorize(Roles = "Administrador,Ventas")]` | Detalle de ventas requiere roles específicos |
 | GET /api/usuarios | HttpGet | `[Authorize(Roles = "Administrador")]` | Lista de usuarios solo para administradores |
 | GET /api/productos | HttpGet | `[Authorize(Roles = "Administrador")]` | Lista de productos solo para administradores |
 | GET /api/categorias | HttpGet | `[Authorize]` | Cualquier usuario autenticado puede ver categorías |
@@ -437,7 +437,7 @@ public async Task<IActionResult> ObtenerPorCodigo(string codigo)
 - ✅ **Seguridad Mejorada**: Ya no se puede buscar productos sin autenticación
 - ✅ **Consistencia**: Todos los endpoints ahora requieren autenticación
 - ✅ **Control de Acceso**: Solo usuarios autenticados pueden buscar productos
-- ⚠️ **Consideración**: Los vendedores necesitarán estar autenticados para buscar productos durante las ventas
+- ⚠️ **Consideración**: Los usuarios de ventas necesitarán estar autenticados para buscar productos durante las ventas
 
 ---
 
@@ -507,10 +507,10 @@ public async Task<IActionResult> ObtenerPorCodigo(string codigo)
 
 **Cambios Realizados:**
 - ✅ Agregado `using System.Security.Claims;` para acceso a claims del token
-- ✅ **Endpoint Historial**: Implementada lógica de propiedad - vendedores solo ven sus ventas, administradores ven todas
-- ✅ **Endpoint Obtener**: Implementada verificación de propiedad - vendedores solo pueden ver sus propias ventas
-- ✅ **Endpoint Detalle**: Implementada verificación de propiedad - vendedores solo pueden ver detalles de sus ventas
-- ✅ **Endpoint GenerarPDF**: Implementada verificación de propiedad - vendedores solo pueden generar PDFs de sus ventas
+- ✅ **Endpoint Historial**: Implementada lógica de propiedad - usuarios ventas solo ven sus ventas, administradores ven todas
+- ✅ **Endpoint Obtener**: Implementada verificación de propiedad - usuarios ventas solo pueden ver sus propias ventas
+- ✅ **Endpoint Detalle**: Implementada verificación de propiedad - usuarios ventas solo pueden ver detalles de sus ventas
+- ✅ **Endpoint GenerarPDF**: Implementada verificación de propiedad - usuarios ventas solo pueden generar PDFs de sus ventas
 
 **Lógica Implementada:**
 
@@ -547,7 +547,7 @@ if (!isAdmin && v.UsuarioRegistrado?.IdUsuario != userId)
 
 **Cambios Realizados:**
 - ✅ Agregado `using System.Security.Claims;` para acceso a claims del token
-- ✅ **Endpoint Editar**: Modificado para permitir que vendedores editen su propio perfil
+- ✅ **Endpoint Editar**: Modificado para permitir que usuarios ventas editen su propio perfil
 - ✅ **Nuevo Endpoint Perfil**: Agregado GET /api/usuarios/perfil para que usuarios obtengan su propio perfil
 - ✅ Implementada verificación de propiedad - usuarios solo pueden editar su propio perfil
 
@@ -588,10 +588,10 @@ if (!isAdmin && id != userId)
 
 | Endpoint | Método | Lógica de Propiedad | Justificación |
 |----------|--------|-------------------|---------------|
-| GET /api/ventas/historial | HttpGet | Vendedores ven solo sus ventas, Admin ve todas | Control de acceso a historial personal |
-| GET /api/ventas/obtener/{numeroVenta} | HttpGet | Vendedores solo ven sus ventas, Admin ve todas | Protección de datos de ventas |
-| GET /api/ventas/detalle/{numeroVenta} | HttpGet | Vendedores solo ven detalles de sus ventas | Protección de detalles de ventas |
-| GET /api/ventas/generarpdf/{numeroVenta} | HttpGet | Vendedores solo generan PDFs de sus ventas | Control de generación de documentos |
+| GET /api/ventas/historial | HttpGet | Usuarios Ventas ven solo sus ventas, Admin ve todas | Control de acceso a historial personal |
+| GET /api/ventas/obtener/{numeroVenta} | HttpGet | Usuarios Ventas solo ven sus ventas, Admin ve todas | Protección de datos de ventas |
+| GET /api/ventas/detalle/{numeroVenta} | HttpGet | Usuarios Ventas solo ven detalles de sus ventas | Protección de detalles de ventas |
+| GET /api/ventas/generarpdf/{numeroVenta} | HttpGet | Usuarios Ventas solo generan PDFs de sus ventas | Control de generación de documentos |
 
 ### **Endpoints de Usuarios con Verificación de Propiedad:**
 
@@ -820,7 +820,7 @@ POST https://localhost:7001/api/auth/login
 Content-Type: application/json
 
 {
-    "nombreUsuario": "vendedor1",
+    "nombreUsuario": "ventas1",
     "clave": "123456"
 }
 ```
@@ -833,13 +833,13 @@ Content-Type: application/json
 
 ### **2. Casos de Prueba para Ventas:**
 
-#### **Caso 1: Usuario Vendedor Accede a Su Propia Venta**
+#### **Caso 1: Usuario Ventas Accede a Su Propia Venta**
 ```
 GET https://localhost:7001/api/ventas/testacceso/V001
 ```
 **Resultado Esperado:** 200 OK con información de acceso permitido
 
-#### **Caso 2: Usuario Vendedor Accede a Venta de Otro Usuario**
+#### **Caso 2: Usuario Ventas Accede a Venta de Otro Usuario**
 ```
 GET https://localhost:7001/api/ventas/testacceso/V002
 ```
@@ -881,8 +881,8 @@ GET https://localhost:7001/api/usuarios/testacceso/2
     "mensaje": "Acceso permitido - Prueba exitosa",
     "usuarioActual": {
         "id": 2,
-        "nombre": "vendedor1",
-        "rol": "Vendedor",
+        "nombre": "ventas1",
+"rol": "Ventas",
         "esAdministrador": false
     },
     "venta": {
@@ -890,7 +890,7 @@ GET https://localhost:7001/api/usuarios/testacceso/2
         "nombreCliente": "Juan Pérez",
         "precioTotal": 150.00,
                     "fechaRegistro": "2025-07-28T10:30:00",
-        "usuarioRegistrado": "vendedor1",
+        "usuarioRegistrado": "ventas1",
         "idUsuarioRegistrado": 2
     },
     "verificacion": {
@@ -925,8 +925,8 @@ GET https://localhost:7001/api/usuarios/testacceso/2
 
 ## 🎯 ESCENARIOS DE PRUEBA VALIDADOS
 
-### **1. Escenario: Usuario Vendedor Accede a Sus Recursos**
-- ✅ **Login exitoso** con credenciales de vendedor
+### **1. Escenario: Usuario Ventas Accede a Sus Recursos**
+- ✅ **Login exitoso** con credenciales de ventas
 - ✅ **Acceso permitido** a sus propias ventas
 - ✅ **Acceso permitido** a su propio perfil
 - ✅ **Acceso denegado** a ventas de otros usuarios
@@ -1128,7 +1128,7 @@ GET /api/auditoria/estadisticas?fechaInicio={date}&fechaFin={date}
 ```
 GET /api/auditoria/mi-actividad?fechaInicio={date}&fechaFin={date}
 ```
-**Autorización:** Administradores y Vendedores
+**Autorización:** Administradores y Ventas
 **Funcionalidad:** Usuarios pueden ver su propia actividad
 
 ### **4. Resumen Diario:**
@@ -1213,12 +1213,12 @@ private string GetClientIpAddress(HttpContext context)
 
 ### **Log de Acceso Exitoso:**
 ```
-ACCESO - Usuario: vendedor1 (ID: 2, Rol: Vendedor) | Endpoint: GET /api/ventas/obtener/V001 | Resultado: Permitido | Detalles: IP: 192.168.1.100, User-Agent: Mozilla/5.0..., Status: 200 | Timestamp: 2025-07-28 15:45:30 UTC
+ACCESO - Usuario: ventas1 (ID: 2, Rol: Ventas) | Endpoint: GET /api/ventas/obtener/V001 | Resultado: Permitido | Detalles: IP: 192.168.1.100, User-Agent: Mozilla/5.0..., Status: 200 | Timestamp: 2025-07-28 15:45:30 UTC
 ```
 
 ### **Log de Autorización Denegada:**
 ```
-AUTORIZACIÓN - Usuario: vendedor1 (ID: 2, Rol: Vendedor) | Recurso: Venta V002 | Acción: Consulta | Resultado: Denegado | Motivo: Usuario no es propietario de la venta | Timestamp: 2025-07-28 15:46:15 UTC
+AUTORIZACIÓN - Usuario: ventas1 (ID: 2, Rol: Ventas) | Recurso: Venta V002 | Acción: Consulta | Resultado: Denegado | Motivo: Usuario no es propietario de la venta | Timestamp: 2025-07-28 15:46:15 UTC
 ```
 
 ### **Log de Autenticación Exitosa:**
@@ -1395,7 +1395,7 @@ GET /api/auditoria/historial/2?fechaInicio=2025-07-28&fechaFin=2025-07-28
       "accion": "Login",
       "resultado": "Exitoso",
       "ip": "192.168.1.100",
-      "detalles": "Login exitoso - Rol: Vendedor"
+      "detalles": "Login exitoso - Rol: Ventas"
     }
   ],
   "totalActividades": 15
@@ -1469,7 +1469,7 @@ GET /api/auditoria/resumen-diario?fecha=2025-07-28
 ```
 
 ### **Sistema de Autorización Operativo:**
-- ✅ **Autorización por Roles**: Administrador y Vendedor
+- ✅ **Autorización por Roles**: Administrador y Ventas
 - ✅ **Propiedad del Recurso**: Verificación de propiedad en ventas y usuarios
 - ✅ **Endpoints de Prueba**: `/testacceso` disponibles para validación
 - ✅ **Middleware de Seguridad**: Protección automática de endpoints
@@ -1524,7 +1524,7 @@ GET /api/auditoria/resumen-diario?fecha=2025-07-28
 ### **Decoradores de Autorización:**
 - `[Authorize]` - Requiere autenticación
 - `[Authorize(Roles = "Administrador")]` - Solo administradores
-- `[Authorize(Roles = "Administrador,Vendedor")]` - Administradores o vendedores
+- `[Authorize(Roles = "Administrador,Ventas")]` - Administradores o ventas
 - `[AllowAnonymous]` - Acceso público
 
 ### **Claims JWT Utilizados:**
@@ -1584,23 +1584,23 @@ GET /api/auditoria/resumen-diario?fecha=2025-07-28
 curl -H "Authorization: Bearer {token_admin}" \
      -X GET "https://localhost:7206/api/usuarios"
 
-# Probar acceso de Vendedor (debe fallar)
-curl -H "Authorization: Bearer {token_vendedor}" \
+# Probar acceso de Ventas (debe fallar)
+curl -H "Authorization: Bearer {token_ventas}" \
      -X GET "https://localhost:7206/api/usuarios"
 ```
 
 **Resultados Esperados:**
 - ✅ Administrador: 200 OK con lista de usuarios
-- ❌ Vendedor: 403 Forbidden
+- ❌ Ventas: 403 Forbidden
 
 ### **2. Validación de Propiedad de Recursos**
 ```bash
 # Probar acceso a venta propia
-curl -H "Authorization: Bearer {token_vendedor}" \
+curl -H "Authorization: Bearer {token_ventas}" \
      -X GET "https://localhost:7206/api/ventas/detalle/V001"
 
 # Probar acceso a venta de otro usuario (debe fallar)
-curl -H "Authorization: Bearer {token_vendedor2}" \
+curl -H "Authorization: Bearer {token_ventas2}" \
      -X GET "https://localhost:7206/api/ventas/detalle/V001"
 ```
 
@@ -1629,7 +1629,7 @@ curl -H "Authorization: Bearer {token_admin}" \
   "error": "Acceso denegado",
   "message": "No tiene permisos para acceder a este recurso",
   "requiredRole": "Administrador",
-  "currentRole": "Vendedor",
+  "currentRole": "Ventas",
   "resource": "/api/usuarios",
   "timestamp": "28 de julio del 2025T10:30:00Z"
 }
@@ -1643,7 +1643,7 @@ curl -H "Authorization: Bearer {token_admin}" \
   "user": {
     "id": 2,
     "name": "Juan Pérez",
-    "role": "Vendedor"
+    "role": "Ventas"
   },
   "permissions": [
     "ventas.crear",
@@ -1656,7 +1656,7 @@ curl -H "Authorization: Bearer {token_admin}" \
 ### **3. Headers de Seguridad**
 ```http
 X-User-ID: 2
-X-User-Role: Vendedor
+X-User-Role: Ventas
 X-Request-ID: abc123-def456
 X-Audit-Trail: enabled
 ```
@@ -1830,7 +1830,7 @@ curl -s -o /dev/null -w "%{http_code}" \
 
 echo "3. Verificando acceso denegado..."
 curl -s -o /dev/null -w "%{http_code}" \
-     -H "Authorization: Bearer $VENDEDOR_TOKEN" \
+     -H "Authorization: Bearer $VENTAS_TOKEN" \
      "https://localhost:7206/api/usuarios"
 
 echo "=== VERIFICACIÓN COMPLETADA ==="

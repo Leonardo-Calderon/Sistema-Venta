@@ -46,4 +46,7 @@ builder.Services.AddScoped<IProductoService, ProductoService>();
 builder.Services.AddScoped<IVentaService, VentaService>();
 builder.Services.AddScoped<INegocioService, NegocioService>();
 
+// Registrar servicio CSRF para protección contra ataques Cross-Site Request Forgery
+builder.Services.AddScoped<ICsrfService, CsrfService>();
+
 await builder.Build().RunAsync();

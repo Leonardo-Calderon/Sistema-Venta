@@ -1,5 +1,8 @@
 ﻿// En: SistemaVenta.API/Controllers/AuthController.cs
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Antiforgery;
+using Microsoft.AspNetCore.Hosting;
 using SVServices.Interfaces;
 using Shared.DTOs;
 using SVRepository.Entities;
@@ -181,6 +184,73 @@ public class AuthController : ControllerBase
             signingCredentials: credentials);
 
         return new JwtSecurityTokenHandler().WriteToken(token);
+    }
+
+    /// <summary>
+    /// Obtiene el token CSRF para el usuario autenticado.
+    /// </summary>
+    /// <returns>
+    /// - 200 OK con el token CSRF si el usuario está autenticado
+    /// - 401 Unauthorized si el usuario no está autenticado
+    /// </returns>
+    /// <remarks>
+    /// Este endpoint proporciona el token CSRF necesario para proteger
+    /// las operaciones que modifican estado (POST, PUT, DELETE) contra
+    /// ataques de falsificación de solicitudes en sitios cruzados.
+    /// 
+    /// El token CSRF se genera automáticamente por el middleware
+    /// anti-forgery de ASP.NET Core y se incluye en las cookies
+    /// de la respuesta.
+    /// </remarks>
+    [HttpGet("csrf-token")]
+    [Authorize]
+    public IActionResult GetCsrfToken()
+    {
+        try
+        {
+            // Generar el token CSRF usando el servicio de antiforgery
+            var antiforgery = HttpContext.RequestServices.GetRequiredService<IAntiforgery>();
+            var tokens = antiforgery.GetAndStoreTokens(HttpContext);
+            
+            if (string.IsNullOrEmpty(tokens.RequestToken))
+            {
+                _logger.LogWarning("No se pudo generar token CSRF para usuario: {Usuario}", 
+                    User.FindFirst(ClaimTypes.Name)?.Value ?? "Desconocido");
+                return BadRequest("No se pudo generar token CSRF");
+            }
+
+                         // Configurar cookie CSRF manualmente para desarrollo cross-origin
+             if (HttpContext.RequestServices.GetRequiredService<IWebHostEnvironment>().IsDevelopment())
+             {
+                 var cookieOptions = new CookieOptions
+                 {
+                     HttpOnly = true,
+                     Secure = true, // Requerido cuando SameSite=None
+                     SameSite = SameSiteMode.None,
+                     IsEssential = true,
+                     Domain = null, // Permite cross-origin
+                     Path = "/"
+                 };
+                 
+                 HttpContext.Response.Cookies.Append("CSRF-TOKEN", tokens.RequestToken, cookieOptions);
+                 
+                 _logger.LogInformation("Cookie CSRF configurada manualmente para desarrollo cross-origin con Secure=true");
+             }
+
+            _logger.LogInformation("Token CSRF generado exitosamente para usuario: {Usuario}", 
+                User.FindFirst(ClaimTypes.Name)?.Value ?? "Desconocido");
+
+            _logger.LogInformation("Token CSRF generado para usuario: {Usuario} - Token: {Token}",
+                User.FindFirst(ClaimTypes.Name)?.Value ?? "Desconocido",
+                tokens.RequestToken.Substring(0, Math.Min(10, tokens.RequestToken.Length)) + "...");
+
+            return Ok(new { csrfToken = tokens.RequestToken });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error al generar token CSRF");
+            return StatusCode(500, "Error interno al generar token CSRF");
+        }
     }
 
     private string GetClientIpAddress()

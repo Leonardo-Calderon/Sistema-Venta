@@ -9,10 +9,12 @@ namespace SistemaVenta.Web.Client.Services.Implementations
     public class VentaService : IVentaService
     {
         private readonly HttpClient _httpClient;
+        private readonly ICsrfService _csrfService;
 
-        public VentaService(HttpClient httpClient)
+        public VentaService(HttpClient httpClient, ICsrfService csrfService)
         {
             _httpClient = httpClient;
+            _csrfService = csrfService;
         }
 
         public async Task<VentaDTO> Obtener(string numeroVenta)
@@ -22,7 +24,15 @@ namespace SistemaVenta.Web.Client.Services.Implementations
         }
         public async Task<string> Registrar(VentaDTO venta)
         {
-            var response = await _httpClient.PostAsJsonAsync("api/Ventas/Registrar", venta);
+            // Obtener token CSRF para la operación
+            var csrfToken = await _csrfService.GetCurrentCsrfTokenAsync();
+            
+            // Crear request con token CSRF
+            var request = new HttpRequestMessage(HttpMethod.Post, "api/Ventas/Registrar");
+            request.Headers.Add("X-CSRF-TOKEN", csrfToken);
+            request.Content = JsonContent.Create(venta);
+            
+            var response = await _httpClient.SendAsync(request);
             if (response.IsSuccessStatusCode)
             {
                 var responseBody = await response.Content.ReadFromJsonAsync<NumeroVentaResponse>();

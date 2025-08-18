@@ -152,6 +152,97 @@
             - Otros: "Desconocido"
             </remarks>
         </member>
+        <member name="T:SistemaVenta.API.Middleware.CsrfProtectionMiddleware">
+            <summary>
+            Middleware personalizado para protección CSRF que funciona con autenticación JWT.
+            </summary>
+            <remarks>
+            Este middleware implementa protección CSRF para aplicaciones que usan JWT Bearer tokens.
+            Valida tokens CSRF en operaciones que modifican estado (POST, PUT, DELETE) para prevenir
+            ataques de falsificación de solicitudes en sitios cruzados.
+            
+            Funcionalidades:
+            - Detección automática de métodos que modifican estado
+            - Validación de tokens CSRF en headers personalizados
+            - Compatibilidad con autenticación JWT
+            - Logging detallado de intentos de acceso
+            - Manejo de errores de validación CSRF
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Middleware.CsrfProtectionMiddleware.#ctor(Microsoft.AspNetCore.Http.RequestDelegate,Microsoft.Extensions.Logging.ILogger{SistemaVenta.API.Middleware.CsrfProtectionMiddleware},Microsoft.AspNetCore.Hosting.IWebHostEnvironment)">
+            <summary>
+            Inicializa una nueva instancia del middleware de protección CSRF.
+            </summary>
+            <param name="next">El siguiente middleware en el pipeline.</param>
+            <param name="logger">Logger para registrar eventos de seguridad.</param>
+            <param name="environment">Entorno de la aplicación para determinar si estamos en desarrollo.</param>
+            <remarks>
+            El constructor recibe el siguiente middleware en el pipeline, un logger
+            para registrar eventos de seguridad relacionados con la validación CSRF,
+            y el entorno de la aplicación para aplicar lógica específica de desarrollo.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Middleware.CsrfProtectionMiddleware.InvokeAsync(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Procesa la petición HTTP y valida tokens CSRF cuando sea necesario.
+            </summary>
+            <param name="context">El contexto HTTP de la petición actual.</param>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método es el punto de entrada del middleware. Analiza la petición
+            para determinar si requiere validación CSRF y procede con la validación
+            si es necesario.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Middleware.CsrfProtectionMiddleware.IsStateChangingMethod(System.String)">
+            <summary>
+            Determina si el método HTTP modifica estado y requiere protección CSRF.
+            </summary>
+            <param name="method">El método HTTP de la petición.</param>
+            <returns>True si el método modifica estado, false en caso contrario.</returns>
+            <remarks>
+            Los métodos que modifican estado son POST, PUT, PATCH y DELETE.
+            Estos métodos requieren protección CSRF para prevenir ataques
+            de falsificación de solicitudes.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Middleware.CsrfProtectionMiddleware.RequiresAuthentication(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Determina si la petición requiere autenticación basándose en la ruta.
+            </summary>
+            <param name="context">El contexto HTTP de la petición.</param>
+            <returns>True si la petición requiere autenticación, false en caso contrario.</returns>
+            <remarks>
+            Algunas rutas como login no requieren validación CSRF ya que
+            no están protegidas por autenticación.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Middleware.CsrfProtectionMiddleware.ValidateCsrfToken(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Valida el token CSRF de la petición.
+            </summary>
+            <param name="context">El contexto HTTP de la petición.</param>
+            <returns>True si el token CSRF es válido, false en caso contrario.</returns>
+            <remarks>
+            Este método valida el token CSRF comparando el token del header
+            con el token almacenado en las cookies de forma segura.
+            En desarrollo, si no hay cookies disponibles, valida basándose en el token JWT.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.API.Middleware.CsrfProtectionMiddleware.GetUserName(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Obtiene el nombre del usuario autenticado del contexto.
+            </summary>
+            <param name="context">El contexto HTTP de la petición.</param>
+            <returns>El nombre del usuario o null si no está autenticado.</returns>
+        </member>
+        <member name="M:SistemaVenta.API.Middleware.CsrfProtectionMiddleware.GetClientIpAddress(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Obtiene la dirección IP del cliente.
+            </summary>
+            <param name="context">El contexto HTTP de la petición.</param>
+            <returns>La dirección IP del cliente.</returns>
+        </member>
         <member name="T:SistemaVenta.API.Middleware.GlobalExceptionHandlerMiddleware">
             <summary>
             Middleware para el manejo global de excepciones en la aplicación API.
@@ -401,6 +492,24 @@
             
             El token se firma usando la clave secreta configurada en la aplicación
             y utiliza el algoritmo HMAC-SHA256 para la firma.
+            </remarks>
+        </member>
+        <member name="M:AuthController.GetCsrfToken">
+            <summary>
+            Obtiene el token CSRF para el usuario autenticado.
+            </summary>
+            <returns>
+            - 200 OK con el token CSRF si el usuario está autenticado
+            - 401 Unauthorized si el usuario no está autenticado
+            </returns>
+            <remarks>
+            Este endpoint proporciona el token CSRF necesario para proteger
+            las operaciones que modifican estado (POST, PUT, DELETE) contra
+            ataques de falsificación de solicitudes en sitios cruzados.
+            
+            El token CSRF se genera automáticamente por el middleware
+            anti-forgery de ASP.NET Core y se incluye en las cookies
+            de la respuesta.
             </remarks>
         </member>
         <member name="T:CategoriasController">

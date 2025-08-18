@@ -36,8 +36,14 @@ try
         options.HeaderName = "X-CSRF-TOKEN";
         options.Cookie.Name = "CSRF-TOKEN";
         options.Cookie.HttpOnly = true;
-        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-        options.Cookie.SameSite = SameSiteMode.Strict;
+        // En desarrollo, permitir cookies no seguras para localhost
+        options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+        // En desarrollo, usar SameSite=None para permitir cross-origin en localhost
+        // En producción, cambiar a SameSiteMode.Strict
+        options.Cookie.SameSite = SameSiteMode.None;
+        options.Cookie.IsEssential = true;
+        // Configurar dominio para desarrollo cross-origin
+        options.Cookie.Domain = null; // Permite que la cookie se envíe a cualquier subdominio
     });
 
     // Configurar la Inyección de Dependencias de los proyectos de la solución
@@ -55,6 +61,21 @@ try
             app.AllowAnyOrigin()
                .AllowAnyHeader()
                .AllowAnyMethod();
+        });
+        
+        // Política específica para desarrollo con credenciales
+        options.AddPolicy("DevelopmentPolicy", app =>
+        {
+            app.WithOrigins(
+                "https://localhost:7289",
+                "https://localhost:5001",
+                "https://localhost:7189"
+            )
+            .AllowAnyMethod()
+            .AllowAnyHeader()
+            .AllowCredentials()
+            .WithExposedHeaders("X-CSRF-TOKEN", "Set-Cookie")
+            .SetIsOriginAllowedToAllowWildcardSubdomains();
         });
     });
 
@@ -94,20 +115,17 @@ try
     // Agregar middleware de cabeceras de seguridad
     app.UseMiddleware<SecurityHeadersMiddleware>();
     
-    // Configurar CORS con orígenes específicos para mayor seguridad
-    app.UseCors(builder => builder
-        .WithOrigins(
-            "https://localhost:7289",
-            "https://localhost:5001",
-            "https://localhost:7189"   
-        )
-        .AllowAnyMethod()
-        .AllowAnyHeader()
-        .AllowCredentials()
-    );
+    // Configurar CORS ANTES del middleware CSRF para evitar bloqueos
+    app.UseCors("DevelopmentPolicy");
+    
+    // Agregar middleware anti-CSRF para protección contra ataques Cross-Site Request Forgery
+    app.UseAntiforgery();
     
     app.UseAuthentication();
     app.UseAuthorization();
+    
+    // Agregar middleware personalizado de protección CSRF para JWT DESPUÉS de la autenticación
+    app.UseMiddleware<CsrfProtectionMiddleware>();
     
     // Agregar middleware de auditoría para registrar actividades
     app.UseMiddleware<AuditoriaMiddleware>();

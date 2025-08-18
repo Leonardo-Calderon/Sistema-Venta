@@ -20,7 +20,7 @@
             - Notificación de cambios en el estado de autenticación
             </remarks>
         </member>
-        <member name="M:SistemaVenta.Web.Client.Services.Implementations.AuthService.#ctor(System.Net.Http.HttpClient,Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider)">
+        <member name="M:SistemaVenta.Web.Client.Services.Implementations.AuthService.#ctor(System.Net.Http.HttpClient,Microsoft.AspNetCore.Components.Authorization.AuthenticationStateProvider,SistemaVenta.Web.Client.Services.Interfaces.ICsrfService)">
             <summary>
             Inicializa una nueva instancia del servicio de autenticación.
             </summary>
@@ -70,6 +70,92 @@
             y perderá acceso a las funcionalidades que requieren autenticación.
             </remarks>
         </member>
+        <member name="T:SistemaVenta.Web.Client.Services.Implementations.CsrfService">
+            <summary>
+            Implementación del servicio de gestión de tokens CSRF para la aplicación cliente.
+            </summary>
+            <remarks>
+            Esta clase implementa la interfaz ICsrfService y proporciona la funcionalidad
+            para manejar tokens CSRF en la aplicación Blazor WebAssembly.
+            
+            Responsabilidades:
+            - Comunicación con la API para obtener tokens CSRF
+            - Almacenamiento local de tokens CSRF
+            - Gestión del ciclo de vida de tokens CSRF
+            - Manejo de errores de comunicación
+            - Validación de tokens CSRF
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Implementations.CsrfService.#ctor(System.Net.Http.HttpClient,Blazored.LocalStorage.ILocalStorageService)">
+            <summary>
+            Inicializa una nueva instancia del servicio CSRF.
+            </summary>
+            <param name="httpClient">Cliente HTTP para comunicación con la API.</param>
+            <param name="localStorage">Servicio de almacenamiento local.</param>
+            <remarks>
+            El constructor recibe las dependencias necesarias para el funcionamiento
+            del servicio, incluyendo el cliente HTTP para comunicación con la API
+            y el servicio de almacenamiento local para persistir tokens CSRF.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Implementations.CsrfService.GetCsrfTokenAsync">
+            <summary>
+            Obtiene un token CSRF válido de la API.
+            </summary>
+            <returns>
+            El token CSRF si se obtiene exitosamente.
+            </returns>
+            <exception cref="T:System.Net.Http.HttpRequestException">Se lanza cuando la petición HTTP falla.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando no se recibe un token válido.</exception>
+            <remarks>
+            Este método realiza una petición GET a la API para obtener un nuevo
+            token CSRF. El token se almacena localmente con una marca de tiempo
+            para controlar su validez.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Implementations.CsrfService.GetCurrentCsrfTokenAsync">
+            <summary>
+            Obtiene el token CSRF actual, renovándolo si es necesario.
+            </summary>
+            <returns>
+            El token CSRF actual o un nuevo token si el actual no es válido.
+            </returns>
+            <remarks>
+            Este método verifica si existe un token CSRF válido localmente.
+            Si no existe o ha expirado, obtiene un nuevo token de la API.
+            Es el método principal que deben usar los servicios para obtener
+            tokens CSRF antes de realizar operaciones que modifican estado.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Implementations.CsrfService.ClearCsrfTokenAsync">
+            <summary>
+            Limpia el token CSRF almacenado localmente.
+            </summary>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método elimina el token CSRF y su marca de tiempo del
+            almacenamiento local. Se debe llamar cuando el usuario cierra
+            sesión o cuando se detecta que el token ha expirado.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Implementations.CsrfService.IsCsrfTokenValidAsync">
+            <summary>
+            Verifica si el token CSRF actual es válido.
+            </summary>
+            <returns>
+            True si el token CSRF es válido, false en caso contrario.
+            </returns>
+            <remarks>
+            Este método verifica si existe un token CSRF válido localmente
+            sin realizar una petición a la API. Verifica tanto la existencia
+            del token como su marca de tiempo de expiración.
+            </remarks>
+        </member>
+        <member name="T:SistemaVenta.Web.Client.Services.Implementations.CsrfService.CsrfTokenResponse">
+            <summary>
+            Clase interna para deserializar la respuesta del token CSRF.
+            </summary>
+        </member>
         <member name="T:SistemaVenta.Web.Client.Services.Implementations.UsuarioService">
             <summary>
             Implementación del servicio de gestión de usuarios para la aplicación cliente.
@@ -86,7 +172,7 @@
             - Validación de respuestas HTTP
             </remarks>
         </member>
-        <member name="M:SistemaVenta.Web.Client.Services.Implementations.UsuarioService.#ctor(System.Net.Http.HttpClient)">
+        <member name="M:SistemaVenta.Web.Client.Services.Implementations.UsuarioService.#ctor(System.Net.Http.HttpClient,SistemaVenta.Web.Client.Services.Interfaces.ICsrfService)">
             <summary>
             Inicializa una nueva instancia del servicio de usuarios.
             </summary>
@@ -209,6 +295,83 @@
             3. Notifica al sistema de autenticación sobre el cierre de sesión
             
             Después de llamar a este método, el usuario será redirigido a la página de login.
+            </remarks>
+        </member>
+        <member name="T:SistemaVenta.Web.Client.Services.Interfaces.ICsrfService">
+            <summary>
+            Interfaz para el servicio de gestión de tokens CSRF en la aplicación cliente.
+            </summary>
+            <remarks>
+            Esta interfaz define las operaciones necesarias para manejar tokens CSRF
+            en la aplicación Blazor WebAssembly, incluyendo la obtención y gestión
+            de tokens para proteger las operaciones que modifican estado.
+            
+            Responsabilidades:
+            - Obtener tokens CSRF de la API
+            - Almacenar tokens CSRF localmente
+            - Proporcionar tokens para requests HTTP
+            - Manejar renovación de tokens CSRF
+            - Validar tokens CSRF antes de su uso
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Interfaces.ICsrfService.GetCsrfTokenAsync">
+            <summary>
+            Obtiene un token CSRF válido de la API.
+            </summary>
+            <returns>
+            El token CSRF si se obtiene exitosamente.
+            </returns>
+            <exception cref="T:System.Net.Http.HttpRequestException">Se lanza cuando la petición HTTP falla.</exception>
+            <exception cref="T:System.Exception">Se lanza cuando no se recibe un token válido.</exception>
+            <remarks>
+            Este método:
+            1. Realiza una petición GET a la API para obtener el token CSRF
+            2. Verifica que la respuesta sea exitosa
+            3. Extrae el token CSRF de la respuesta
+            4. Almacena el token localmente para uso posterior
+            5. Retorna el token CSRF
+            
+            El token CSRF se obtiene de la API y se almacena localmente
+            para ser usado en operaciones que modifican estado.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Interfaces.ICsrfService.GetCurrentCsrfTokenAsync">
+            <summary>
+            Obtiene el token CSRF actual, renovándolo si es necesario.
+            </summary>
+            <returns>
+            El token CSRF actual o un nuevo token si el actual no es válido.
+            </returns>
+            <remarks>
+            Este método verifica si existe un token CSRF válido localmente.
+            Si no existe o ha expirado, obtiene un nuevo token de la API.
+            
+            Es el método principal que deben usar los servicios para obtener
+            tokens CSRF antes de realizar operaciones que modifican estado.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Interfaces.ICsrfService.ClearCsrfTokenAsync">
+            <summary>
+            Limpia el token CSRF almacenado localmente.
+            </summary>
+            <returns>Una tarea que representa la operación asíncrona.</returns>
+            <remarks>
+            Este método elimina el token CSRF del almacenamiento local.
+            Se debe llamar cuando el usuario cierra sesión o cuando
+            se detecta que el token ha expirado.
+            </remarks>
+        </member>
+        <member name="M:SistemaVenta.Web.Client.Services.Interfaces.ICsrfService.IsCsrfTokenValidAsync">
+            <summary>
+            Verifica si el token CSRF actual es válido.
+            </summary>
+            <returns>
+            True si el token CSRF es válido, false en caso contrario.
+            </returns>
+            <remarks>
+            Este método verifica si existe un token CSRF válido localmente
+            sin realizar una petición a la API. Útil para verificaciones
+            rápidas antes de realizar operaciones.
             </remarks>
         </member>
         <member name="T:SistemaVenta.Web.Client.Services.Interfaces.IUsuarioService">

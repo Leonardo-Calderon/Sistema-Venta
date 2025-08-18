@@ -21,6 +21,7 @@ namespace SistemaVenta.Web.Client.Services.Implementations
     public class UsuarioService : IUsuarioService
     {
         private readonly HttpClient _httpClient;
+        private readonly ICsrfService _csrfService;
 
         /// <summary>
         /// Inicializa una nueva instancia del servicio de usuarios.
@@ -31,9 +32,10 @@ namespace SistemaVenta.Web.Client.Services.Implementations
         /// peticiones a la API de usuarios. Este cliente debe estar configurado
         /// con la URL base de la API.
         /// </remarks>
-        public UsuarioService(HttpClient httpClient)
+        public UsuarioService(HttpClient httpClient, ICsrfService csrfService)
         {
             _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+            _csrfService = csrfService ?? throw new ArgumentNullException(nameof(csrfService));
         }
 
         /// <summary>
@@ -72,7 +74,15 @@ namespace SistemaVenta.Web.Client.Services.Implementations
         /// </remarks>
         public async Task<HttpResponseMessage> Crear(UsuarioCrearDTO usuario)
         {
-            return await _httpClient.PostAsJsonAsync("api/usuarios", usuario);
+            // Obtener token CSRF para la operación
+            var csrfToken = await _csrfService.GetCurrentCsrfTokenAsync();
+            
+            // Crear request con token CSRF
+            var request = new HttpRequestMessage(HttpMethod.Post, "api/usuarios");
+            request.Headers.Add("X-CSRF-TOKEN", csrfToken);
+            request.Content = JsonContent.Create(usuario);
+            
+            return await _httpClient.SendAsync(request);
         }
 
         /// <summary>
@@ -92,7 +102,15 @@ namespace SistemaVenta.Web.Client.Services.Implementations
         /// </remarks>
         public async Task<HttpResponseMessage> Editar(UsuarioDTO usuario)
         {
-            return await _httpClient.PutAsJsonAsync($"api/usuarios/{usuario.IdUsuario}", usuario);
+            // Obtener token CSRF para la operación
+            var csrfToken = await _csrfService.GetCurrentCsrfTokenAsync();
+            
+            // Crear request con token CSRF
+            var request = new HttpRequestMessage(HttpMethod.Put, $"api/usuarios/{usuario.IdUsuario}");
+            request.Headers.Add("X-CSRF-TOKEN", csrfToken);
+            request.Content = JsonContent.Create(usuario);
+            
+            return await _httpClient.SendAsync(request);
         }
 
         /// <summary>
@@ -110,7 +128,14 @@ namespace SistemaVenta.Web.Client.Services.Implementations
         /// </remarks>
         public async Task<HttpResponseMessage> Eliminar(int id)
         {
-            return await _httpClient.DeleteAsync($"api/usuarios/{id}");
+            // Obtener token CSRF para la operación
+            var csrfToken = await _csrfService.GetCurrentCsrfTokenAsync();
+            
+            // Crear request con token CSRF
+            var request = new HttpRequestMessage(HttpMethod.Delete, $"api/usuarios/{id}");
+            request.Headers.Add("X-CSRF-TOKEN", csrfToken);
+            
+            return await _httpClient.SendAsync(request);
         }
     }
 }
