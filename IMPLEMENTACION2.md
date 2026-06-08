@@ -6,6 +6,7 @@
 
 **Objetivo:** Implementar mecanismos de validación y parametrización de consultas para prevenir SQL Injection
 
+**Nota de Contexto:** Aunque la arquitectura base del sistema (basada en Procedimientos Almacenados y parámetros fuertemente tipados a través de `SqlDbType`) **ya neutralizaba** la ejecución de código SQL inyectado, el conocimiento adquirido tras la investigación de buenas prácticas de ciberseguridad motivó la implementación de una capa adicional. Con el objetivo de aplicar el principio de **Defensa en Profundidad (Defense in Depth)**, se desarrolló este sistema de validación y sanitización a nivel de aplicación (API) para detectar, registrar y rechazar proactivamente las cargas útiles maliciosas antes de que siquiera alcancen la capa de datos.
 ---
 
 ## 📋 ÍNDICE DE CONTENIDOS
